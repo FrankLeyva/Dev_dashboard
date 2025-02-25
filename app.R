@@ -1,0 +1,28 @@
+library(shiny)
+library(bslib)
+library(htmltools)
+library(DT)
+library(dplyr)
+library(plotly)
+library(leaflet)
+library(sf)
+library(tidyverse)
+library(tidyr)
+library(igraph)
+library(wordcloud2)
+# Source all necessary files
+source("R/global_theme.R")
+source('R/razon_module.R')
+source('R/interval_module.R')
+source('R/ordinal_module.R')
+source('R/categorical_module.R')
+source('R/nominal_module.R')
+source('R/binary_module.R')
+source("R/data_loader.R")
+source("R/question_classifier.R")
+source("R/server.R")
+source("R/ui.R")
+
+
+# Launch the application
+shinyApp(ui = ui, server = server)
