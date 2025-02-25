@@ -1,4 +1,4 @@
-# ui.R
+library(bslib)
 ui <- page_fluid(
   theme = bs_theme(
     version = 5,
