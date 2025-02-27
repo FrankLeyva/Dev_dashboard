@@ -1,4 +1,4 @@
-prepare_razon_data <- function(data, question_id) {
+prepare_razon_data <- function(data, question_id, metadata) {
   # Ensure required columns exist
   required_cols <- c(question_id, "Q2", "Q101", "Q103")
   
@@ -24,7 +24,8 @@ prepare_razon_data <- function(data, question_id) {
       gender = as.factor(gender),
       age_group = as.factor(age_group)
     )
-  
+    attr(subset_data, "question_label") <- get_question_label(question_id, metadata)
+
   return(subset_data)
 }
 find_mode <- function(x) {
@@ -67,7 +68,12 @@ calculate_gender_district_stats <- function(data) {
       values_from = mean_value
     )
 }
-create_histogram <- function(data, bins = 30, title = "Distribución") {
+create_histogram <- function(data, bins = 30, title = NULL) {
+  question_label <- attr(data, "question_label")
+  # If no title provided, use the question label
+  if (is.null(title)) {
+    title <- paste("Distribución de", question_label)
+  }
   plot_ly(
     data = data,
     x = ~value,
@@ -137,8 +143,8 @@ razonUI <- function(id) {
   tagList(
     fluidRow(
       column(4,
-        card(
-          card_header("Controles de Visualización"),
+        accordion(
+          accordion_panel("Controles de Visualización",
           selectInput(
             ns("plot_type"),
             "Tipo de Visualización",
@@ -150,9 +156,10 @@ razonUI <- function(id) {
               "Comparación por Género" = "gender_dumbbell",
               "Gráfico de Barras" = "bars"
             )
-          ),
+          )
+        ),
           # Add filter controls
-          card_header("Filtros"),
+          accordion_panel("Filtros",
           selectInput(
             ns("district_filter"), 
             "Distritos",
@@ -170,8 +177,10 @@ razonUI <- function(id) {
             "Grupo de Edad",
             choices = NULL,
             multiple = TRUE
-          ),
-          # Conditional panels for specific plot types
+          )
+        ),
+          accordion_panel(
+            "Opciones Adicionales",
           conditionalPanel(
             condition = "input.plot_type == 'bars'",
             ns = ns,
@@ -183,9 +192,10 @@ razonUI <- function(id) {
                 "Horizontal" = "h"
               )
             )
-          ), min_height = 500
+          ), 
         )
-      ),
+      )
+    ),
       column(8,
         card(
           card_header("Visualización"),
@@ -198,23 +208,25 @@ razonUI <- function(id) {
 
 # R/razon_module.R
 
-razonServer <- function(id, data, selected_question, geo_data) {
+razonServer <- function(id, data, selected_question, geo_data, metadata) {
   moduleServer(id, function(input, output, session) {
      
     # Reactive dataset preparation
     prepared_data <- reactive({
-      req(data(), selected_question())
-      prepare_razon_data(data(), selected_question())
+      tryCatch({
+        req(data(), selected_question(), metadata())
+        
+        # Add validation
+        if (is.null(selected_question()) || selected_question() == "") {
+          return(NULL)
+        }
+        
+        prepare_razon_data(data(), selected_question(), metadata())
+      }, error = function(e) {
+        warning(paste("Error in prepared_data:", e$message))
+        return(NULL)
+      })
     })
-    stats<- reactive({ list(
-      total_responses = length(prepared_data()$value),
-      mode = find_mode(prepared_data()$value),
-      mean = mean(prepared_data()$value, na.rm = TRUE),
-      median = median(prepared_data()$value, na.rm = TRUE),
-      sd = sd(prepared_data()$value, na.rm = TRUE),
-      unique_categories = length(unique(prepared_data()$value)),
-      missing = sum(is.na(prepared_data()$value))
-    )})
 
     observe({
       req(prepared_data())
@@ -251,7 +263,7 @@ razonServer <- function(id, data, selected_question, geo_data) {
       
       data
     })
-    # Dynamic plot output based on selection
+
     output$plot_output <- renderUI({
       plot_type <- input$plot_type
       

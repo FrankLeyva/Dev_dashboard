@@ -47,7 +47,10 @@ server <- function(input, output, session) {
       Cantidad = sapply(types, length)
     )
   })
-  
+  output$question_label <- renderText({
+    req(input$test_question, data()$metadata)
+    get_question_label(input$test_question, data()$metadata)
+  })
   # Display questions by type
   output$questions_by_type <- DT::renderDataTable({
     req(input$question_type)
@@ -91,6 +94,7 @@ server <- function(input, output, session) {
       razonServer(
         "razon_test",
         data = reactive(data()$responses),
+        metadata = reactive(data()$metadata),
         selected_question = selected_question,
         geo_data = geo_data
       )

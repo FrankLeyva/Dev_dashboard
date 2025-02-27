@@ -119,7 +119,8 @@ prepare_binary_data <- function(data, question_id, metadata) {
   attr(valid_data, "total_responses") <- total_responses
   attr(valid_data, "question_id") <- question_id
   attr(valid_data, "question_label") <- question_metadata$label
-  
+  attr(valid_data, "question_label") <- get_question_label(question_id, metadata)
+
   return(valid_data)
 }
 
@@ -733,8 +734,8 @@ binaryUI <- function(id) {
   tagList(
     fluidRow(
       column(4,
-        card(
-          card_header("Controles de Visualización"),
+        accordion(
+          accordion_panel("Controles de Visualización",
           selectInput(
             ns("plot_type"),
             "Tipo de Visualización",
@@ -749,10 +750,10 @@ binaryUI <- function(id) {
               "Barras por Edad" = "age_bars",
               "Comparación Múltiple" = "multiple_comparison"
             )
-          ),
-          
+          )
+        ),
           # Add filter controls
-          card_header("Filtros"),
+          accordion_panel("Filtros",
           selectInput(
             ns("district_filter"), 
             "Distritos",
@@ -770,9 +771,10 @@ binaryUI <- function(id) {
             "Grupo de Edad",
             choices = NULL,
             multiple = TRUE
-          ),
-          
-          # Conditional panels for specific plot types
+          )
+        ),
+          accordion_panel(
+            "Opciones Adicionales",
           conditionalPanel(
             condition = sprintf("input['%s'] == 'district_bars'", ns("plot_type")),
             radioButtons(
@@ -811,8 +813,10 @@ binaryUI <- function(id) {
               selected = "bars"
             )
           )
-        )
-      ),
+        ), 
+      )
+    
+  ),
       column(8,
         card(
           card_header("Visualización"),

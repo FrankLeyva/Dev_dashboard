@@ -200,11 +200,23 @@ prepare_interval_data <- function(data, question_id, metadata) {
   } else {
     # For unlabeled numeric data
     max_val <- max(valid_data$value_num, na.rm = TRUE)
-    valid_data$value <- factor(
-      valid_data$value_num,
-      levels = 1:max_val,
-      ordered = TRUE
-    )
+    
+    # Fix for "result would be too long a vector" error
+    if (is.finite(max_val) && max_val <= 1000) {  # Add a reasonable limit
+      valid_data$value <- factor(
+        valid_data$value_num,
+        levels = 1:max_val,
+        ordered = TRUE
+      )
+    } else {
+      # Just use the unique values as levels instead of 1:max_val
+      unique_values <- sort(unique(valid_data$value_num))
+      valid_data$value <- factor(
+        valid_data$value_num,
+        levels = unique_values,
+        ordered = TRUE
+      )
+    }
   }
   
   # Add attributes about the processing
@@ -214,7 +226,8 @@ prepare_interval_data <- function(data, question_id, metadata) {
   attr(valid_data, "missing_count") <- missing_count
   attr(valid_data, "total_responses") <- total_responses
   attr(valid_data, "numeric_values") <- valid_data$value_num
-  
+  attr(valid_data, "question_label") <- get_question_label(question_id, metadata)
+
   # Simplify the data frame to include only necessary columns
   valid_data <- valid_data %>%
     select(value, district, gender, age_group, value_num)
@@ -587,8 +600,8 @@ intervalUI <- function(id) {
   tagList(
     fluidRow(
       column(4,
-        card(
-          card_header("Controles de Visualización"),
+        accordion(
+          accordion_panel("Controles de Visualización",
           selectInput(
             ns("plot_type"),
             "Tipo de Visualización",
@@ -600,10 +613,11 @@ intervalUI <- function(id) {
               "Comparación por Género" = "gender_dumbbell",
               "Gráfico de Barras" = "bars"
             )
+          )
           ),
           
           # Add filter controls
-          card_header("Filtros"),
+          accordion_panel("Filtros",
           selectInput(
             ns("district_filter"), 
             "Distritos",
@@ -621,8 +635,10 @@ intervalUI <- function(id) {
             "Grupo de Edad",
             choices = NULL,
             multiple = TRUE
+          )
           ),
-          
+          accordion_panel(
+            "Opciones Adicionales",
           conditionalPanel(
             condition = sprintf("input['%s'] == 'histogram'", ns("plot_type")),
             sliderInput(
@@ -644,6 +660,7 @@ intervalUI <- function(id) {
                 "Horizontal" = "h"
               )
             )
+            )
           )
         )
       ),
@@ -661,14 +678,19 @@ intervalServer <- function(id, data, metadata, selected_question, geo_data) {
   moduleServer(id, function(input, output, session) {
     # Initial data preparation with metadata
     prepared_data <- reactive({
-      req(data(), selected_question(), metadata())
-      
-      # Add validation
-      if (is.null(selected_question()) || selected_question() == "") {
+      tryCatch({
+        req(data(), selected_question(), metadata())
+        
+        # Add validation
+        if (is.null(selected_question()) || selected_question() == "") {
+          return(NULL)
+        }
+        
+        prepare_interval_data(data(), selected_question(), metadata())
+      }, error = function(e) {
+        warning(paste("Error in prepared_data:", e$message))
         return(NULL)
-      }
-      
-      prepare_interval_data(data(), selected_question(), metadata())
+      })
     })
     
     # Update filter choices

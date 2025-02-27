@@ -148,7 +148,8 @@ prepare_categorical_data <- function(data, question_id, metadata) {
   attr(valid_data, "ns_nc_count") <- ns_nc_count
   attr(valid_data, "missing_count") <- missing_count
   attr(valid_data, "total_responses") <- total_responses
-  
+  attr(valid_data, "question_label") <- get_question_label(question_id, metadata)
+
   # Simplify the data frame to include only necessary columns
   valid_data <- valid_data %>%
     select(value, district, gender, age_group)
@@ -740,8 +741,8 @@ categoricoUI <- function(id) {
   tagList(
     fluidRow(
       column(4,
-        card(
-          card_header("Controles de Visualización"),
+        accordion(
+          accordion_panel("Controles de Visualización",
           selectInput(
             ns("plot_type"),
             "Tipo de Visualización",
@@ -757,10 +758,10 @@ categoricoUI <- function(id) {
               "Gráfico de Árbol Jerárquico" = "hierarchical_treemap",
               "Relaciones entre Categorías" = "relationship"
             )
-          ),
-          
+          )
+        ),
           # Add filter controls
-          card_header("Filtros"),
+          accordion_panel("Filtros",
           selectInput(
             ns("district_filter"), 
             "Distritos",
@@ -820,7 +821,10 @@ categoricoUI <- function(id) {
               max = 15,
               value = 7
             )
+          )
           ),
+            accordion_panel(
+              "Opciones Adicionales",
           conditionalPanel(
             condition = sprintf("input['%s'] == 'relationship'", ns("plot_type")),
             selectInput(
@@ -842,8 +846,10 @@ categoricoUI <- function(id) {
               selected = "district"
             )
           )
-        )
-      ),
+        ), 
+      
+    )
+  ),
       column(8,
         card(
           card_header("Visualización"),

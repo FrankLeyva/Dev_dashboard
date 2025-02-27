@@ -80,6 +80,14 @@ ui <- page_fluid(
             "test_question",
             "Pregunta de Prueba",
             choices = NULL
+          ),
+          div(
+            style = "margin-top: 10px; margin-bottom: 20px;",
+            h5("Pregunta:"),
+            div(
+              style = "font-style: italic; margin-left: 5px;",
+              textOutput("question_label")
+            )
           )
         ),
         conditionalPanel(

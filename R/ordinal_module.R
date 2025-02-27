@@ -176,11 +176,12 @@ prepare_ordinal_data <- function(data, question_id, metadata) {
     return(empty_data)
   }
   
-  # Create factor levels for display - ensuring ordering is preserved
   if (special_cases || (!is.null(value_labels) && any(names(value_labels) %in% c(1:10)))) {
-    # For scale questions
+    # For scale questions like Q56 (1-10 plus No hay)
+    # Extract numeric values for factor levels
     valid_numeric_values <- sort(as.numeric(names(value_labels)[!names(value_labels) %in% ns_nc_codes]))
     
+    # Create factor with numeric labels first
     valid_data$value <- factor(
       valid_data$value_num,
       levels = valid_numeric_values,
@@ -200,11 +201,23 @@ prepare_ordinal_data <- function(data, question_id, metadata) {
   } else {
     # For unlabeled numeric data
     max_val <- max(valid_data$value_num, na.rm = TRUE)
-    valid_data$value <- factor(
-      valid_data$value_num,
-      levels = 1:max_val,
-      ordered = TRUE
-    )
+    
+    # Fix for "result would be too long a vector" error
+    if (is.finite(max_val) && max_val <= 1000) {  # Add a reasonable limit
+      valid_data$value <- factor(
+        valid_data$value_num,
+        levels = 1:max_val,
+        ordered = TRUE
+      )
+    } else {
+      # Just use the unique values as levels instead of 1:max_val
+      unique_values <- sort(unique(valid_data$value_num))
+      valid_data$value <- factor(
+        valid_data$value_num,
+        levels = unique_values,
+        ordered = TRUE
+      )
+    }
   }
   
   # Add attributes about the processing
@@ -214,7 +227,8 @@ prepare_ordinal_data <- function(data, question_id, metadata) {
   attr(valid_data, "missing_count") <- missing_count
   attr(valid_data, "total_responses") <- total_responses
   attr(valid_data, "numeric_values") <- valid_data$value_num
-  
+  attr(valid_data, "question_label") <- get_question_label(question_id, metadata)
+
   # Simplify the data frame to include only necessary columns
   valid_data <- valid_data %>%
     select(value, district, gender, age_group, value_num)
@@ -585,8 +599,8 @@ ordinalUI <- function(id) {
   tagList(
     fluidRow(
       column(4,
-        card(
-          card_header("Controles de Visualización"),
+        accordion(
+          accordion_panel("Controles de Visualización",
           selectInput(
             ns("plot_type"),
             "Tipo de Visualización",
@@ -598,10 +612,10 @@ ordinalUI <- function(id) {
               "Comparación por Género" = "gender_dumbbell",
               "Gráfico de Barras" = "bars"
             )
-          ),
-          
+          )
+        ),
           # Add filter controls
-          card_header("Filtros"),
+          accordion_panel("Filtros",
           selectInput(
             ns("district_filter"), 
             "Distritos",
@@ -619,7 +633,10 @@ ordinalUI <- function(id) {
             "Grupo de Edad",
             choices = NULL,
             multiple = TRUE
-          ),
+          )
+        ),
+          accordion_panel(
+            "Opciones Adicionales",
           
           conditionalPanel(
             condition = sprintf("input['%s'] == 'histogram'", ns("plot_type")),
@@ -642,9 +659,10 @@ ordinalUI <- function(id) {
                 "Horizontal" = "h"
               )
             )
-          )
+          ), 
         )
-      ),
+      )
+    ),
       column(8,
         card(
           card_header("Visualización"),

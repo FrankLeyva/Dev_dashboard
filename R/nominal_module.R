@@ -84,7 +84,8 @@ prepare_nominal_data <- function(data, question_id, metadata) {
   attr(valid_data, "total_responses") <- total_responses
   attr(valid_data, "tokens") <- tokens
   attr(valid_data, "word_freq") <- word_freq
-  
+  attr(valid_data, "question_label") <- get_question_label(question_id, metadata)
+
   return(valid_data)
 }
 
@@ -527,8 +528,8 @@ nominalUI <- function(id) {
   tagList(
     fluidRow(
       column(4,
-        card(
-          card_header("Controles de Visualización"),
+        accordion(
+          accordion_panel("Controles de Visualización",
           selectInput(
             ns("plot_type"),
             "Tipo de Visualización",
@@ -540,10 +541,10 @@ nominalUI <- function(id) {
               "Treemap de Palabras" = "word_treemap",
               "Red de Bigramas" = "bigram_network"
             )
-          ),
-          
+          )
+        ),
           # Add filter controls
-          card_header("Filtros"),
+          accordion_panel("Filtros",
           selectInput(
             ns("district_filter"), 
             "Distritos",
@@ -576,9 +577,10 @@ nominalUI <- function(id) {
             min = 1,
             max = 10,
             value = 3
-          ),
-          
-          # Conditional panels for specific plot types
+          )
+        ),
+          accordion_panel(
+            "Opciones Adicionales",
           conditionalPanel(
             condition = sprintf("input['%s'] == 'word_freq'", ns("plot_type")),
             sliderInput(
@@ -629,8 +631,10 @@ nominalUI <- function(id) {
               value = 30
             )
           )
-        )
-      ),
+        ), 
+      
+    )
+  ),
       column(8,
         card(
           card_header("Visualización"),
