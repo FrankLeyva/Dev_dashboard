@@ -5,25 +5,32 @@ ui <- page_fluid(
     bootswatch = "litera",
     primary = "#0d6efd"
   ),
-  
+  layout_columns(
+    fill = FALSE,
+    card(
+      card_header("Configuración de Encuesta"),
+      selectInput(
+        "survey_selector",
+        "Seleccionar Encuesta:",
+        choices = c(
+          "Percepción Ciudadana (PER 2023)" = "PER_2023",
+          "Participación Ciudadana (PAR 2023)" = "PAR_2023"
+        ),
+        selected = "PER"
+      )
+    )
+  ),
   navset_tab(
     nav_panel(
       title = "Vista General de Datos",
       icon = icon("database"),
       
-      layout_columns(
-        fill = FALSE,
-        value_box(
-          title = "Total de Respuestas",
-          value = textOutput("total_responses"),
-          showcase = icon("users")
-        ),
-        value_box(
-          title = "Preguntas",
-          value = textOutput("total_questions"),
-          showcase = icon("question")
-        )
-      ),
+      card(
+        card_header("Información de la Encuesta Actual"),
+        textOutput("survey_name"),
+        uiOutput("survey_info")
+      )
+      ,
       
       card(
         card_header("Resumen de Clasificación"),

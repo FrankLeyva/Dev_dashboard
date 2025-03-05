@@ -75,9 +75,9 @@ prepare_interval_data <- function(data, question_id, metadata) {
   subset_data <- data %>%
     select(
       value = all_of(question_id),
-      district = Q2,
-      gender = Q101,
-      age_group = Q103
+      district = DISTRICT,  
+      gender = GENDER,      
+      age_group = AGE_GROUP 
     )
   
   # Handle NA values
@@ -393,7 +393,118 @@ create_interval_district_map <- function(data, geo_data) {
       ) %>% lapply(HTML)
     )
 }
-
+# Modified create_interval_district_map function for question 4 with labels
+create_interval_district_map_q4 <- function(data, geo_data) {
+  # Verify we have both data and geo_data
+  req(data, geo_data)
+  
+  # For question 4, calculate percentage of responses that are 1 or 2
+  # 1 = "Empeorado mucho", 2 = "Empeorado algo"
+  district_stats <- data %>%
+    mutate(
+      is_worsened = value_num %in% c(1, 2)  # 1 or 2 represents "Empeorado"
+    ) %>%
+    group_by(district) %>%
+    summarise(
+      total_responses = n(),
+      worsened_count = sum(is_worsened, na.rm = TRUE),
+      worsened_percent = round(100 * sum(is_worsened, na.rm = TRUE) / n(), 1),
+      .groups = 'drop'
+    )
+  
+  # Find district with highest and lowest percentages for highlighting
+  highest_district <- district_stats %>% arrange(desc(worsened_percent)) %>% slice(1)
+  lowest_district <- district_stats %>% arrange(worsened_percent) %>% slice(1)
+  
+  # Create color palette based on percentage
+  pal <- colorNumeric(
+    palette = "RdYlBu",  # Red-Yellow-Blue palette (red for high values)
+    domain = district_stats$worsened_percent,
+    reverse = TRUE  # Reverse so red is for higher values
+  )
+  
+  # Calculate centroids for label placement
+  geo_data$centroid <- sf::st_centroid(geo_data$geometry)
+  centroids <- sf::st_coordinates(geo_data$centroid)
+  geo_data$lng <- centroids[,1]
+  geo_data$lat <- centroids[,2]
+  
+  # Create map
+  map <- leaflet(geo_data) %>%
+    addTiles() %>% 
+    addPolygons(
+      fillOpacity = 0.7,
+      weight = 1,
+      color = theme_config$palette$district[match(geo_data$No_Distrit, district_stats$district)],
+      dashArray = "3",
+      highlight = highlightOptions(
+        weight = 2,
+        color = "#666666",
+        dashArray = "",
+        fillOpacity = 0.7,
+        bringToFront = TRUE
+      ),
+      label = ~sprintf(
+        "Distrito: %s<br>'Empeorado mucho/algo': %d (%s%%)<br>Total: %d",
+        district_stats$district[match(No_Distrit, district_stats$district)],
+        district_stats$worsened_count[match(No_Distrit, district_stats$district)],
+        district_stats$worsened_percent[match(No_Distrit, district_stats$district)],
+        district_stats$total_responses[match(No_Distrit, district_stats$district)]
+      ) %>% lapply(HTML)
+    ) 
+  
+  # Add labels for each district
+  for(i in 1:nrow(geo_data)) {
+    district_num <- geo_data$No_Distrit[i]
+    percent <- district_stats$worsened_percent[match(district_num, district_stats$district)]
+    
+    # Skip if no percentage data
+    if(is.na(percent)) next
+    
+    # Determine background color based on whether this is highest or lowest district
+    bg_color <- "#FFFFFF"  # Default white background
+    text_color <- "#000000"  # Default black text
+    
+    if(!is.na(highest_district$district) && district_num == highest_district$district) {
+      bg_color <- "#8b0000"  # Black background for highest
+      text_color <- "#FFFFFF"  # White text
+    } else if(!is.na(lowest_district$district) && district_num == lowest_district$district) {
+      bg_color <- "#006400"  # Black background for lowest
+      text_color <- "#FFFFFF"  # White text
+    }
+    
+    # Create label HTML
+    label_html <- sprintf(
+      '<div style="background-color: %s; color: %s; padding: 5px; border-radius: 3px; font-weight: bold;">Distrito %s<br>%s%%</div>',
+      bg_color, text_color, district_num, percent
+    )
+    
+    # Add label
+    map <- map %>% addLabelOnlyMarkers(
+      lng = geo_data$lng[i],
+      lat = geo_data$lat[i],
+      label = lapply(list(label_html), HTML),
+      labelOptions = labelOptions(
+        noHide = TRUE,
+        direction = "center",
+        textOnly = TRUE
+      )
+    )
+  }
+  
+  # Add overall average label
+  overall_percent <- round(mean(district_stats$worsened_percent, na.rm = TRUE), 1)
+  
+  map <- map %>% addControl(
+    html = sprintf(
+      '<div style="background-color: #333333; color: white; padding: 5px; border-radius: 3px;"><strong>Porcentaje general: %s%%</strong></div>',
+      overall_percent
+    ),
+    position = "topright"
+  )
+  
+  return(map)
+}
 create_interval_age_bars <- function(data) {
   # Create label lookup
   labels_lookup <- create_label_lookup(data)
@@ -848,9 +959,18 @@ intervalServer <- function(id, data, metadata, selected_question, geo_data) {
   )
 })
 
+# Add this to your intervalServer function, replacing the existing district_map render
 output$district_map <- renderLeaflet({
   req(filtered_data(), geo_data())
-  create_interval_district_map(filtered_data(), geo_data())
+  
+  # Check if the selected question is Q4
+  if(selected_question() == "Q4") {
+    # Use the special map visualization for Q4
+    create_interval_district_map_q4(filtered_data(), geo_data())
+  } else {
+    # Use the standard map visualization for other questions
+    create_interval_district_map(filtered_data(), geo_data())
+  }
 })
 
 output$age_bars_plot <- renderPlotly({

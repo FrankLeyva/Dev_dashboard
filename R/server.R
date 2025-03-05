@@ -1,8 +1,8 @@
 server <- function(input, output, session) {
   data <- reactive({
-    load_survey_data("data/processed/PER_2023_responses.csv", "data/processed/PER_2023_metadata_classified.csv")
+    req(input$survey_selector)
+    load_survey_data(input$survey_selector)
   })
-
   
   geo_data <- reactive({
     tryCatch({
@@ -13,7 +13,36 @@ server <- function(input, output, session) {
     })
   })
 
+  output$survey_name <- renderText({
+    if (input$survey_selector == "PAR_2023") {
+      "Participación Ciudadana (PAR 2023)"
+    } else if (input$survey_selector == "PER_2023"){
+      "Percepción Ciudadana (PER 2023)"
+    }
+  })
+  observeEvent(input$survey_selector, {
+    # Reset the test_question when survey changes
+    updateSelectInput(session, "test_question", choices = NULL, selected = NULL)
+    
+    # Also reset the question_type in the Classification panel if needed
+    updateSelectInput(session, "question_type", selected = "razon")
+  })
 
+  output$survey_info <- renderUI({
+    req(data())
+    
+    # Calculate some basic stats
+    num_questions <- ncol(data()$responses)
+    num_responses <- nrow(data()$responses)
+    survey_id <- data()$survey_id
+    
+    tagList(
+      p(paste("ID de Encuesta:", survey_id)),
+      p(paste("Número de Preguntas:", num_questions)),
+      p(paste("Número de Respuestas:", num_responses)),
+      p(paste("Fecha de actualización:", format(Sys.Date(), "%d/%m/%Y")))
+    )
+  })
   # Classify questions
   question_classification <- reactive({
     classify_questions(data()$metadata)

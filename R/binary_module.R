@@ -1,3 +1,5 @@
+# Complete updated prepare_binary_data function with fix for text sentences
+
 prepare_binary_data <- function(data, question_id, metadata) {
   # Validate inputs
   if (is.null(question_id) || question_id == "") {
@@ -17,6 +19,22 @@ prepare_binary_data <- function(data, question_id, metadata) {
   value_labels <- NULL
   positive_values <- c("1", "Sí", "Si", "Yes", "Selected", "TRUE", "True", "true")
   negative_values <- c("0", "No", "Not Selected", "FALSE", "False", "false")
+  treat_na_as_negative <- FALSE
+  invert_selected_logic <- FALSE
+  
+  # SPECIFIC QUESTION HANDLERS - Add special case handling for known problematic questions
+  if (grepl("^Q(6|17)\\.[0-9]+$", question_id)) {
+    # For questions like Q6.x and Q17.x in PAR survey - these are checkbox questions
+    # where a value of 1 means "Selected" and NA means "Not Selected"
+    is_checkbox_question <- TRUE
+    treat_na_as_negative <- TRUE
+    invert_selected_logic <- FALSE
+    
+    # Add debugging for these specific questions
+    cat(sprintf("Handling checkbox question %s with special logic\n", question_id))
+  } else {
+    is_checkbox_question <- FALSE
+  }
   
   # Process value labels if they exist
   if (question_metadata$has_value_labels && !is.na(question_metadata$value_labels)) {
@@ -28,6 +46,13 @@ prepare_binary_data <- function(data, question_id, metadata) {
       values <- character()
       labels <- character()
       
+      # Check if this is a Selected/Not Selected question
+      is_selection_type <- any(grepl("Selected", label_pairs, fixed = TRUE))
+      if (is_selection_type && !is_checkbox_question) {
+        is_checkbox_question <- TRUE
+        treat_na_as_negative <- TRUE
+      }
+      
       # Process each pair
       for(pair in label_pairs) {
         # Split by equals and clean up
@@ -38,6 +63,28 @@ prepare_binary_data <- function(data, question_id, metadata) {
           
           values <- c(values, value)
           labels <- c(labels, label)
+          
+          # Handle inverted label logic
+          if (label == "Selected" && value == "0") {
+            invert_selected_logic <- TRUE
+          }
+          if (label == "Not Selected" && value == "1") {
+            invert_selected_logic <- TRUE
+          }
+          
+          # Handle standard Yes/No questions
+          if (value == "2" && grepl("^no\\s|^no$|no\\s", tolower(label), ignore.case = TRUE)) {
+            negative_values <- c(negative_values, "2")
+          }
+          
+          if (value == "1" && grepl("^no\\s|^no$|no\\s", tolower(label), ignore.case = TRUE)) {
+            negative_values <- c(negative_values, "1")
+            positive_values <- positive_values[positive_values != "1"]
+          }
+          
+          if (value == "2" && grepl("^si\\s|^sí\\s|^si$|^sí$", tolower(label), ignore.case = TRUE)) {
+            positive_values <- c(positive_values, "2")
+          }
         }
       }
       
@@ -53,29 +100,88 @@ prepare_binary_data <- function(data, question_id, metadata) {
   subset_data <- data %>%
     select(
       value = all_of(question_id),
-      district = Q2,
-      gender = Q101,
-      age_group = Q103
+      district = DISTRICT, 
+      gender = GENDER,
+      age_group = AGE_GROUP
     )
-  
+
   # Handle NA values
   subset_data$value_original <- subset_data$value
   subset_data$is_na <- is.na(subset_data$value)
   
-  # Standardize binary values (convert to TRUE/FALSE)
+  # Check distribution of data to determine if we need to invert logic
+  if (!is_checkbox_question) {
+    # For non-checkbox questions, check if this might be a checkbox type
+    # based on data distribution
+    if (mean(subset_data$is_na) > 0.5) {
+      # If most values are NA, this is likely a checkbox question
+      is_checkbox_question <- TRUE
+      treat_na_as_negative <- TRUE
+    }
+  }
+  
+  # For checkbox questions, analyze distribution to determine logic
+  if (is_checkbox_question) {
+    # Count occurrences explicitly
+    ones_count <- sum(subset_data$value == "1" | subset_data$value == "Selected", na.rm = TRUE)
+    zeros_count <- sum(subset_data$value == "0" | subset_data$value == "Not Selected", na.rm = TRUE)
+    na_count <- sum(subset_data$is_na)
+    
+    # Store these for debugging
+    attr(subset_data, "ones_count") <- ones_count
+    attr(subset_data, "zeros_count") <- zeros_count
+    attr(subset_data, "na_count") <- na_count
+    
+    # If ones are rare, this is a standard checkbox (1=checked, uncommon)
+    if (ones_count < nrow(subset_data) * 0.1 && ones_count > 0) {
+      invert_selected_logic <- FALSE
+    }
+    # If zeros are rare, this might be an inverted checkbox
+    else if (zeros_count < nrow(subset_data) * 0.1 && zeros_count > 0) {
+      invert_selected_logic <- TRUE
+    }
+  }
+  
+  # If we need to invert the logic, swap positive and negative values
+  if (invert_selected_logic) {
+    temp <- positive_values
+    positive_values <- negative_values
+    negative_values <- temp
+  }
+  
+  # CRITICAL FIX: Special handling for specific questions from PAR survey
+  if (grepl("^Q(6|17)\\.[0-9]+$", question_id)) {
+    # For these questions, 1 = Selected, everything else = Not Selected
+    # Ensure positive_values contains "1" and "Selected"
+    positive_values <- unique(c("1", "Selected", positive_values))
+    negative_values <- negative_values[!negative_values %in% positive_values]
+  }
+  
+  # Create binary values - this is the crucial part
   subset_data <- subset_data %>%
     mutate(
       binary_value = case_when(
-        is_na ~ NA,
+        # For checkbox questions, NA typically means "not checked"
+        is_na & is_checkbox_question ~ FALSE,
+        # For other questions, follow the user's preference
+        is_na & treat_na_as_negative ~ FALSE,
+        is_na & !treat_na_as_negative ~ NA,
+        # Process actual values
         value %in% positive_values ~ TRUE,
         value %in% negative_values ~ FALSE,
-        as.character(value) == "1" ~ TRUE,
-        as.character(value) == "0" ~ FALSE,
+        as.character(value) == "1" & !"1" %in% negative_values ~ TRUE,
+        as.character(value) == "0" & !"0" %in% positive_values ~ FALSE,
+        # Handle text values
         toupper(value) == "TRUE" ~ TRUE,
         toupper(value) == "FALSE" ~ FALSE,
         toupper(value) == "YES" ~ TRUE,
         toupper(value) == "NO" ~ FALSE,
         toupper(value) == "SELECTED" ~ TRUE,
+        toupper(value) == "NOT SELECTED" ~ FALSE,
+        # Add pattern matching for strings that start with Sí/Si or No
+        grepl("^Sí|^Si", value, ignore.case = TRUE) ~ TRUE,
+        grepl("^No", value, ignore.case = TRUE) ~ FALSE,
+        # Default to NA for unhandled cases
         TRUE ~ NA
       )
     )
@@ -109,21 +215,146 @@ prepare_binary_data <- function(data, question_id, metadata) {
     attr(empty_data, "total_responses") <- total_responses
     attr(empty_data, "question_id") <- question_id
     attr(empty_data, "question_label") <- question_metadata$label
+    attr(empty_data, "treat_na_as_negative") <- treat_na_as_negative
+    attr(empty_data, "invert_selected_logic") <- invert_selected_logic
+    attr(empty_data, "is_checkbox_question") <- is_checkbox_question
+    attr(empty_data, "positive_values") <- positive_values
+    attr(empty_data, "negative_values") <- negative_values
     return(empty_data)
   }
   
-  # Add attributes about the processing
+  # Add attributes to the result
   attr(valid_data, "has_labels") <- !is.null(value_labels)
   attr(valid_data, "value_labels") <- value_labels
   attr(valid_data, "missing_count") <- missing_count
   attr(valid_data, "total_responses") <- total_responses
   attr(valid_data, "question_id") <- question_id
   attr(valid_data, "question_label") <- question_metadata$label
-  attr(valid_data, "question_label") <- get_question_label(question_id, metadata)
-
+  attr(valid_data, "treat_na_as_negative") <- treat_na_as_negative
+  attr(valid_data, "invert_selected_logic") <- invert_selected_logic
+  attr(valid_data, "is_checkbox_question") <- is_checkbox_question
+  attr(valid_data, "positive_values") <- positive_values
+  attr(valid_data, "negative_values") <- negative_values
+  
   return(valid_data)
 }
-
+# Helper function to consistently get binary labels across all visualizations
+get_binary_labels <- function(data) {
+  value_labels <- attr(data, "value_labels")
+  positive_values <- attr(data, "positive_values")
+  negative_values <- attr(data, "negative_values")
+  is_checkbox <- attr(data, "is_checkbox_question")
+  
+  # First, handle any special cases with no data
+  if (nrow(data) == 0) {
+    # Default labels for empty data
+    return(list(true_label = "Sí", false_label = "No"))
+  }
+  
+  # Check if this is a special case where 1=No, 2=Yes
+  is_reversed <- "1" %in% negative_values && "2" %in% positive_values
+  
+  # Count actual value occurrences in original data
+  value_counts <- table(data$value_original, useNA = "ifany")
+  
+  # Initialize labels
+  true_label <- NULL
+  false_label <- NULL
+  
+  # Try to get the label for positive values (TRUE)
+  if (!is.null(value_labels) && length(value_labels) >= 1) {
+    # Special handling for common patterns
+    if (is_reversed) {
+      # If 1=No, 2=Yes - use label for "2"
+      if ("2" %in% names(value_labels)) {
+        true_label <- value_labels["2"]
+      }
+    } else if ("1" %in% positive_values && "1" %in% names(value_labels)) {
+      # Standard case: 1=Yes
+      true_label <- value_labels["1"]
+    }
+    
+    # If no label yet, try to find which positive values are in the data
+    if (is.null(true_label)) {
+      pos_in_data <- intersect(names(value_counts), as.character(positive_values))
+      if (length(pos_in_data) > 0) {
+        # Use most common positive value
+        most_common_pos <- pos_in_data[which.max(as.vector(value_counts[pos_in_data]))]
+        if (most_common_pos %in% names(value_labels)) {
+          true_label <- value_labels[most_common_pos]
+        }
+      }
+    }
+    
+    # Final fallback for positive label
+    if (is.null(true_label)) {
+      # Try any positive value with a label
+      for (val in positive_values) {
+        val_str <- as.character(val)
+        if (val_str %in% names(value_labels)) {
+          true_label <- value_labels[val_str]
+          break
+        }
+      }
+      if (is.null(true_label)) true_label <- "Sí"
+    }
+    
+    # Now get the label for negative values (FALSE)
+    if (is_reversed) {
+      # If 1=No, 2=Yes - use label for "1"
+      if ("1" %in% names(value_labels)) {
+        false_label <- value_labels["1"]
+      }
+    } else {
+      # Try to find which negative values are in the data
+      neg_in_data <- intersect(names(value_counts), as.character(negative_values))
+      if (length(neg_in_data) > 0) {
+        # Use most common negative value
+        most_common_neg <- neg_in_data[which.max(as.vector(value_counts[neg_in_data]))]
+        if (most_common_neg %in% names(value_labels)) {
+          false_label <- value_labels[most_common_neg]
+        }
+      }
+    }
+    
+    # If still no label, try common negative values
+    if (is.null(false_label)) {
+      if ("2" %in% negative_values && "2" %in% names(value_labels)) {
+        false_label <- value_labels["2"]
+      } else if ("0" %in% negative_values && "0" %in% names(value_labels)) {
+        false_label <- value_labels["0"]
+      }
+    }
+    
+    # Final fallback for negative label
+    if (is.null(false_label)) {
+      # Try any negative value
+      for (val in negative_values) {
+        val_str <- as.character(val)
+        if (val_str %in% names(value_labels)) {
+          false_label <- value_labels[val_str]
+          break
+        }
+      }
+      if (is.null(false_label)) false_label <- "No"
+    }
+  } else {
+    # Default labels if no value_labels available
+    true_label <- "Sí"
+    false_label <- "No"
+  }
+  
+  # Fix for checkbox questions
+  if (is_checkbox) {
+    if (true_label == "Not Selected" && false_label == "Selected") {
+      temp <- true_label
+      true_label <- false_label
+      false_label <- temp
+    }
+  }
+  
+  return(list(true_label = true_label, false_label = false_label))
+}
 # Function to prepare multiple binary questions for comparison
 prepare_multiple_binary <- function(data, question_ids, metadata) {
   if (length(question_ids) == 0) {
@@ -160,29 +391,21 @@ create_binary_bar <- function(data, title = "Distribución de Respuestas") {
            layout(title = "No hay datos suficientes para visualizar"))
   }
   
-  # Get value labels if available
-  value_labels <- attr(data, "value_labels")
+  # Get correct labels using the helper function
+  labels <- get_binary_labels(data)
+  true_label <- labels$true_label
+  false_label <- labels$false_label
   
-  # Determine appropriate labels
-  if (!is.null(value_labels) && length(value_labels) >= 2) {
-    # Use the value labels from metadata
-    true_label <- value_labels[names(value_labels)[1]]
-    false_label <- value_labels[names(value_labels)[2]]
-  } else {
-    # Default labels
-    true_label <- "Sí"
-    false_label <- "No"
-  }
+  # Count actual TRUE/FALSE values
+  true_count <- sum(data$binary_value, na.rm = TRUE)
+  false_count <- sum(!data$binary_value, na.rm = TRUE)
   
   plot_df <- data.frame(
     Response = c(true_label, false_label),
-    Count = c(
-      sum(data$binary_value, na.rm = TRUE), 
-      sum(!data$binary_value, na.rm = TRUE)
-    ),
+    Count = c(true_count, false_count),
     Percentage = c(
-      round(100 * mean(data$binary_value, na.rm = TRUE), 1),
-      round(100 * (1 - mean(data$binary_value, na.rm = TRUE)), 1)
+      round(100 * true_count / (true_count + false_count), 1),
+      round(100 * false_count / (true_count + false_count), 1)
     )
   )
   
@@ -212,30 +435,22 @@ create_binary_pie <- function(data, title = "Distribución de Respuestas") {
            layout(title = "No hay datos suficientes para visualizar"))
   }
   
-  # Get value labels if available
-  value_labels <- attr(data, "value_labels")
+  # Get correct labels using the helper function
+  labels <- get_binary_labels(data)
+  true_label <- labels$true_label
+  false_label <- labels$false_label
   
-  # Determine appropriate labels
-  if (!is.null(value_labels) && length(value_labels) >= 2) {
-    # Use the value labels from metadata
-    true_label <- value_labels[names(value_labels)[1]]
-    false_label <- value_labels[names(value_labels)[2]]
-  } else {
-    # Default labels
-    true_label <- "Sí"
-    false_label <- "No"
-  }
+  # Count actual TRUE/FALSE values
+  true_count <- sum(data$binary_value, na.rm = TRUE)
+  false_count <- sum(!data$binary_value, na.rm = TRUE)
   
-  values <- c(
-    sum(data$binary_value, na.rm = TRUE), 
-    sum(!data$binary_value, na.rm = TRUE)
-  )
+  values <- c(true_count, false_count)
   
   labels <- c(true_label, false_label)
   
   percentages <- c(
-    round(100 * mean(data$binary_value, na.rm = TRUE), 1),
-    round(100 * (1 - mean(data$binary_value, na.rm = TRUE)), 1)
+    round(100 * true_count / (true_count + false_count), 1),
+    round(100 * false_count / (true_count + false_count), 1)
   )
   
   # Create pie chart
@@ -265,17 +480,9 @@ create_binary_district_bars <- function(data, orientation = "v") {
              layout(title = "No hay datos suficientes para visualizar"))
   }
   
-  # Get value labels if available
-  value_labels <- attr(data, "value_labels")
-  
-  # Determine appropriate labels
-  if (!is.null(value_labels) && length(value_labels) >= 2) {
-    # Use the value labels from metadata
-    true_label <- value_labels[names(value_labels)[1]]
-  } else {
-    # Default label
-    true_label <- "Sí"
-  }
+  # Get correct labels using the helper function
+  labels <- get_binary_labels(data)
+  true_label <- labels$true_label
   
   # Calculate percentages by district
   district_stats <- data %>%
@@ -341,17 +548,9 @@ create_binary_district_map <- function(data, geo_data) {
              layout(title = "No hay datos suficientes para visualizar"))
   }
   
-  # Get value labels if available
-  value_labels <- attr(data, "value_labels")
-  
-  # Determine appropriate labels
-  if (!is.null(value_labels) && length(value_labels) >= 2) {
-    # Use the value labels from metadata
-    true_label <- value_labels[names(value_labels)[1]]
-  } else {
-    # Default label
-    true_label <- "Sí"
-  }
+  # Get correct labels using the helper function
+  labels <- get_binary_labels(data)
+  true_label <- labels$true_label
   
   # Calculate percentages by district
   district_stats <- data %>%
@@ -403,7 +602,6 @@ create_binary_district_map <- function(data, geo_data) {
       opacity = 0.7
     )
 }
-
 create_binary_demographics_bars <- function(data, group_var = "gender") {
   # Check if we have data
   if (nrow(data) == 0) {
@@ -411,19 +609,10 @@ create_binary_demographics_bars <- function(data, group_var = "gender") {
              layout(title = "No hay datos suficientes para visualizar"))
   }
   
-  # Get value labels if available
-  value_labels <- attr(data, "value_labels")
-  
-  # Determine appropriate labels
-  if (!is.null(value_labels) && length(value_labels) >= 2) {
-    # Use the value labels from metadata
-    true_label <- value_labels[names(value_labels)[1]]
-    false_label <- value_labels[names(value_labels)[2]]
-  } else {
-    # Default labels
-    true_label <- "Sí"
-    false_label <- "No"
-  }
+  # Get correct labels using the helper function
+  labels <- get_binary_labels(data)
+  true_label <- labels$true_label
+  false_label <- labels$false_label
   
   # Calculate percentages by demographic group
   demo_stats <- data %>%
@@ -461,7 +650,6 @@ create_binary_demographics_bars <- function(data, group_var = "gender") {
       ylab = paste0("Porcentaje de ", true_label)
     )
 }
-
 # New function for gender dumbbell plot
 create_binary_gender_dumbbell <- function(data) {
   # Check if we have data
@@ -470,17 +658,9 @@ create_binary_gender_dumbbell <- function(data) {
              layout(title = "No hay datos suficientes para visualizar"))
   }
   
-  # Get value labels if available
-  value_labels <- attr(data, "value_labels")
-  
-  # Determine appropriate label
-  if (!is.null(value_labels) && length(value_labels) >= 2) {
-    # Use the value labels from metadata
-    true_label <- value_labels[names(value_labels)[1]]
-  } else {
-    # Default label
-    true_label <- "Sí"
-  }
+  # Get correct labels using the helper function
+  labels <- get_binary_labels(data)
+  true_label <- labels$true_label
   
   # Calculate gender statistics by district
   gender_stats <- data %>%
@@ -565,6 +745,7 @@ create_multiple_binary_comparison <- function(data_list, comparison_type = "bars
   comparison_data <- data.frame(
     QuestionID = character(),
     QuestionLabel = character(),
+    TrueLabel = character(),
     PercentageTrue = numeric(),
     CountTrue = integer(),
     CountTotal = integer(),
@@ -581,6 +762,10 @@ create_multiple_binary_comparison <- function(data_list, comparison_type = "bars
     question_label <- attr(data, "question_label")
     if (is.null(question_label)) question_label <- qid
     
+    # Get the appropriate label for TRUE values
+    labels <- get_binary_labels(data)
+    true_label <- labels$true_label
+    
     # Calculate statistics
     percentage_true <- 100 * mean(data$binary_value, na.rm = TRUE)
     count_true <- sum(data$binary_value, na.rm = TRUE)
@@ -592,6 +777,7 @@ create_multiple_binary_comparison <- function(data_list, comparison_type = "bars
       data.frame(
         QuestionID = qid,
         QuestionLabel = question_label,
+        TrueLabel = true_label,
         PercentageTrue = percentage_true,
         CountTrue = count_true,
         CountTotal = count_total,
@@ -632,7 +818,7 @@ create_multiple_binary_comparison <- function(data_list, comparison_type = "bars
       orientation = 'h',
       text = ~paste0(
         QuestionLabel, "<br>",
-        "Sí: ", CountTrue, " (", round(PercentageTrue, 1), "%)<br>",
+        TrueLabel, ": ", CountTrue, " (", round(PercentageTrue, 1), "%)<br>",
         "Total: ", CountTotal
       ),
       hoverinfo = "text",
@@ -662,7 +848,7 @@ create_multiple_binary_comparison <- function(data_list, comparison_type = "bars
       hoverinfo = "text",
       text = ~paste0(
         comparison_data$QuestionLabel, "<br>",
-        "Sí: ", comparison_data$CountTrue, " (", round(comparison_data$PercentageTrue, 1), "%)<br>",
+        comparison_data$TrueLabel, ": ", comparison_data$CountTrue, " (", round(comparison_data$PercentageTrue, 1), "%)<br>",
         "Total: ", comparison_data$CountTotal
       )
     ) %>%
@@ -684,11 +870,11 @@ create_multiple_binary_comparison <- function(data_list, comparison_type = "bars
         sizemin = 5,
         color = ~PercentageTrue,
         colorscale = "Blues",
-        colorbar = list(title = "% Sí")
+        colorbar = list(title = "% Respuestas Positivas")
       ),
       text = ~paste0(
         QuestionLabel, "<br>",
-        "Sí: ", CountTrue, " (", round(PercentageTrue, 1), "%)<br>",
+        TrueLabel, ": ", CountTrue, " (", round(PercentageTrue, 1), "%)<br>",
         "Total: ", CountTotal
       ),
       hoverinfo = "text"
@@ -711,7 +897,7 @@ create_multiple_binary_comparison <- function(data_list, comparison_type = "bars
       orientation = 'h',
       text = ~paste0(
         QuestionLabel, "<br>",
-        "Sí: ", CountTrue, " (", round(PercentageTrue, 1), "%)<br>",
+        TrueLabel, ": ", CountTrue, " (", round(PercentageTrue, 1), "%)<br>",
         "Total: ", CountTotal
       ),
       hoverinfo = "text",
@@ -812,6 +998,14 @@ binaryUI <- function(id) {
               ),
               selected = "bars"
             )
+          ),
+          conditionalPanel(
+            condition = sprintf("input['%s'] == 'summary'", ns("plot_type")),
+            checkboxInput(
+              ns("treat_na_as_negative"),
+              "Tratar valores vacíos como 'No'",
+              value = TRUE
+            )
           )
         ), 
       )
@@ -840,7 +1034,13 @@ binaryServer <- function(id, data, metadata, selected_question, geo_data, all_bi
           return(NULL)
         }
         
-        prepare_binary_data(data(), selected_question(), metadata())
+        # Add a parameter to the function call
+        prep_data <- prepare_binary_data(data(), selected_question(), metadata())
+        
+        # Store whether NA values are treated as negative for UI feedback
+        attr(prep_data, "na_treated_as_negative") <- input$treat_na_as_negative
+        
+        return(prep_data)
       }, error = function(e) {
         warning(paste("Error in prepared_data:", e$message))
         return(NULL)
@@ -872,7 +1072,24 @@ binaryServer <- function(id, data, metadata, selected_question, geo_data, all_bi
         )
       }
     })
-    
+    observe({
+      # Update the checkbox default value based on the question
+      question_key <- selected_question()
+      default_value <- TRUE  # Default to treating NA as negative
+      
+      # Check if there's a survey-specific config
+      if (!is.null(survey_config) && 
+          !is.null(survey_config$binary_response_config)) {
+        
+        if (question_key %in% names(survey_config$binary_response_config$question_exceptions)) {
+          default_value <- survey_config$binary_response_config$question_exceptions[[question_key]]
+        } else {
+          default_value <- survey_config$binary_response_config$treat_na_as_negative_by_default
+        }
+      }
+      
+      updateCheckboxInput(session, "treat_na_as_negative", value = default_value)
+    })
     # Update filter choices
     observe({
       tryCatch({
@@ -985,19 +1202,10 @@ binaryServer <- function(id, data, metadata, selected_question, geo_data, all_bi
         true_percent <- round(100 * true_count / (true_count + false_count), 2)
         false_percent <- round(100 * false_count / (true_count + false_count), 2)
         
-        # Get value labels if available
-        value_labels <- attr(data, "value_labels")
-        
-        # Determine appropriate labels
-        if (!is.null(value_labels) && length(value_labels) >= 2) {
-          # Use the value labels from metadata
-          true_label <- value_labels[names(value_labels)[1]]
-          false_label <- value_labels[names(value_labels)[2]]
-        } else {
-          # Default labels
-          true_label <- "Sí"
-          false_label <- "No"
-        }
+        # Get the appropriate labels using the helper function
+        labels <- get_binary_labels(data)
+        true_label <- labels$true_label
+        false_label <- labels$false_label
         
         cat("Estadísticas para Datos Binarios:\n")
         cat("\nDistribución de Respuestas:\n")
@@ -1055,6 +1263,36 @@ binaryServer <- function(id, data, metadata, selected_question, geo_data, all_bi
         
         print(age_breakdown)
         
+        cat("\nNotas sobre el procesamiento de datos:\n")
+        if (attr(data, "treat_na_as_negative")) {
+          cat("- Los valores vacíos (NA) se están tratando como respuestas 'No'.\n")
+        } else {
+          cat("- Los valores vacíos (NA) se están tratando como datos faltantes.\n")
+        }
+        
+        # Add info about special value mappings if present
+        value_labels <- attr(data, "value_labels")
+        if (!is.null(value_labels)) {
+          cat("- Mapeo de valores: ")
+          for (i in seq_along(value_labels)) {
+            cat(names(value_labels)[i], "=", value_labels[i])
+            if (i < length(value_labels)) cat(", ")
+          }
+          cat("\n")
+        }
+        
+        cat("\nDetalles técnicos para diagnóstico:\n")
+        cat("- ID de pregunta:", attr(data, "question_id"), "\n")
+        cat("- Tipo de pregunta:", ifelse(attr(data, "is_checkbox_question"), "Casilla de verificación", "Binaria estándar"), "\n")
+        cat("- Lógica invertida:", ifelse(attr(data, "invert_selected_logic"), "Sí", "No"), "\n")
+        cat("- Valores positivos:", paste(attr(data, "positive_values"), collapse=", "), "\n")
+        cat("- Valores negativos:", paste(attr(data, "negative_values"), collapse=", "), "\n")
+        
+        if (!is.null(attr(data, "ones_count"))) {
+          cat("- Valores '1':", attr(data, "ones_count"), "\n")
+          cat("- Valores '0':", attr(data, "zeros_count"), "\n")
+          cat("- Valores NA:", attr(data, "na_count"), "\n")
+        }
       }, error = function(e) {
         cat("Error al generar estadísticas:", e$message)
       })

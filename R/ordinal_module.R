@@ -77,9 +77,9 @@ prepare_ordinal_data <- function(data, question_id, metadata) {
   subset_data <- data %>%
     select(
       value = all_of(question_id),
-      district = Q2,
-      gender = Q101,
-      age_group = Q103
+      district = DISTRICT,  
+      gender = GENDER,      
+      age_group = AGE_GROUP 
     )
   
   # Handle NA values

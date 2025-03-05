@@ -13,6 +13,7 @@ library(wordcloud2)
 # Source all necessary files
 source("R/global_theme.R")
 source("R/utils.R")
+source("R/survey_config.R")
 source('R/razon_module.R')
 source('R/interval_module.R')
 source('R/ordinal_module.R')
