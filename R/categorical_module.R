@@ -733,7 +733,171 @@ create_category_relationships <- function(data, cat_var1, cat_var2) {
            layout(title = paste("Error en la visualización:", e$message)))
   })
 }
-
+create_category_district_map <- function(data, geo_data, selected_categories = NULL, highlight_extremes = TRUE) {
+  # Check if we have data
+  if (is.null(data) || nrow(data) == 0 || is.null(geo_data)) {
+    return(plotly_empty() %>% 
+             layout(title = "No hay datos suficientes para visualizar"))
+  }
+  
+  # Handle case when no categories are selected
+  if (is.null(selected_categories) || length(selected_categories) == 0) {
+    # Default mode: Show counts of each category by district
+    district_counts <- data %>%
+      count(district, value) %>%
+      group_by(district) %>%
+      mutate(percentage = round(100 * n / sum(n), 1)) %>%
+      ungroup()
+    
+    # Get most common category for each district
+    district_modes <- district_counts %>%
+      group_by(district) %>%
+      slice_max(order_by = n, n = 1) %>%
+      ungroup() %>%
+      select(district, value, count = n, percentage)
+    
+    # Create map
+    return(leaflet(geo_data) %>%
+      addTiles() %>% 
+      addPolygons(
+        fillOpacity = 0.7,
+        weight = 1,
+        color = theme_config$colors$primary,
+        dashArray = "3",
+        highlight = highlightOptions(
+          weight = 2,
+          color = "#666666",
+          dashArray = "",
+          fillOpacity = 0.7,
+          bringToFront = TRUE
+        ),
+        label = ~sprintf(
+          "Distrito: %s<br>Categoría más común: %s<br>Frecuencia: %d (%.1f%%)",
+          district_modes$district[match(No_Distrit, district_modes$district)],
+          district_modes$value[match(No_Distrit, district_modes$district)],
+          district_modes$count[match(No_Distrit, district_modes$district)],
+          district_modes$percentage[match(No_Distrit, district_modes$district)]
+        ) %>% lapply(HTML)
+      ))
+  }
+  
+  # For selected categories, calculate percentage
+  district_stats <- data %>%
+    mutate(
+      is_selected = value %in% selected_categories
+    ) %>%
+    group_by(district) %>%
+    summarise(
+      total_responses = n(),
+      selected_count = sum(is_selected, na.rm = TRUE),
+      selected_percent = round(100 * sum(is_selected, na.rm = TRUE) / n(), 1),
+      .groups = 'drop'
+    )
+  
+  # Calculate centroids for label placement
+  geo_data$centroid <- sf::st_centroid(geo_data$geometry)
+  centroids <- sf::st_coordinates(geo_data$centroid)
+  geo_data$lng <- centroids[,1]
+  geo_data$lat <- centroids[,2]
+  
+  # Find district with highest and lowest percentages if highlighting extremes
+  highest_district <- lowest_district <- NULL
+  if (highlight_extremes) {
+    highest_district <- district_stats %>% arrange(desc(selected_percent)) %>% slice(1)
+    lowest_district <- district_stats %>% arrange(selected_percent) %>% slice(1)
+  }
+  
+  # Create list of selected categories for title
+  categories_text <- paste(selected_categories, collapse = ", ")
+  if (nchar(categories_text) > 100) {
+    categories_text <- paste0(substr(categories_text, 1, 97), "...")
+  }
+  
+  # Create color palette based on percentage
+  pal <- colorNumeric(
+    palette = "RdYlBu",
+    domain = district_stats$selected_percent,
+    reverse = TRUE
+  )
+  
+  # Create map
+  map <- leaflet(geo_data) %>%
+    addTiles() %>% 
+    addPolygons(
+      fillOpacity = 0.7,
+      weight = 1,
+      color = theme_config$colors$primary,
+      dashArray = "3",
+      highlight = highlightOptions(
+        weight = 2,
+        color = "#666666",
+        dashArray = "",
+        fillOpacity = 0.7,
+        bringToFront = TRUE
+      ),
+      label = ~sprintf(
+        "Distrito: %s<br>Porcentaje: %s%%<br>Respuestas: %d/%d",
+        district_stats$district[match(No_Distrit, district_stats$district)],
+        district_stats$selected_percent[match(No_Distrit, district_stats$district)],
+        district_stats$selected_count[match(No_Distrit, district_stats$district)],
+        district_stats$total_responses[match(No_Distrit, district_stats$district)]
+      ) %>% lapply(HTML)
+    )
+  
+  # Add labels for each district
+  for(i in 1:nrow(geo_data)) {
+    district_num <- geo_data$No_Distrit[i]
+    percent <- district_stats$selected_percent[match(district_num, district_stats$district)]
+    
+    # Skip if no percentage data
+    if(is.na(percent)) next
+    
+    # Determine background color based on whether this is highest or lowest district
+    bg_color <- "#FFFFFF"  # Default white background
+    text_color <- "#000000"  # Default black text
+    
+    if(highlight_extremes) {
+      if(!is.null(highest_district) && !is.na(highest_district$district) && district_num == highest_district$district) {
+        bg_color <- "#87CEEB"  # Light blue background for highest
+        text_color <- "#000000"  # Black text
+      } else if(!is.null(lowest_district) && !is.na(lowest_district$district) && district_num == lowest_district$district) {
+        bg_color <- "#012A4A"  # Dark blue background for lowest
+        text_color <- "#FFFFFF"  # White text
+      }
+    }
+    
+    # Create label HTML
+    label_html <- sprintf(
+      '<div style="background-color: %s; color: %s; padding: 5px; border-radius: 3px; font-weight: bold;">Distrito %s<br>%s%%</div>',
+      bg_color, text_color, district_num, percent
+    )
+    
+    # Add label
+    map <- map %>% addLabelOnlyMarkers(
+      lng = geo_data$lng[i],
+      lat = geo_data$lat[i],
+      label = lapply(list(label_html), HTML),
+      labelOptions = labelOptions(
+        noHide = TRUE,
+        direction = "center",
+        textOnly = TRUE
+      )
+    )
+  }
+  
+  # Add overall average label
+  overall_percent <- round(mean(district_stats$selected_percent, na.rm = TRUE), 1)
+  
+  map <- map %>% addControl(
+    html = sprintf(
+      '<div style="background-color: #333333; color: white; padding: 5px; border-radius: 3px;"><strong>Porcentaje general: %s%%</strong></div>',
+      overall_percent
+    ),
+    position = "topright"
+  )
+  
+  return(map)
+}
 # UI Definition
 categoricoUI <- function(id) {
   ns <- NS(id)
@@ -751,6 +915,7 @@ categoricoUI <- function(id) {
               "Gráfico de Barras" = "bars",
               "Gráfico Circular" = "pie",
               "Mapa de Calor por Distrito" = "district_heatmap",
+              "Mapa Geográfico por Distrito" = "district_map", # Add new option here
               "Barras Apiladas por Distrito" = "stacked_bars",
               "Barras por Género" = "gender_bars",
               "Barras por Edad" = "age_bars",
@@ -845,6 +1010,21 @@ categoricoUI <- function(id) {
                           "value" = "value"),
               selected = "district"
             )
+          ),
+          
+          # Add new conditional panel for district map options
+          conditionalPanel(
+            condition = sprintf("input['%s'] == 'district_map'", ns("plot_type")),
+            checkboxGroupInput(
+              ns("map_categories"),
+              "Categorías a incluir en el porcentaje:",
+              choices = NULL # Will be populated dynamically
+            ),
+            checkboxInput(
+              ns("highlight_extremes"),
+              "Resaltar valores extremos",
+              value = TRUE
+            )
           )
         ), 
       
@@ -905,7 +1085,32 @@ categoricoServer <- function(id, data, metadata, selected_question, geo_data) {
         warning(paste("Error updating filters:", e$message))
       })
     })
-    
+    observe({
+      req(filtered_data())
+      data <- filtered_data()
+      
+      if(is.null(data) || nrow(data) == 0) {
+        return()
+      }
+      
+      # Get unique categories
+      unique_categories <- unique(data$value)
+      
+      # Sort alphabetically
+      unique_categories <- sort(as.character(unique_categories))
+      
+      # Limit to top 15 most common categories if there are too many
+      if(length(unique_categories) > 15) {
+        category_counts <- table(data$value)
+        top_categories <- names(sort(category_counts, decreasing = TRUE)[1:15])
+        unique_categories <- sort(top_categories)
+      }
+      
+      # Update the choices
+      updateCheckboxGroupInput(session, "map_categories", 
+                               choices = unique_categories,
+                               selected = NULL)
+    })
     # Filtered data reactive
     filtered_data <- reactive({
       tryCatch({
@@ -948,7 +1153,15 @@ categoricoServer <- function(id, data, metadata, selected_question, geo_data) {
         "relationship" = plotlyOutput(session$ns("relationship_plot"), height = "600px")
       )
     })
-
+    output$district_map_plot <- renderLeaflet({
+      req(filtered_data(), geo_data())
+      create_category_district_map(
+        filtered_data(),
+        geo_data(),
+        selected_categories = input$map_categories,
+        highlight_extremes = input$highlight_extremes
+      )
+    })
     # Summary statistics
     output$summary_stats <- renderPrint({
       tryCatch({

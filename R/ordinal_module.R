@@ -331,44 +331,132 @@ create_ordinal_histogram <- function(data, bins = 30, title = "Distribución") {
   
   return(plot)
 }
-create_ordinal_district_map <- function(data, geo_data) {
+create_ordinal_district_map <- function(data, geo_data, selected_responses = NULL, highlight_extremes = TRUE) {
+  # Check if we have data
+  if (is.null(data) || nrow(data) == 0 || is.null(geo_data)) {
+    return(plotly_empty() %>% 
+             layout(title = "No hay datos suficientes para visualizar"))
+  }
+  
   # Create label lookup
   labels_lookup <- create_label_lookup(data)
   
-  # Calculate district statistics
+  # Handle case when no responses are selected
+  if (is.null(selected_responses) || length(selected_responses) == 0) {
+    # Original behavior - use mean values
+    district_stats <- data %>%
+      mutate(numeric_value = get_numeric_values(.)) %>%
+      group_by(district) %>%
+      summarise(
+        mean_value = mean(numeric_value, na.rm = TRUE),
+        n = n(),
+        .groups = 'drop'
+      )
+    
+    # Get mode values for each district
+    district_modes <- data %>%
+      group_by(district) %>%
+      summarise(
+        mode_numeric = as.numeric(names(which.max(table(get_numeric_values(.))))),
+        .groups = 'drop'
+      ) %>%
+      # Add text labels for modes
+      mutate(
+        mode_label = sapply(mode_numeric, function(val) {
+          if (as.character(val) %in% names(labels_lookup)) {
+            return(labels_lookup[as.character(val)])
+          } else {
+            return(as.character(val))
+          }
+        })
+      )
+    
+    # Join the mode values
+    district_stats <- district_stats %>%
+      left_join(district_modes, by = "district")
+    
+    # Create map
+    return(leaflet(geo_data) %>%
+      addTiles() %>% 
+      addPolygons(
+        fillOpacity = 0.7,
+        weight = 1,
+        color = theme_config$palette$district[match(geo_data$No_Distrit, district_stats$district)],
+        dashArray = "3",
+        highlight = highlightOptions(
+          weight = 2,
+          color = "#666666",
+          dashArray = "",
+          fillOpacity = 0.7,
+          bringToFront = TRUE
+        ),
+        label = ~sprintf(
+          "Distrito: %s<br>Respuesta más común: %s<br>Promedio: %.2f<br>N: %d",
+          district_stats$district[match(No_Distrit, district_stats$district)],
+          district_stats$mode_label[match(No_Distrit, district_stats$district)],
+          district_stats$mean_value[match(No_Distrit, district_stats$district)],
+          district_stats$n[match(No_Distrit, district_stats$district)]
+        ) %>% lapply(HTML)
+      ))
+  }
+  
+  # For selected responses, calculate percentage
+  selected_responses_numeric <- suppressWarnings(as.numeric(selected_responses))
+  
+  # Calculate district statistics using percentages of selected responses
   district_stats <- data %>%
-    mutate(numeric_value = get_numeric_values(.)) %>%
-    group_by(district) %>%
-    summarise(
-      mean_value = mean(numeric_value, na.rm = TRUE),
-      n = n(),
-      .groups = 'drop'
-    )
-  
-  # Get mode values for each district
-  district_modes <- data %>%
-    group_by(district) %>%
-    summarise(
-      mode_numeric = as.numeric(names(which.max(table(get_numeric_values(.))))),
-      .groups = 'drop'
-    ) %>%
-    # Add text labels for modes
     mutate(
-      mode_label = sapply(mode_numeric, function(val) {
-        if (as.character(val) %in% names(labels_lookup)) {
-          return(labels_lookup[as.character(val)])
-        } else {
-          return(as.character(val))
-        }
-      })
+      numeric_value = get_numeric_values(.)
+    ) %>%
+    rowwise() %>%
+    mutate(
+      # Check if numeric_value matches any of the selected values
+      is_selected = as.logical(sum(numeric_value == selected_responses_numeric, na.rm = TRUE))
+    ) %>%
+    ungroup() %>%
+    group_by(district) %>%
+    summarise(
+      total_responses = n(),
+      selected_count = sum(is_selected, na.rm = TRUE),
+      selected_percent = round(100 * sum(is_selected, na.rm = TRUE) / n(), 1),
+      .groups = 'drop'
     )
   
-  # Join the mode values
-  district_stats <- district_stats %>%
-    left_join(district_modes, by = "district")
+  # Calculate centroids for label placement
+  geo_data$centroid <- sf::st_centroid(geo_data$geometry)
+  centroids <- sf::st_coordinates(geo_data$centroid)
+  geo_data$lng <- centroids[,1]
+  geo_data$lat <- centroids[,2]
+  
+  # Find district with highest and lowest percentages if highlighting extremes
+  highest_district <- lowest_district <- NULL
+  if (highlight_extremes) {
+    highest_district <- district_stats %>% arrange(desc(selected_percent)) %>% slice(1)
+    lowest_district <- district_stats %>% arrange(selected_percent) %>% slice(1)
+  }
+  
+  # Create response labels for title
+  response_labels <- sapply(selected_responses, function(val) {
+    val_numeric <- suppressWarnings(as.numeric(val))
+    if (!is.na(val_numeric) && as.character(val_numeric) %in% names(labels_lookup)) {
+      return(labels_lookup[as.character(val_numeric)])
+    } else if (grepl("=", val)) {
+      # Extract from the format "1 = Label"
+      return(trimws(sub(".*=", "", val)))
+    } else {
+      return(val)
+    }
+  })
+  
+  # Create color palette based on percentage
+  pal <- colorNumeric(
+    palette = "RdYlBu",  # Red-Yellow-Blue palette (red for high values)
+    domain = district_stats$selected_percent,
+    reverse = TRUE  # Reverse so red is for higher values
+  )
   
   # Create map
-  leaflet(geo_data) %>%
+  map <- leaflet(geo_data) %>%
     addTiles() %>% 
     addPolygons(
       fillOpacity = 0.7,
@@ -377,19 +465,73 @@ create_ordinal_district_map <- function(data, geo_data) {
       dashArray = "3",
       highlight = highlightOptions(
         weight = 2,
-        color = theme_config$colors$highlight,
+        color = "#666666",
         dashArray = "",
         fillOpacity = 0.7,
         bringToFront = TRUE
       ),
       label = ~sprintf(
-        "Distrito: %s<br>Respuesta más común: %s<br>Promedio: %.2f<br>N: %d",
+        "Distrito: %s<br>Porcentaje: %s%%<br>Respuestas: %d/%d",
         district_stats$district[match(No_Distrit, district_stats$district)],
-        district_stats$mode_label[match(No_Distrit, district_stats$district)],
-        district_stats$mean_value[match(No_Distrit, district_stats$district)],
-        district_stats$n[match(No_Distrit, district_stats$district)]
+        district_stats$selected_percent[match(No_Distrit, district_stats$district)],
+        district_stats$selected_count[match(No_Distrit, district_stats$district)],
+        district_stats$total_responses[match(No_Distrit, district_stats$district)]
       ) %>% lapply(HTML)
     )
+  
+  # Add labels for each district
+  for(i in 1:nrow(geo_data)) {
+    district_num <- geo_data$No_Distrit[i]
+    percent <- district_stats$selected_percent[match(district_num, district_stats$district)]
+    
+    # Skip if no percentage data
+    if(is.na(percent)) next
+    
+    # Determine background color based on whether this is highest or lowest district
+    bg_color <- "#FFFFFF"  # Default white background
+    text_color <- "#000000"  # Default black text
+    
+    if(highlight_extremes) {
+      if(!is.null(highest_district) && !is.na(highest_district$district) && district_num == highest_district$district) {
+        bg_color <- "#87CEEB"  # Black background for highest
+        text_color <- "#000000"  # White text
+      } else if(!is.null(lowest_district) && !is.na(lowest_district$district) && district_num == lowest_district$district) {
+        bg_color <- "#012A4A"  # Black background for lowest
+        text_color <- "#FFFFFF"  # White text
+      }
+    }
+    
+    # Create label HTML
+    label_html <- sprintf(
+      '<div style="background-color: %s; color: %s; padding: 5px; border-radius: 3px; font-weight: bold;">Distrito %s<br>%s%%</div>',
+      bg_color, text_color, district_num, percent
+    )
+    
+    # Add label
+    map <- map %>% addLabelOnlyMarkers(
+      lng = geo_data$lng[i],
+      lat = geo_data$lat[i],
+      label = lapply(list(label_html), HTML),
+      labelOptions = labelOptions(
+        noHide = TRUE,
+        direction = "center",
+        textOnly = TRUE
+      )
+    )
+  }
+  
+  # Add overall average label
+  overall_percent <- round(mean(district_stats$selected_percent, na.rm = TRUE), 1)
+  
+  map <- map %>% addControl(
+    html = sprintf(
+      '<div style="background-color: #333333; color: white; padding: 5px; border-radius: 3px;"><strong>Porcentaje general: %s%%</strong></div>',
+      overall_percent
+    ),
+    position = "topright"
+  )
+  
+  return(map)
 }
 
 create_ordinal_age_bars <- function(data) {
@@ -659,10 +801,25 @@ ordinalUI <- function(id) {
                 "Horizontal" = "h"
               )
             )
+          ),
+          
+          # Add new conditional panel for map response selection
+          conditionalPanel(
+            condition = sprintf("input['%s'] == 'map'", ns("plot_type")),
+            checkboxGroupInput(
+              ns("map_responses"),
+              "Respuestas a incluir en el porcentaje:",
+              choices = NULL # Will be populated dynamically
+            ),
+            checkboxInput(
+              ns("highlight_extremes"),
+              "Resaltar valores extremos",
+              value = TRUE
+            )
+          )
           ), 
         )
-      )
-    ),
+      ),
       column(8,
         card(
           card_header("Visualización"),
@@ -709,7 +866,34 @@ ordinalServer <- function(id, data, metadata, selected_question, geo_data) {
         selected = character(0)
       )
     })
-    
+    observe({
+      req(prepared_data())
+      data <- prepared_data()
+      
+      if(is.null(data) || nrow(data) == 0) {
+        return()
+      }
+      
+      # Get unique response values and their labels
+      value_labels <- attr(data, "value_labels")
+      unique_values <- unique(data$value_num)
+      unique_values <- sort(unique_values[!is.na(unique_values)])
+      
+      # Create choices with labels if available
+      choices <- list()
+      for(val in unique_values) {
+        display_text <- as.character(val)
+        if(!is.null(value_labels) && as.character(val) %in% names(value_labels)) {
+          display_text <- paste0(val, " = ", value_labels[as.character(val)])
+        }
+        choices[[display_text]] <- val
+      }
+      
+      # Update the choices
+      updateCheckboxGroupInput(session, "map_responses", 
+                               choices = choices,
+                               selected = NULL)
+    })
     # Filtered data reactive
     filtered_data <- reactive({
       data <- prepared_data()
@@ -845,7 +1029,13 @@ ordinalServer <- function(id, data, metadata, selected_question, geo_data) {
     
     output$district_map <- renderLeaflet({
       req(filtered_data(), geo_data())
-      create_ordinal_district_map(filtered_data(), geo_data())
+      
+      create_ordinal_district_map(
+        filtered_data(), 
+        geo_data(),
+        selected_responses = input$map_responses,
+        highlight_extremes = input$highlight_extremes
+      )
     })
     
     output$age_bars_plot <- renderPlotly({

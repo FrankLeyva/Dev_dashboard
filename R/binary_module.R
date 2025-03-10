@@ -1,5 +1,3 @@
-# Complete updated prepare_binary_data function with fix for text sentences
-
 prepare_binary_data <- function(data, question_id, metadata) {
   # Validate inputs
   if (is.null(question_id) || question_id == "") {
@@ -473,6 +471,135 @@ create_binary_pie <- function(data, title = "Distribución de Respuestas") {
     )
 }
 
+# Updated district map visualization
+create_binary_district_map <- function(data, geo_data, highlight_extremes = TRUE, focus_on_true = TRUE) {
+  # Check if we have data
+  if (is.null(data) || nrow(data) == 0 || is.null(geo_data)) {
+    return(plotly_empty() %>% 
+             layout(title = "No hay datos suficientes para visualizar"))
+  }
+  
+  # Get correct labels using the helper function
+  labels <- get_binary_labels(data)
+  true_label <- labels$true_label
+  false_label <- labels$false_label
+  
+  # Calculate percentages by district - we'll focus on TRUE values by default
+  district_stats <- data %>%
+    group_by(district) %>%
+    summarise(
+      total_responses = n(),
+      true_count = sum(binary_value, na.rm = TRUE),
+      false_count = sum(!binary_value, na.rm = TRUE),
+      true_percent = round(100 * mean(binary_value, na.rm = TRUE), 1),
+      false_percent = round(100 * (1 - mean(binary_value, na.rm = TRUE)), 1),
+      .groups = 'drop'
+    )
+  
+  # Choose which percentage to display based on focus parameter
+  if (!focus_on_true) {
+    district_stats$selected_percent <- district_stats$false_percent
+    district_stats$selected_count <- district_stats$false_count
+    display_label <- false_label
+  } else {
+    district_stats$selected_percent <- district_stats$true_percent
+    district_stats$selected_count <- district_stats$true_count
+    display_label <- true_label
+  }
+  
+  # Calculate centroids for label placement
+  geo_data$centroid <- sf::st_centroid(geo_data$geometry)
+  centroids <- sf::st_coordinates(geo_data$centroid)
+  geo_data$lng <- centroids[,1]
+  geo_data$lat <- centroids[,2]
+  
+  # Find district with highest and lowest percentages if highlighting extremes
+  highest_district <- lowest_district <- NULL
+  if (highlight_extremes) {
+    highest_district <- district_stats %>% arrange(desc(selected_percent)) %>% slice(1)
+    lowest_district <- district_stats %>% arrange(selected_percent) %>% slice(1)
+  }
+  
+  # Create map
+  map <- leaflet(geo_data) %>%
+    addTiles() %>% 
+    addPolygons(
+      fillOpacity = 0.7,
+      weight = 1,
+      color = theme_config$palette$district[match(geo_data$No_Distrit, district_stats$district)],
+      dashArray = "3",
+      highlight = highlightOptions(
+        weight = 2,
+        color = "#666666",
+        dashArray = "",
+        fillOpacity = 0.7,
+        bringToFront = TRUE
+      ),
+      label = ~sprintf(
+        "Distrito: %s<br>%s: %s%%<br>Respuestas: %d/%d",
+        district_stats$district[match(No_Distrit, district_stats$district)],
+        display_label,
+        district_stats$selected_percent[match(No_Distrit, district_stats$district)],
+        district_stats$selected_count[match(No_Distrit, district_stats$district)],
+        district_stats$total_responses[match(No_Distrit, district_stats$district)]
+      ) %>% lapply(HTML)
+    )
+  
+  # Add labels for each district
+  for(i in 1:nrow(geo_data)) {
+    district_num <- geo_data$No_Distrit[i]
+    percent <- district_stats$selected_percent[match(district_num, district_stats$district)]
+    
+    # Skip if no percentage data
+    if(is.na(percent)) next
+    
+    # Determine background color based on whether this is highest or lowest district
+    bg_color <- "#FFFFFF"  # Default white background
+    text_color <- "#000000"  # Default black text
+    
+    if(highlight_extremes) {
+      if(!is.null(highest_district) && !is.na(highest_district$district) && district_num == highest_district$district) {
+        bg_color <- "#87CEEB"  # Light blue background for highest
+        text_color <- "#000000"  # Black text
+      } else if(!is.null(lowest_district) && !is.na(lowest_district$district) && district_num == lowest_district$district) {
+        bg_color <- "#012A4A"  # Dark blue background for lowest
+        text_color <- "#FFFFFF"  # White text
+      }
+    }
+    
+    # Create label HTML
+    label_html <- sprintf(
+      '<div style="background-color: %s; color: %s; padding: 5px; border-radius: 3px; font-weight: bold;">Distrito %s<br>%s%%</div>',
+      bg_color, text_color, district_num, percent
+    )
+    
+    # Add label
+    map <- map %>% addLabelOnlyMarkers(
+      lng = geo_data$lng[i],
+      lat = geo_data$lat[i],
+      label = lapply(list(label_html), HTML),
+      labelOptions = labelOptions(
+        noHide = TRUE,
+        direction = "center",
+        textOnly = TRUE
+      )
+    )
+  }
+  
+  # Add overall average label
+  overall_percent <- round(mean(district_stats$selected_percent, na.rm = TRUE), 1)
+  
+  map <- map %>% addControl(
+    html = sprintf(
+      '<div style="background-color: #333333; color: white; padding: 5px; border-radius: 3px;"><strong>%s general: %s%%</strong></div>',
+      display_label, overall_percent
+    ),
+    position = "topright"
+  )
+  
+  return(map)
+}
+
 create_binary_district_bars <- function(data, orientation = "v") {
   # Check if we have data
   if (nrow(data) == 0) {
@@ -541,116 +668,6 @@ create_binary_district_bars <- function(data, orientation = "v") {
   }
 }
 
-create_binary_district_map <- function(data, geo_data) {
-  # Check if we have data
-  if (nrow(data) == 0 || is.null(geo_data)) {
-    return(plotly_empty() %>% 
-             layout(title = "No hay datos suficientes para visualizar"))
-  }
-  
-  # Get correct labels using the helper function
-  labels <- get_binary_labels(data)
-  true_label <- labels$true_label
-  
-  # Calculate percentages by district
-  district_stats <- data %>%
-    group_by(district) %>%
-    summarise(
-      percentage_true = 100 * mean(binary_value, na.rm = TRUE),
-      count_true = sum(binary_value, na.rm = TRUE),
-      count_false = sum(!binary_value, na.rm = TRUE),
-      count_total = n(),
-      .groups = 'drop'
-    )
-  
-  # Create color palette
-  pal <- colorNumeric(
-    palette = "Blues",
-    domain = district_stats$percentage_true
-  )
-  
-  # Create map
-  leaflet(geo_data) %>%
-    addTiles() %>% 
-    addPolygons(
-      fillColor = ~pal(district_stats$percentage_true[match(No_Distrit, district_stats$district)]),
-      fillOpacity = 0.7,
-      weight = 1,
-      color = "#666666",
-      dashArray = "3",
-      highlight = highlightOptions(
-        weight = 2,
-        color = "#666666",
-        dashArray = "",
-        fillOpacity = 0.7,
-        bringToFront = TRUE
-      ),
-      label = ~sprintf(
-        "Distrito: %s<br>%s: %d (%.1f%%)<br>Total: %d",
-        district_stats$district[match(No_Distrit, district_stats$district)],
-        true_label,
-        district_stats$count_true[match(No_Distrit, district_stats$district)],
-        district_stats$percentage_true[match(No_Distrit, district_stats$district)],
-        district_stats$count_total[match(No_Distrit, district_stats$district)]
-      ) %>% lapply(HTML)
-    ) %>%
-    addLegend(
-      position = "bottomright",
-      pal = pal,
-      values = district_stats$percentage_true,
-      title = paste0("% de ", true_label),
-      opacity = 0.7
-    )
-}
-create_binary_demographics_bars <- function(data, group_var = "gender") {
-  # Check if we have data
-  if (nrow(data) == 0) {
-    return(plotly_empty() %>% 
-             layout(title = "No hay datos suficientes para visualizar"))
-  }
-  
-  # Get correct labels using the helper function
-  labels <- get_binary_labels(data)
-  true_label <- labels$true_label
-  false_label <- labels$false_label
-  
-  # Calculate percentages by demographic group
-  demo_stats <- data %>%
-    group_by(.data[[group_var]]) %>%
-    summarise(
-      percentage_true = 100 * mean(binary_value, na.rm = TRUE),
-      count_true = sum(binary_value, na.rm = TRUE),
-      count_false = sum(!binary_value, na.rm = TRUE),
-      count_total = n(),
-      .groups = 'drop'
-    )
-  
-  # Create grouped bar chart
-  plot_ly(
-    data = demo_stats,
-    x = ~get(group_var),
-    y = ~percentage_true,
-    type = "bar",
-    text = ~paste0(
-      get(group_var), "<br>",
-      true_label, ": ", count_true, " (", round(percentage_true, 1), "%)<br>",
-      false_label, ": ", count_false, " (", round(100 - percentage_true, 1), "%)<br>",
-      "Total: ", count_total
-    ),
-    hoverinfo = "text",
-    marker = list(
-      color = if(group_var == "gender") get_color_palette("gender") else 
-             if(group_var == "age_group") get_color_palette("age_group") else 
-             theme_config$colors$primary
-    )
-  ) %>%
-    apply_plotly_theme(
-      title = paste("Distribución por", ifelse(group_var == "gender", "Género", "Grupo de Edad")),
-      xlab = ifelse(group_var == "gender", "Género", "Grupo de Edad"),
-      ylab = paste0("Porcentaje de ", true_label)
-    )
-}
-# New function for gender dumbbell plot
 create_binary_gender_dumbbell <- function(data) {
   # Check if we have data
   if (nrow(data) == 0) {
@@ -732,6 +749,55 @@ create_binary_gender_dumbbell <- function(data) {
       ylab = "Distrito"
     ) %>%
     layout(showlegend = TRUE)
+}
+
+create_binary_demographics_bars <- function(data, group_var = "gender") {
+  # Check if we have data
+  if (nrow(data) == 0) {
+    return(plotly_empty() %>% 
+             layout(title = "No hay datos suficientes para visualizar"))
+  }
+  
+  # Get correct labels using the helper function
+  labels <- get_binary_labels(data)
+  true_label <- labels$true_label
+  false_label <- labels$false_label
+  
+  # Calculate percentages by demographic group
+  demo_stats <- data %>%
+    group_by(.data[[group_var]]) %>%
+    summarise(
+      percentage_true = 100 * mean(binary_value, na.rm = TRUE),
+      count_true = sum(binary_value, na.rm = TRUE),
+      count_false = sum(!binary_value, na.rm = TRUE),
+      count_total = n(),
+      .groups = 'drop'
+    )
+  
+  # Create grouped bar chart
+  plot_ly(
+    data = demo_stats,
+    x = ~get(group_var),
+    y = ~percentage_true,
+    type = "bar",
+    text = ~paste0(
+      get(group_var), "<br>",
+      true_label, ": ", count_true, " (", round(percentage_true, 1), "%)<br>",
+      false_label, ": ", count_false, " (", round(100 - percentage_true, 1), "%)<br>",
+      "Total: ", count_total
+    ),
+    hoverinfo = "text",
+    marker = list(
+      color = if(group_var == "gender") get_color_palette("gender") else 
+             if(group_var == "age_group") get_color_palette("age_group") else 
+             theme_config$colors$primary
+    )
+  ) %>%
+    apply_plotly_theme(
+      title = paste("Distribución por", ifelse(group_var == "gender", "Género", "Grupo de Edad")),
+      xlab = ifelse(group_var == "gender", "Género", "Grupo de Edad"),
+      ylab = paste0("Porcentaje de ", true_label)
+    )
 }
 
 create_multiple_binary_comparison <- function(data_list, comparison_type = "bars", top_n = 5) {
@@ -973,6 +1039,26 @@ binaryUI <- function(id) {
               selected = "v"
             )
           ),
+          
+          # Add district map options
+          conditionalPanel(
+            condition = sprintf("input['%s'] == 'district_map'", ns("plot_type")),
+            radioButtons(
+              ns("map_focus"),
+              "Valor a destacar:",
+              choices = c(
+                "Sí/Verdadero/Seleccionado" = "true",
+                "No/Falso/No Seleccionado" = "false"
+              ),
+              selected = "true"
+            ),
+            checkboxInput(
+              ns("highlight_extremes"),
+              "Resaltar valores extremos",
+              value = TRUE
+            )
+          ),
+          
           conditionalPanel(
             condition = sprintf("input['%s'] == 'multiple_comparison'", ns("plot_type")),
             selectInput(
@@ -1173,7 +1259,7 @@ binaryServer <- function(id, data, metadata, selected_question, geo_data, all_bi
         "summary" = verbatimTextOutput(session$ns("summary_stats")),
         "bars" = plotlyOutput(session$ns("bars_plot"), height = "600px"),
         "pie" = plotlyOutput(session$ns("pie_plot"), height = "600px"),
-        "district_map" = leafletOutput(session$ns("district_map_plot"), height = "600px"),
+        "district_map" = leafletOutput(session$ns("district_map"), height = "600px"),
         "district_bars" = plotlyOutput(session$ns("district_bars_plot"), height = "600px"),
         "gender_dumbbell" = plotlyOutput(session$ns("gender_dumbbell_plot"), height = "600px"),
         "gender_bars" = plotlyOutput(session$ns("gender_bars_plot"), height = "600px"),
@@ -1323,9 +1409,16 @@ binaryServer <- function(id, data, metadata, selected_question, geo_data, all_bi
     })
     
     # District map
-    output$district_map_plot <- renderLeaflet({
+    output$district_map <- renderLeaflet({
       req(filtered_data(), geo_data())
-      create_binary_district_map(filtered_data(), geo_data())
+      focus_on_true <- input$map_focus == "true"
+      
+      create_binary_district_map(
+        filtered_data(), 
+        geo_data(),
+        highlight_extremes = input$highlight_extremes,
+        focus_on_true = focus_on_true
+      )
     })
     
     # District bars
