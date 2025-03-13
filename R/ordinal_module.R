@@ -538,36 +538,34 @@ create_ordinal_age_bars <- function(data) {
   # Create label lookup
   labels_lookup <- create_label_lookup(data)
   
-  # Calculate age group statistics 
-  age_stats <- data %>%
+  # Get numeric values BEFORE grouping
+  numeric_values <- get_numeric_values(data)
+  
+  # Add numeric values as a column to the data
+  data_with_numeric <- data %>%
+    mutate(numeric_value = numeric_values)
+  
+  # Calculate age group statistics with mode in a single operation
+  age_stats <- data_with_numeric %>%
     group_by(age_group) %>%
     summarise(
-      mean_value = mean(get_numeric_values(.), na.rm = TRUE),
+      mean_value = mean(numeric_value, na.rm = TRUE),
+      mode_numeric = as.numeric(names(which.max(table(numeric_value)))),
       n = n(),
       .groups = 'drop'
     )
   
-  # Get mode values for each age group with labels
-  age_modes <- data %>%
-    group_by(age_group) %>%
-    summarise(
-      mode_numeric = as.numeric(names(which.max(table(get_numeric_values(.))))),
-      .groups = 'drop'
-    ) %>%
-    # Add text labels for modes
+  # Add text labels for modes
+  age_stats <- age_stats %>%
     mutate(
       mode_label = sapply(mode_numeric, function(val) {
-        if (as.character(val) %in% names(labels_lookup)) {
+        if (!is.na(val) && as.character(val) %in% names(labels_lookup)) {
           return(labels_lookup[as.character(val)])
         } else {
           return(as.character(val))
         }
       })
     )
-  
-  # Join the mode values
-  age_stats <- age_stats %>%
-    left_join(age_modes, by = "age_group")
   
   # Create the plot
   plot_ly(
@@ -595,19 +593,28 @@ create_ordinal_gender_dumbbell <- function(data) {
   # Create label lookup
   labels_lookup <- create_label_lookup(data)
   
-  # Calculate gender statistics by district
-  gender_stats <- data %>%
+  # Get numeric values BEFORE grouping
+  numeric_values <- get_numeric_values(data)
+  
+  # Add numeric values as a column to the data
+  data_with_numeric <- data %>%
+    mutate(numeric_value = numeric_values)
+  
+  # Calculate gender statistics by district with mode in a single operation
+  gender_stats <- data_with_numeric %>%
     group_by(district, gender) %>%
     summarise(
-      mean_value = mean(get_numeric_values(.), na.rm = TRUE),
-      mode_numeric = as.numeric(names(which.max(table(get_numeric_values(.))))),
+      mean_value = mean(numeric_value, na.rm = TRUE),
+      mode_numeric = as.numeric(names(which.max(table(numeric_value)))),
       n = n(),
       .groups = 'drop'
-    ) %>%
-    # Add text labels for modes
+    )
+  
+  # Add text labels for modes
+  gender_stats <- gender_stats %>%
     mutate(
       mode_label = sapply(mode_numeric, function(val) {
-        if (as.character(val) %in% names(labels_lookup)) {
+        if (!is.na(val) && as.character(val) %in% names(labels_lookup)) {
           return(labels_lookup[as.character(val)])
         } else {
           return(as.character(val))

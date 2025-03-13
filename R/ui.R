@@ -13,10 +13,14 @@ ui <- page_fluid(
         "survey_selector",
         "Seleccionar Encuesta:",
         choices = c(
-          "Percepción Ciudadana (PER 2023)" = "PER_2023",
-          "Participación Ciudadana (PAR 2023)" = "PAR_2023"
+        "Percepción Ciudadana A (PER A 2023)" = "PER_A_2023",
+          "Participación Ciudadana A (PAR A 2023)" = "PAR_A_2023",
+          "Percepción Ciudadana B (PER B 2023)" = "PER_B_2023",
+          "Participación Ciudadana B (PAR B 2023)" = "PAR_B_2023",
+          "Percepción Ciudadana 2024 (PER 2024)" = "PER_2024"
+
         ),
-        selected = "PER"
+        selected = "PER_A_2023"
       )
     )
   ),

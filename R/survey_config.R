@@ -1,10 +1,41 @@
 survey_config <- list(
-  PER_2023= list(
+  PER_A_2023= list(
     district_col = "Q2",
     gender_col = "Q101",
     age_col = "Q103"
   ),
-  PAR_2023 = list(
+  PER_B_2023= list(
+    district_col = "Q2",
+    gender_col = "Q101",
+    age_col = "Q103"
+  ),
+  PER_2024= list(
+    district_col = "Q2",
+    gender_col = "Q101",
+    age_col = "Q103",
+    gender_mapping = c(
+      "1" = "Hombre",
+      "2" = "Mujer",
+      "3" = "Otro"
+    )
+  ),
+  PAR_A_2023 = list(
+    district_col = "Q2",
+    gender_col = "Q144",
+    age_col = "Q146",
+    gender_mapping = c(
+      "1" = "Hombre",
+      "2" = "Mujer",
+      "3" = "Otro"
+    ),
+    age_mapping = c(
+      "1" = "18 a 29 anos",
+      "2" = "18 a 44 anos",
+      "3" = "18 a 59 anos",
+      "4" = "60 anos o mas"
+    )
+  ),
+  PAR_B_2023 = list(
     district_col = "Q2",
     gender_col = "Q144",
     age_col = "Q146",

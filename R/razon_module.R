@@ -135,6 +135,37 @@ create_district_map <- function(data, geo_data) {
 }
 
 
+create_ridge_plot <- function(data, title = NULL) {
+  # Check if we have ggridges
+  if (!requireNamespace("ggridges", quietly = TRUE)) {
+    stop("Package 'ggridges' is required for this visualization. Please install it with install.packages('ggridges')")
+  }
+  
+  question_label <- attr(data, "question_label")
+  # If no title provided, use the question label
+  if (is.null(title)) {
+    title <- paste("Distribución de", question_label, "por distrito")
+  }
+  
+  # Create the plot
+  p <- ggplot(data, aes(x = value, y = district, fill = district)) +
+    ggridges::geom_density_ridges(
+      quantile_lines = TRUE, 
+      quantiles = 2,
+      alpha = 0.7,
+      scale = 0.9
+    ) +
+    scale_fill_manual(values = get_color_palette("district")) +
+    theme_minimal() +
+    labs(
+      title = title,
+      x = "Valor",
+      y = "Distrito"
+    ) +
+    theme(legend.position = "none")
+  
+  return(p)
+}
 
 
 razonUI <- function(id) {
@@ -154,7 +185,8 @@ razonUI <- function(id) {
               "Mapa de Distritos" = "map",
               "Barras por Edad" = "age_bars",
               "Comparación por Género" = "gender_dumbbell",
-              "Gráfico de Barras" = "bars"
+              "Gráfico de Barras" = "bars",
+              "Gráfico de Crestas" = "ridge_plot"  
             )
           )
         ),
@@ -206,7 +238,6 @@ razonUI <- function(id) {
   )
 }
 
-# R/razon_module.R
 
 razonServer <- function(id, data, selected_question, geo_data, metadata) {
   moduleServer(id, function(input, output, session) {
@@ -273,7 +304,9 @@ razonServer <- function(id, data, selected_question, geo_data, metadata) {
         "map" = leafletOutput(session$ns("district_map")),
         "age_bars" = plotlyOutput(session$ns("age_bars_plot")),
         "gender_dumbbell" = plotlyOutput(session$ns("gender_dumbbell_plot")),
-        "bars" = plotlyOutput(session$ns("bar_plot"))
+        "bars" = plotlyOutput(session$ns("bar_plot")),
+        "ridge_plot" = plotOutput(session$ns("ridge_plot"), height = "600px")  # Add this line
+
       )
     })
     
@@ -303,6 +336,10 @@ razonServer <- function(id, data, selected_question, geo_data, metadata) {
     output$histogram_plot <- renderPlotly({
       req(filtered_data())
       create_histogram(filtered_data(), bins = input$bins)
+    })
+    output$ridge_plot <- renderPlot({
+      req(filtered_data())
+      create_ridge_plot(filtered_data())
     })
 
 

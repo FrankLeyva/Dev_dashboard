@@ -1,12 +1,22 @@
-load_survey_data <- function(survey_id = "PER_2023") {
-  # Define paths based on survey_id
-  if (survey_id == "PAR_2023") {
-    response_path <- "data/processed/PAR_2023_responses.csv"
-    metadata_path <- "data/processed/PAR_2023_metadata_classified.csv"
-  } else { # Default to PER
-    response_path <- "data/processed/PER_2023_responses.csv"
-    metadata_path <- "data/processed/PER_2023_metadata_classified.csv"
+load_survey_data <- function(survey_id = "PER_A_2023") {
+  if (survey_id == "PAR_A_2023") {
+    response_path <- "data/processed/PAR_A_2023_responses.csv"
+    metadata_path <- "data/processed/PAR_A_2023_metadata_classified.csv"
+  } else if (survey_id == "PAR_B_2023") { 
+    response_path <- "data/processed/PAR_B_2023_responses.csv"
+    metadata_path <- "data/processed/PAR_A_2023_metadata_classified.csv"
+  } else if (survey_id == "PER_B_2023") { 
+    response_path <- "data/processed/PER_B_2023_responses.csv"
+    metadata_path <- "data/processed/PER_A_2023_metadata_classified.csv"
+  } else if (survey_id == "PER_2024") { 
+    response_path <- "data/processed/PER_2024_responses.csv"
+    metadata_path <- "data/processed/PER_2024_metadata_classified.csv"
+  } 
+   else  { 
+    response_path <- "data/processed/PER_A_2023_responses.csv"
+    metadata_path <- "data/processed/PER_A_2023_metadata_classified.csv"
   }
+  
   
   # Load the data
   responses <- read.csv(response_path, encoding = "utf-8")

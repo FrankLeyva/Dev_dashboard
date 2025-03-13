@@ -546,24 +546,71 @@ create_interval_district_map <- function(data, geo_data, selected_responses = NU
    
    return(map)
  }
+
+ create_interval_ridge_plot <- function(data, title = NULL) {
+  # Check if we have ggridges
+  if (!requireNamespace("ggridges", quietly = TRUE)) {
+    stop("Package 'ggridges' is required for this visualization. Please install it with install.packages('ggridges')")
+  }
+  
+  question_label <- attr(data, "question_label")
+  # If no title provided, use the question label
+  if (is.null(title)) {
+    title <- paste("Distribución de", question_label, "por distrito")
+  }
+  
+  # Get numeric values for the plot
+  plot_data <- data %>%
+    mutate(
+      numeric_value = get_numeric_values(.),
+      district = factor(district, levels = rev(sort(unique(as.character(district)))))
+    )
+  
+  # Create the plot
+  p <- ggplot(plot_data, aes(x = numeric_value, y = district, fill = district)) +
+    ggridges::geom_density_ridges(
+      quantile_lines = TRUE, 
+      quantiles = 2,
+      alpha = 0.7,
+      scale = 0.9
+    ) +
+    scale_fill_manual(values = get_color_palette("district")) +
+    theme_minimal() +
+    labs(
+      title = title,
+      x = "Valor",
+      y = "Distrito"
+    ) +
+    theme(legend.position = "none")
+  
+  return(p)
+}
+
+
 create_interval_age_bars <- function(data) {
   # Create label lookup
   labels_lookup <- create_label_lookup(data)
   
+  # Get numeric values BEFORE grouping
+  numeric_values <- get_numeric_values(data)
+  
   # Calculate age group statistics 
   age_stats <- data %>%
+    # Add the numeric values as a column
+    mutate(numeric_value = numeric_values) %>%
     group_by(age_group) %>%
     summarise(
-      mean_value = mean(get_numeric_values(.), na.rm = TRUE),
+      mean_value = mean(numeric_value, na.rm = TRUE),
       n = n(),
       .groups = 'drop'
     )
   
-  # Get mode values for each age group with labels
+  # Get mode values for each age group with labels 
   age_modes <- data %>%
+    mutate(numeric_value = numeric_values) %>%
     group_by(age_group) %>%
     summarise(
-      mode_numeric = as.numeric(names(which.max(table(get_numeric_values(.))))),
+      mode_numeric = as.numeric(names(which.max(table(numeric_value)))),
       .groups = 'drop'
     ) %>%
     # Add text labels for modes
@@ -581,7 +628,7 @@ create_interval_age_bars <- function(data) {
   age_stats <- age_stats %>%
     left_join(age_modes, by = "age_group")
   
-  # Create the plot
+  # Rest of the function remains the same
   plot_ly(
     data = age_stats,
     x = ~age_group,
@@ -607,19 +654,28 @@ create_interval_gender_dumbbell <- function(data) {
   # Create label lookup
   labels_lookup <- create_label_lookup(data)
   
-  # Calculate gender statistics by district
-  gender_stats <- data %>%
+  # Get numeric values BEFORE grouping
+  numeric_values <- get_numeric_values(data)
+  
+  # Add numeric values as a column to the data
+  data_with_numeric <- data %>%
+    mutate(numeric_value = numeric_values)
+  
+  # Calculate gender statistics by district with mode in a single operation
+  gender_stats <- data_with_numeric %>%
     group_by(district, gender) %>%
     summarise(
-      mean_value = mean(get_numeric_values(.), na.rm = TRUE),
-      mode_numeric = as.numeric(names(which.max(table(get_numeric_values(.))))),
+      mean_value = mean(numeric_value, na.rm = TRUE),
+      mode_numeric = as.numeric(names(which.max(table(numeric_value)))),
       n = n(),
       .groups = 'drop'
-    ) %>%
-    # Add text labels for modes
+    )
+  
+  # Add text labels for modes
+  gender_stats <- gender_stats %>%
     mutate(
       mode_label = sapply(mode_numeric, function(val) {
-        if (as.character(val) %in% names(labels_lookup)) {
+        if (!is.na(val) && as.character(val) %in% names(labels_lookup)) {
           return(labels_lookup[as.character(val)])
         } else {
           return(as.character(val))
@@ -764,7 +820,8 @@ intervalUI <- function(id) {
               "Mapa de Distritos" = "map",
               "Barras por Edad" = "age_bars",
               "Comparación por Género" = "gender_dumbbell",
-              "Gráfico de Barras" = "bars"
+              "Gráfico de Barras" = "bars",
+              "Gráfico de Crestas" = "ridge_plot"
             )
           )
           ),
@@ -949,7 +1006,8 @@ observe({
         "map" = leafletOutput(session$ns("district_map")),
         "age_bars" = plotlyOutput(session$ns("age_bars_plot")),
         "gender_dumbbell" = plotlyOutput(session$ns("gender_dumbbell_plot")),
-        "bars" = plotlyOutput(session$ns("bar_plot"))
+        "bars" = plotlyOutput(session$ns("bar_plot")),
+        "ridge_plot" = plotOutput(session$ns("ridge_plot"), height = "600px")
       )
     })
 
@@ -1082,5 +1140,9 @@ output$bar_plot <- renderPlotly({
     orientation = input$bar_orientation
   )
 })
+output$ridge_plot <- renderPlot({
+  req(filtered_data())
+  create_interval_ridge_plot(filtered_data())
 })
+  })
 }

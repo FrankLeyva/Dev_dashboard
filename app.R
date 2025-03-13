@@ -10,6 +10,7 @@ library(tidyverse)
 library(tidyr)
 library(igraph)
 library(wordcloud2)
+library(ggridges)
 # Source all necessary files
 source("R/global_theme.R")
 source("R/utils.R")

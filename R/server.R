@@ -14,10 +14,14 @@ server <- function(input, output, session) {
   })
 
   output$survey_name <- renderText({
-    if (input$survey_selector == "PAR_2023") {
-      "Participación Ciudadana (PAR 2023)"
-    } else if (input$survey_selector == "PER_2023"){
-      "Percepción Ciudadana (PER 2023)"
+    if (input$survey_selector == "PAR_A_2023") {
+      "Participación Ciudadana A (PAR 2023)"
+    } else if (input$survey_selector == "PER_A_2023"){
+      "Percepción Ciudadana A (PER 2023)"
+    } else if (input$survey_selector == "PAR_B_2023"){
+      "Participación Ciudadana B (PAR 2023)"
+    } else if (input$survey_selector == "PER_B_2023"){
+      "Percepción Ciudadana B (PER 2023)"
     }
   })
   observeEvent(input$survey_selector, {

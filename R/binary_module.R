@@ -1,4 +1,4 @@
-prepare_binary_data <- function(data, question_id, metadata) {
+prepare_binary_data <- function(data, question_id, metadata, treat_na_as_negative = NULL) {
   # Validate inputs
   if (is.null(question_id) || question_id == "") {
     return(NULL)
@@ -17,7 +17,11 @@ prepare_binary_data <- function(data, question_id, metadata) {
   value_labels <- NULL
   positive_values <- c("1", "Sí", "Si", "Yes", "Selected", "TRUE", "True", "true")
   negative_values <- c("0", "No", "Not Selected", "FALSE", "False", "false")
-  treat_na_as_negative <- FALSE
+  
+  # Set default value for treat_na_as_negative if not provided
+  local_treat_na_as_negative <- if(is.null(treat_na_as_negative)) FALSE else treat_na_as_negative
+  
+  is_checkbox_question <- FALSE
   invert_selected_logic <- FALSE
   
   # SPECIFIC QUESTION HANDLERS - Add special case handling for known problematic questions
@@ -25,7 +29,7 @@ prepare_binary_data <- function(data, question_id, metadata) {
     # For questions like Q6.x and Q17.x in PAR survey - these are checkbox questions
     # where a value of 1 means "Selected" and NA means "Not Selected"
     is_checkbox_question <- TRUE
-    treat_na_as_negative <- TRUE
+    local_treat_na_as_negative <- TRUE  # Override for these special cases
     invert_selected_logic <- FALSE
     
     # Add debugging for these specific questions
@@ -48,7 +52,7 @@ prepare_binary_data <- function(data, question_id, metadata) {
       is_selection_type <- any(grepl("Selected", label_pairs, fixed = TRUE))
       if (is_selection_type && !is_checkbox_question) {
         is_checkbox_question <- TRUE
-        treat_na_as_negative <- TRUE
+        local_treat_na_as_negative <- TRUE
       }
       
       # Process each pair
@@ -114,7 +118,7 @@ prepare_binary_data <- function(data, question_id, metadata) {
     if (mean(subset_data$is_na) > 0.5) {
       # If most values are NA, this is likely a checkbox question
       is_checkbox_question <- TRUE
-      treat_na_as_negative <- TRUE
+      local_treat_na_as_negative <- TRUE
     }
   }
   
@@ -162,8 +166,8 @@ prepare_binary_data <- function(data, question_id, metadata) {
         # For checkbox questions, NA typically means "not checked"
         is_na & is_checkbox_question ~ FALSE,
         # For other questions, follow the user's preference
-        is_na & treat_na_as_negative ~ FALSE,
-        is_na & !treat_na_as_negative ~ NA,
+        is_na & local_treat_na_as_negative ~ FALSE,
+        is_na & !local_treat_na_as_negative ~ NA,
         # Process actual values
         value %in% positive_values ~ TRUE,
         value %in% negative_values ~ FALSE,
@@ -213,7 +217,7 @@ prepare_binary_data <- function(data, question_id, metadata) {
     attr(empty_data, "total_responses") <- total_responses
     attr(empty_data, "question_id") <- question_id
     attr(empty_data, "question_label") <- question_metadata$label
-    attr(empty_data, "treat_na_as_negative") <- treat_na_as_negative
+    attr(empty_data, "treat_na_as_negative") <- local_treat_na_as_negative
     attr(empty_data, "invert_selected_logic") <- invert_selected_logic
     attr(empty_data, "is_checkbox_question") <- is_checkbox_question
     attr(empty_data, "positive_values") <- positive_values
@@ -228,7 +232,7 @@ prepare_binary_data <- function(data, question_id, metadata) {
   attr(valid_data, "total_responses") <- total_responses
   attr(valid_data, "question_id") <- question_id
   attr(valid_data, "question_label") <- question_metadata$label
-  attr(valid_data, "treat_na_as_negative") <- treat_na_as_negative
+  attr(valid_data, "treat_na_as_negative") <- local_treat_na_as_negative
   attr(valid_data, "invert_selected_logic") <- invert_selected_logic
   attr(valid_data, "is_checkbox_question") <- is_checkbox_question
   attr(valid_data, "positive_values") <- positive_values
@@ -1120,11 +1124,15 @@ binaryServer <- function(id, data, metadata, selected_question, geo_data, all_bi
           return(NULL)
         }
         
-        # Add a parameter to the function call
-        prep_data <- prepare_binary_data(data(), selected_question(), metadata())
+        # Pass the treat_na_as_negative parameter from UI
+        prep_data <- prepare_binary_data(
+          data(), 
+          selected_question(), 
+          metadata(), 
+          treat_na_as_negative = input$treat_na_as_negative
+        )
         
-        # Store whether NA values are treated as negative for UI feedback
-        attr(prep_data, "na_treated_as_negative") <- input$treat_na_as_negative
+        # No need to set the attribute here anymore as it's now set within the function
         
         return(prep_data)
       }, error = function(e) {
@@ -1277,6 +1285,7 @@ binaryServer <- function(id, data, metadata, selected_question, geo_data, all_bi
           return()
         }
         
+        
         # Get the response counts
         total_responses <- nrow(data)
         missing_count <- attr(data, "missing_count")
@@ -1350,7 +1359,7 @@ binaryServer <- function(id, data, metadata, selected_question, geo_data, all_bi
         print(age_breakdown)
         
         cat("\nNotas sobre el procesamiento de datos:\n")
-        if (attr(data, "treat_na_as_negative")) {
+        if (attr(data, "treat_na_as_negative")) {  # Use the correct attribute name here
           cat("- Los valores vacíos (NA) se están tratando como respuestas 'No'.\n")
         } else {
           cat("- Los valores vacíos (NA) se están tratando como datos faltantes.\n")
@@ -1458,4 +1467,5 @@ binaryServer <- function(id, data, metadata, selected_question, geo_data, all_bi
       )
     })
   })
+
 }
