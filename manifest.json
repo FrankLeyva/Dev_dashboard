@@ -1649,6 +1649,43 @@
         "RemoteSha": "3.5.1"
       }
     },
+    "ggridges": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "ggridges",
+        "Type": "Package",
+        "Title": "Ridgeline Plots in 'ggplot2'",
+        "Version": "0.5.6",
+        "Authors@R": "\n    person(\n      given = \"Claus O.\",\n      family = \"Wilke\",\n      role = c(\"aut\", \"cre\"),\n      email = \"wilke@austin.utexas.edu\",\n      comment = c(ORCID = \"0000-0002-7470-9261\")\n    )",
+        "Description": "Ridgeline plots provide a convenient way of visualizing changes in distributions over time or space. This package enables the creation of such plots in 'ggplot2'.",
+        "URL": "https://wilkelab.org/ggridges/",
+        "BugReports": "https://github.com/wilkelab/ggridges/issues",
+        "Depends": "R (>= 3.2)",
+        "Imports": "ggplot2 (>= 3.4.0), grid (>= 3.0.0), scales (>= 0.4.1), withr\n(>= 2.1.1)",
+        "License": "GPL-2 | file LICENSE",
+        "LazyData": "true",
+        "Suggests": "covr, dplyr, patchwork, ggplot2movies, forcats, knitr,\nrmarkdown, testthat, vdiffr",
+        "VignetteBuilder": "knitr",
+        "Collate": "'data.R' 'ggridges.R' 'geoms.R' 'geomsv.R' 'geoms-gradient.R'\n'geom-density-line.R' 'position.R' 'scale-cyclical.R'\n'scale-point.R' 'scale-vline.R' 'stats.R' 'theme.R'\n'utils_ggplot2.R' 'utils.R'",
+        "RoxygenNote": "7.2.3",
+        "Encoding": "UTF-8",
+        "NeedsCompilation": "no",
+        "Packaged": "2024-01-23 01:28:20 UTC; clauswilke",
+        "Author": "Claus O. Wilke [aut, cre] (<https://orcid.org/0000-0002-7470-9261>)",
+        "Maintainer": "Claus O. Wilke <wilke@austin.utexas.edu>",
+        "Repository": "CRAN",
+        "Date/Publication": "2024-01-23 05:40:10 UTC",
+        "Built": "R 4.4.3; ; 2025-03-11 03:23:14 UTC; windows",
+        "RemoteType": "standard",
+        "RemotePkgRef": "ggridges",
+        "RemoteRef": "ggridges",
+        "RemoteRepos": "https://cran.rstudio.com",
+        "RemoteReposName": "CRAN",
+        "RemotePkgPlatform": "x86_64-w64-mingw32",
+        "RemoteSha": "0.5.6"
+      }
+    },
     "glue": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -5050,10 +5087,13 @@
   },
   "files": {
     ".Rprofile": {
-      "checksum": "f667e8c4227426510cc915e16bbbc2b7"
+      "checksum": "f86bd8358a9886748e5f7d304b07dd8d"
     },
     "app.R": {
-      "checksum": "78e96d6557fadbfd12fa380f604fa5c0"
+      "checksum": "6566ed933d93fd55b15fb54465b9b93e"
+    },
+    "css/custom.css": {
+      "checksum": "78e9ae05a4448fed23770bd773876f19"
     },
     "data/Coded/binary_module.R": {
       "checksum": "9f68b0d2c074e5d752fd0abb4e03f578"
@@ -5100,6 +5140,15 @@
     "data/processed/Map_Survey.rds": {
       "checksum": "90e2b62be164b11c90471a8759ad70d9"
     },
+    "data/processed/PAR_2023_Metadata.csv": {
+      "checksum": "1cc00712e0c117b39cef1d25dbfccfe7"
+    },
+    "data/processed/PAR_2023_metadata_classified.csv": {
+      "checksum": "2d8e6c069ee3a656f08e9249ce4971fe"
+    },
+    "data/processed/PAR_2023_responses.csv": {
+      "checksum": "8baae13040d5fb7c1ec4d81abe465b51"
+    },
     "data/processed/PER_2023_metadata.csv": {
       "checksum": "964293e13cbec2c7d93e8c4b12f53dd2"
     },
@@ -5110,7 +5159,16 @@
       "checksum": "d3c2416bde6ea26fc7918434b6520ad0"
     },
     "data/processed/PER_2023_responses.csv": {
-      "checksum": "41ca455bae37d161b65da3a31db83da6"
+      "checksum": "c4510753f17da8fd60fdc8c010189824"
+    },
+    "data/processed/PER_2024_metadata.csv": {
+      "checksum": "81bf6ce22660347089a31654b31e98e3"
+    },
+    "data/processed/PER_2024_metadata_classified.csv": {
+      "checksum": "a1e04d5f48f683fce76e02751cb65c3b"
+    },
+    "data/processed/PER_2024_responses.csv": {
+      "checksum": "82e7cc2f32031795f0c77b49d2e27eca"
     },
     "data/processed/SNIIV_modalidad.csv": {
       "checksum": "063dd6686c78bc1f95f8cb4fce8428c5"
@@ -5153,6 +5211,9 @@
     },
     "data/raw/Coding Manual AEJ Percepción 2023.csv": {
       "checksum": "fb0f5814f18cdb4616b1c7c08352b2d5"
+    },
+    "data/raw/Coding_manual_2024.csv": {
+      "checksum": "c592304857f4344d107d5cd6ac57d99b"
     },
     "data/raw/Cuestionario B Participacion ciudadana 2023.xlsx": {
       "checksum": "391c9f2de949de7d114dda00051c25cd"
@@ -5210,6 +5271,15 @@
     },
     "data/raw/PER_2023_responses.csv": {
       "checksum": "41ca455bae37d161b65da3a31db83da6"
+    },
+    "data/raw/PER_2024.xlsx": {
+      "checksum": "f8969c57abe158523ce7f3a17d17270e"
+    },
+    "data/raw/PER_2024_RAW_Responses.csv": {
+      "checksum": "a6035543929c2c74b3d9872c811f55ee"
+    },
+    "data/raw/PER_2024_RAW_Responses.xlsx": {
+      "checksum": "2d14e0b159845da77856f32cbfbfcb61"
     },
     "data/raw/PERCEPCION 2011-2023/_Encuesta de Percepción Ciudadana 2022.sav": {
       "checksum": "632e05e46eba2902499fe1bac7948a65"
@@ -5295,44 +5365,62 @@
     "data/raw/Preguntas AEJ Percepción 2021.csv": {
       "checksum": "2a9a7398a8b03ad08869443f4be7de7d"
     },
+    "metadata_classified.csv": {
+      "checksum": "81bf6ce22660347089a31654b31e98e3"
+    },
+    "Proposal.R": {
+      "checksum": "75d8666e6454463b03cdfa22b3d4d410"
+    },
     "R/binary_module.R": {
-      "checksum": "a31437c06ff08a5c1c869ffec83474dc"
+      "checksum": "b052cbebe99f1f252ae1059a8485340c"
     },
     "R/categorical_module.R": {
-      "checksum": "3f824d48422272209ffbe851443c3ba3"
+      "checksum": "82f8186d8ae410b80faf0f8de3dbbf06"
     },
     "R/data_loader.R": {
-      "checksum": "3af742869dff69d1856e9fc130ad1592"
+      "checksum": "abfbd0af9abb679154b649561afb1cce"
     },
     "R/global_theme.R": {
       "checksum": "960fc0f87375fadb3e99587a275e4d8c"
     },
     "R/interval_module.R": {
-      "checksum": "b524ea57edc4eb616e40030710d8905e"
+      "checksum": "6e3cde17af0b815c4a5c4827d5810aac"
     },
     "R/nominal_module.R": {
-      "checksum": "4af03a7f821dbb449c3d285d39a9960c"
+      "checksum": "15c8d38a224cdba2bc086aa50ad44d48"
     },
     "R/ordinal_module.R": {
-      "checksum": "a6c6889cfae8dd2343804f6b5ba65395"
+      "checksum": "366e01329120704661ce7ed940c8ad3d"
     },
     "R/question_classifier.R": {
       "checksum": "30e2eb244c5488dd5f07e5751984efeb"
     },
     "R/razon_module.R": {
-      "checksum": "bbd98490f92e43c31408ba1f4a160de7"
+      "checksum": "90e6abae1e2b89106b7549df7f31299f"
     },
     "R/server.R": {
-      "checksum": "b3b62a41a522a065291d350d5d54903c"
+      "checksum": "ffdcd468483d04bb71abfc11ae927040"
+    },
+    "R/survey_config.R": {
+      "checksum": "5ac8055c2393028045b6483b4b245965"
+    },
+    "R/theme_modules/services_module.r": {
+      "checksum": "c05a0fec895c9a46651b46155538d1c5"
     },
     "R/ui.R": {
-      "checksum": "0755949a3d526e52f5b61a9e047f3559"
+      "checksum": "9d71510e48a008a853c2d5ccf2e13c4c"
+    },
+    "R/utils.R": {
+      "checksum": "caf202f8fa5ade5565fa07340857fc71"
     },
     "README.md": {
       "checksum": "9343d232581bcc020ba4e595a406def6"
     },
     "renv.lock": {
-      "checksum": "dd30b54f8a9980639f6721c3fa95f0a8"
+      "checksum": "7e78655e8a9c7239b09eda8adcad211c"
+    },
+    "Reporte de Validación.docx": {
+      "checksum": "9bbeb3d8839fe2dd3c7b93ae400686a1"
     }
   },
   "users": null
