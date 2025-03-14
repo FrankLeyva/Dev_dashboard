@@ -1,7 +1,15 @@
 server <- function(input, output, session) {
   data <- reactive({
     req(input$survey_selector)
-    load_survey_data(input$survey_selector)
+    survey_data <- load_survey_data(input$survey_selector)
+    
+    # Add logging to help with debugging
+    message(paste("Loaded survey:", input$survey_selector))
+    message(paste("Number of rows:", nrow(survey_data$responses)))
+    message(paste("Number of columns:", ncol(survey_data$responses)))
+    message(paste("Column names sample:", paste(head(names(survey_data$responses), 5), collapse=", ")))
+    
+    return(survey_data)
   })
   
   geo_data <- reactive({
@@ -14,14 +22,12 @@ server <- function(input, output, session) {
   })
 
   output$survey_name <- renderText({
-    if (input$survey_selector == "PAR_A_2023") {
-      "Participación Ciudadana A (PAR 2023)"
-    } else if (input$survey_selector == "PER_A_2023"){
-      "Percepción Ciudadana A (PER 2023)"
-    } else if (input$survey_selector == "PAR_B_2023"){
-      "Participación Ciudadana B (PAR 2023)"
-    } else if (input$survey_selector == "PER_B_2023"){
-      "Percepción Ciudadana B (PER 2023)"
+    if (input$survey_selector == "PAR_2023") {
+      "2023 Participación Ciudadana (PAR 2023)"
+    } else if (input$survey_selector == "PER_2023"){
+      "2023 Percepción Ciudadana (PER 2023)"
+    } else if (input$survey_selector == "PER_2024"){
+      "2024 Percepción Ciudadana (PER 2024)"
     }
   })
   observeEvent(input$survey_selector, {
@@ -127,9 +133,9 @@ server <- function(input, output, session) {
       razonServer(
         "razon_test",
         data = reactive(data()$responses),
-        metadata = reactive(data()$metadata),
         selected_question = selected_question,
-        geo_data = geo_data
+        geo_data = geo_data,
+        metadata = reactive(data()$metadata)
       )
     } else if(input$test_module == "intervalo") {
       intervalServer(

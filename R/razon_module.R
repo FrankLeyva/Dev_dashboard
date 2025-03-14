@@ -1,34 +1,71 @@
 prepare_razon_data <- function(data, question_id, metadata) {
-  # Ensure required columns exist
-  required_cols <- c(question_id, "Q2", "Q101", "Q103")
+  # Get the column mapping from attributes
+  col_mapping <- attr(data, "col_mapping")
   
-  if (!all(required_cols %in% names(data))) {
-    stop("Missing required columns: ", 
-         paste(required_cols[!required_cols %in% names(data)], collapse = ", "))
+  # Function to get the actual column name for a given question ID
+  get_col_name <- function(q_id) {
+    if (!is.null(col_mapping) && q_id %in% names(col_mapping)) {
+      return(col_mapping[[q_id]])
+    } else if (q_id %in% names(data)) {
+      return(q_id)
+    } else {
+      message(paste("Warning: Column", q_id, "not found in the dataset"))
+      return(NULL)
+    }
+  }
+  
+  # Get the actual column name for the question
+  actual_q_col <- get_col_name(question_id)
+  
+  if (is.null(actual_q_col)) {
+    stop(paste("Question column", question_id, "not found in the dataset"))
+  }
+  
+  # Check if required standardized columns exist
+  if (!all(c("DISTRICT", "GENDER", "AGE_GROUP") %in% names(data))) {
+    stop("Missing required standardized columns: DISTRICT, GENDER, AGE_GROUP")
   }
   
   # Create dataset with only required columns
   subset_data <- data %>%
     select(
-      value = all_of(question_id),
+      value = all_of(actual_q_col),
       district = DISTRICT,  
       gender = GENDER,      
       age_group = AGE_GROUP 
     ) %>%
-    # Remove NA values
-    filter(!is.na(value)) %>%
-    # Convert to numeric if not already
+    # Convert to numeric safely
     mutate(
-      value = as.numeric(value),
+      value = as.numeric(as.character(value))
+    ) %>%
+    # Remove NA values after conversion
+    filter(!is.na(value)) %>%
+    # Convert categorical variables to factors
+    mutate(
       district = as.factor(district),
       gender = as.factor(gender),
       age_group = as.factor(age_group)
     )
-    attr(subset_data, "question_label") <- get_question_label(question_id, metadata)
-
+    
+  attr(subset_data, "question_label") <- get_question_label(question_id, metadata)
+  
   return(subset_data)
 }
+
 find_mode <- function(x) {
+  # Safely handle empty or all-NA input
+  if(length(x) == 0 || all(is.na(x))) {
+    return(NA)
+  }
+  
+  # Remove NA values
+  x <- x[!is.na(x)]
+  
+  # Return mode or NA if still empty
+  if(length(x) == 0) {
+    return(NA)
+  }
+  
   u <- unique(x)
   tab <- tabulate(match(x, u))
   u[tab == max(tab)]
@@ -36,6 +73,15 @@ find_mode <- function(x) {
 
 # Add these helper functions at the top
 calculate_district_means <- function(data) {
+  # Handle empty dataframe
+  if(nrow(data) == 0) {
+    return(data.frame(
+      district = character(),
+      mean_value = numeric(),
+      sd_value = numeric()
+    ))
+  }
+  
   data %>%
     group_by(district) %>%
     summarise(
@@ -46,6 +92,15 @@ calculate_district_means <- function(data) {
 }
 
 calculate_age_distribution <- function(data) {
+  # Handle empty dataframe
+  if(nrow(data) == 0) {
+    return(data.frame(
+      age_group = character(),
+      mean_value = numeric(),
+      count = integer()
+    ))
+  }
+  
   data %>%
     group_by(age_group) %>%
     summarise(
@@ -57,6 +112,15 @@ calculate_age_distribution <- function(data) {
 }
 
 calculate_gender_district_stats <- function(data) {
+  # Handle empty dataframe
+  if(nrow(data) == 0) {
+    return(data.frame(
+      district = character(),
+      Hombre = numeric(),
+      Mujer = numeric()
+    ))
+  }
+  
   data %>%
     group_by(district, gender) %>%
     summarise(
@@ -68,12 +132,20 @@ calculate_gender_district_stats <- function(data) {
       values_from = mean_value
     )
 }
+
 create_histogram <- function(data, bins = 30, title = NULL) {
+  # Check for empty data
+  if(nrow(data) == 0) {
+    return(plotly_empty() %>% 
+             layout(title = "No hay datos suficientes para visualizar"))
+  }
+  
   question_label <- attr(data, "question_label")
   # If no title provided, use the question label
   if (is.null(title)) {
     title <- paste("Distribución de", question_label)
   }
+  
   plot_ly(
     data = data,
     x = ~value,
@@ -93,8 +165,14 @@ create_histogram <- function(data, bins = 30, title = NULL) {
       ylab = "Frecuencia"
     )
 }
+
 create_district_map <- function(data, geo_data) {
-  req(data, geo_data)
+  # Check inputs
+  if(is.null(data) || nrow(data) == 0 || is.null(geo_data)) {
+    return(leaflet() %>% 
+             addTiles() %>%
+             addControl("No hay datos suficientes para visualizar", position = "topright"))
+  }
 
   district_stats <- data %>%
     group_by(district) %>%
@@ -113,32 +191,41 @@ create_district_map <- function(data, geo_data) {
   # Create map
   leaflet(geo_data) %>%
     addTiles() %>% 
-    addPolygons(,
+    addPolygons(
       fillOpacity = 0.7,
       weight = 1,
-      color = theme_config$palette$district[match(geo_data$No_Distrit, district_stats$district)],
+      color = ~pal(district_stats$mean_value[match(No_Distrit, district_stats$district)]),
       dashArray = "3",
       highlight = highlightOptions(
         weight = 2,
-        color = theme_config$palette$district,
+        color = "#666666",
         dashArray = "",
         fillOpacity = 0.7,
         bringToFront = TRUE
       ),
       label = ~sprintf(
         "Distrito: %s<br>Promedio: %.2f<br>N: %d",
-        district_stats$district[match(geo_data$No_Distrit, district_stats$district)],
-        district_stats$mean_value[match(geo_data$No_Distrit, district_stats$district)],
-        district_stats$n[match(geo_data$No_Distrit, district_stats$district)]
+        district_stats$district[match(No_Distrit, district_stats$district)],
+        district_stats$mean_value[match(No_Distrit, district_stats$district)],
+        district_stats$n[match(No_Distrit, district_stats$district)]
       ) %>% lapply(HTML)
     )
 }
 
 
 create_ridge_plot <- function(data, title = NULL) {
+  # Check for empty data
+  if(nrow(data) == 0) {
+    return(ggplot() + 
+             ggtitle("No hay datos suficientes para visualizar") +
+             theme_minimal())
+  }
+  
   # Check if we have ggridges
   if (!requireNamespace("ggridges", quietly = TRUE)) {
-    stop("Package 'ggridges' is required for this visualization. Please install it with install.packages('ggridges')")
+    return(ggplot() + 
+             ggtitle("Package 'ggridges' is required for this visualization") +
+             theme_minimal())
   }
   
   question_label <- attr(data, "question_label")
@@ -239,7 +326,7 @@ razonUI <- function(id) {
 }
 
 
-razonServer <- function(id, data, selected_question, geo_data, metadata) {
+razonServer <- function(id, data, metadata, selected_question, geo_data) {
   moduleServer(id, function(input, output, session) {
      
     # Reactive dataset preparation
@@ -252,7 +339,8 @@ razonServer <- function(id, data, selected_question, geo_data, metadata) {
           return(NULL)
         }
         
-        prepare_razon_data(data(), selected_question(), metadata())
+        result <- prepare_razon_data(data(), selected_question(), metadata())
+        return(result)
       }, error = function(e) {
         warning(paste("Error in prepared_data:", e$message))
         return(NULL)
@@ -261,6 +349,14 @@ razonServer <- function(id, data, selected_question, geo_data, metadata) {
 
     observe({
       req(prepared_data())
+      
+      if (is.null(prepared_data()) || nrow(prepared_data()) == 0) {
+        # If no data, just set empty choices
+        updateSelectInput(session, "district_filter", choices = character(0))
+        updateSelectInput(session, "gender_filter", choices = character(0))
+        updateSelectInput(session, "age_filter", choices = character(0))
+        return()
+      }
       
       updateSelectInput(session, "district_filter",
         choices = unique(prepared_data()$district),
@@ -277,8 +373,13 @@ razonServer <- function(id, data, selected_question, geo_data, metadata) {
         selected = character(0)
       )
     })
+    
     filtered_data <- reactive({
       data <- prepared_data()
+      
+      if (is.null(data) || nrow(data) == 0) {
+        return(data)
+      }
       
       if (length(input$district_filter) > 0) {
         data <- data %>% filter(district %in% input$district_filter)
@@ -305,21 +406,27 @@ razonServer <- function(id, data, selected_question, geo_data, metadata) {
         "age_bars" = plotlyOutput(session$ns("age_bars_plot")),
         "gender_dumbbell" = plotlyOutput(session$ns("gender_dumbbell_plot")),
         "bars" = plotlyOutput(session$ns("bar_plot")),
-        "ridge_plot" = plotOutput(session$ns("ridge_plot"), height = "600px")  # Add this line
-
+        "ridge_plot" = plotOutput(session$ns("ridge_plot"), height = "600px")
       )
     })
     
     # Statistical Summary
     output$summary_stats <- renderPrint({
+      data <- filtered_data()
+      
+      if (is.null(data) || nrow(data) == 0) {
+        cat("No hay datos disponibles para visualizar.\n")
+        return()
+      }
+      
       stats <- list(
-        total_responses = length(filtered_data()$value),
-        mode = find_mode(filtered_data()$value),
-        mean = mean(filtered_data()$value, na.rm = TRUE),
-        median = median(filtered_data()$value, na.rm = TRUE),
-        sd = sd(filtered_data()$value, na.rm = TRUE),
-        unique_categories = length(unique(filtered_data()$value)),
-        missing = sum(is.na(filtered_data()$value))
+        total_responses = length(data$value),
+        mode = find_mode(data$value),
+        mean = mean(data$value, na.rm = TRUE),
+        median = median(data$value, na.rm = TRUE),
+        sd = sd(data$value, na.rm = TRUE),
+        unique_categories = length(unique(data$value)),
+        missing = sum(is.na(data$value))
       )
       
       cat("Estadísticas:\n")
@@ -335,15 +442,22 @@ razonServer <- function(id, data, selected_question, geo_data, metadata) {
     # Histogram
     output$histogram_plot <- renderPlotly({
       req(filtered_data())
-      create_histogram(filtered_data(), bins = input$bins)
+      create_histogram(filtered_data(), bins = 30)
     })
+    
     output$ridge_plot <- renderPlot({
       req(filtered_data())
       create_ridge_plot(filtered_data())
     })
 
-
-     output$age_bars_plot <- renderPlotly({
+    output$age_bars_plot <- renderPlotly({
+      req(filtered_data())
+      
+      if (nrow(filtered_data()) == 0) {
+        return(plotly_empty() %>% 
+                layout(title = "No hay datos suficientes para visualizar"))
+      }
+      
       age_stats <- calculate_age_distribution(filtered_data())
       
       plot_ly(
@@ -364,13 +478,26 @@ razonServer <- function(id, data, selected_question, geo_data, metadata) {
     
     # Gender dumbbell plot
     output$gender_dumbbell_plot <- renderPlotly({
+      req(filtered_data())
+      
+      if (nrow(filtered_data()) == 0) {
+        return(plotly_empty() %>% 
+                layout(title = "No hay datos suficientes para visualizar"))
+      }
+      
       gender_stats <- calculate_gender_district_stats(filtered_data())
+      
+      # Check if we have necessary columns
+      if (!"Hombre" %in% names(gender_stats) || !"Mujer" %in% names(gender_stats)) {
+        return(plotly_empty() %>% 
+                layout(title = "Faltan datos de género para visualizar"))
+      }
       
       # Create traces for each gender
       p <- plot_ly() %>%
         add_trace(
           data = gender_stats,
-          x = ~`Hombre`,
+          x = ~Hombre,
           y = ~district,
           name = "Hombre",
           type = "scatter",
@@ -379,7 +506,7 @@ razonServer <- function(id, data, selected_question, geo_data, metadata) {
         ) %>%
         add_trace(
           data = gender_stats,
-          x = ~`Mujer`,
+          x = ~Mujer,
           y = ~district,
           name = "Mujer",
           type = "scatter",
@@ -389,14 +516,16 @@ razonServer <- function(id, data, selected_question, geo_data, metadata) {
       
       # Add connecting lines
       for(i in 1:nrow(gender_stats)) {
-        p <- add_segments(p,
-          x = gender_stats$Hombre[i],
-          xend = gender_stats$Mujer[i],
-          y = gender_stats$district[i],
-          yend = gender_stats$district[i],
-          line = list(color = theme_config$colors$neutral),
-          showlegend = FALSE
-        )
+        if (!is.na(gender_stats$Hombre[i]) && !is.na(gender_stats$Mujer[i])) {
+          p <- add_segments(p,
+            x = gender_stats$Hombre[i],
+            xend = gender_stats$Mujer[i],
+            y = gender_stats$district[i],
+            yend = gender_stats$district[i],
+            line = list(color = theme_config$colors$neutral),
+            showlegend = FALSE
+          )
+        }
       }
       
       p %>% apply_plotly_theme(
@@ -409,6 +538,13 @@ razonServer <- function(id, data, selected_question, geo_data, metadata) {
     
     # Bar plot using the plot_functions from global_theme
     output$bar_plot <- renderPlotly({
+      req(filtered_data())
+      
+      if (nrow(filtered_data()) == 0) {
+        return(plotly_empty() %>% 
+                layout(title = "No hay datos suficientes para visualizar"))
+      }
+      
       district_means <- calculate_district_means(filtered_data())
       
       plot_functions$bar(
@@ -422,6 +558,7 @@ razonServer <- function(id, data, selected_question, geo_data, metadata) {
         color_by = 'district'
       )
     })
+    
     output$district_map <- renderLeaflet({
       req(filtered_data(), geo_data())
       create_district_map(filtered_data(), geo_data())
