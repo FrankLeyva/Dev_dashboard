@@ -312,6 +312,18 @@ razonUI <- function(id) {
               )
             )
           ), 
+          
+          # Add download buttons for summary statistics
+          conditionalPanel(
+            condition = sprintf("input['%s'] == 'summary'", ns("plot_type")),
+            div(
+              style = "margin-top: 15px;",
+              downloadButton(ns("download_summary_csv"), "Descargar Resumen (CSV)"),
+              br(),
+              br(),
+              downloadButton(ns("download_summary_excel"), "Descargar Resumen (Excel)")
+            )
+          )
         )
       )
     ),
@@ -326,7 +338,7 @@ razonUI <- function(id) {
 }
 
 
-razonServer <- function(id, data, metadata, selected_question, geo_data) {
+razonServer <- function(id, data, selected_question, geo_data, metadata) {
   moduleServer(id, function(input, output, session) {
      
     # Reactive dataset preparation
@@ -339,8 +351,7 @@ razonServer <- function(id, data, metadata, selected_question, geo_data) {
           return(NULL)
         }
         
-        result <- prepare_razon_data(data(), selected_question(), metadata())
-        return(result)
+        prepare_razon_data(data(), selected_question(), metadata())
       }, error = function(e) {
         warning(paste("Error in prepared_data:", e$message))
         return(NULL)
@@ -349,14 +360,6 @@ razonServer <- function(id, data, metadata, selected_question, geo_data) {
 
     observe({
       req(prepared_data())
-      
-      if (is.null(prepared_data()) || nrow(prepared_data()) == 0) {
-        # If no data, just set empty choices
-        updateSelectInput(session, "district_filter", choices = character(0))
-        updateSelectInput(session, "gender_filter", choices = character(0))
-        updateSelectInput(session, "age_filter", choices = character(0))
-        return()
-      }
       
       updateSelectInput(session, "district_filter",
         choices = unique(prepared_data()$district),
@@ -376,10 +379,6 @@ razonServer <- function(id, data, metadata, selected_question, geo_data) {
     
     filtered_data <- reactive({
       data <- prepared_data()
-      
-      if (is.null(data) || nrow(data) == 0) {
-        return(data)
-      }
       
       if (length(input$district_filter) > 0) {
         data <- data %>% filter(district %in% input$district_filter)
@@ -410,39 +409,240 @@ razonServer <- function(id, data, metadata, selected_question, geo_data) {
       )
     })
     
-    # Statistical Summary
+    # Enhanced Statistical Summary
     output$summary_stats <- renderPrint({
       data <- filtered_data()
       
-      if (is.null(data) || nrow(data) == 0) {
-        cat("No hay datos disponibles para visualizar.\n")
-        return()
+      # Create initial stats
+      total_responses <- nrow(data)
+      missing_values <- sum(is.na(data$value))
+      valid_responses <- total_responses - missing_values
+      
+      cat("Estadísticas para Datos de Razón:\n")
+      cat("\nDistribución de Respuestas:\n")
+      cat("Total de respuestas:", total_responses, "\n")
+      cat("Respuestas válidas:", valid_responses, "\n")
+      cat("Datos faltantes:", missing_values, 
+          sprintf("(%.1f%%)", 100 * missing_values/total_responses), "\n")
+      
+      # Overall statistics
+      cat("\nEstadísticas Generales:\n")
+      cat("Media:", round(mean(data$value, na.rm = TRUE), 2), "\n")
+      cat("Mediana:", median(data$value, na.rm = TRUE), "\n")
+      cat("Desviación Estándar:", round(sd(data$value, na.rm = TRUE), 2), "\n")
+      cat("Mínimo:", min(data$value, na.rm = TRUE), "\n")
+      cat("Máximo:", max(data$value, na.rm = TRUE), "\n")
+      
+      # Find mode
+      mode_values <- find_mode(data$value)
+      if (length(mode_values) > 0) {
+        cat("Moda:", paste(mode_values, collapse = ", "), "\n")
+      } else {
+        cat("Moda: No definida\n")
       }
       
-      stats <- list(
-        total_responses = length(data$value),
-        mode = find_mode(data$value),
-        mean = mean(data$value, na.rm = TRUE),
-        median = median(data$value, na.rm = TRUE),
-        sd = sd(data$value, na.rm = TRUE),
-        unique_categories = length(unique(data$value)),
-        missing = sum(is.na(data$value))
-      )
+      # Frequency distribution
+      freq_table <- table(data$value)
+      if (length(freq_table) <= 30) {  # Only display if not too many values
+        cat("\nDistribución de Frecuencias:\n")
+        freq_df <- data.frame(
+          Valor = names(freq_table),
+          Frecuencia = as.vector(freq_table),
+          Porcentaje = round(100 * as.vector(freq_table) / sum(freq_table), 2)
+        )
+        print(freq_df[order(-freq_df$Frecuencia), ])
+      } else {
+        cat("\nDistribución de Frecuencias: Demasiados valores únicos (", length(freq_table), ") para mostrar tabla.\n")
+      }
       
-      cat("Estadísticas:\n")
-      cat("Total de respuestas:", stats$total_responses, "\n")
-      cat("Moda:", stats$mode, "\n")
-      cat("Media:", round(stats$mean, 2), "\n")
-      cat("Mediana:", stats$median, "\n")
-      cat("Desviación Estándar:", round(stats$sd, 2), "\n")
-      cat("Categorías únicas:", stats$unique_categories, "\n")
-      cat("Datos faltantes:", stats$missing, "\n")
+      # Statistics by district
+      cat("\nEstadísticas por Distrito:\n")
+      district_stats <- data %>%
+        group_by(district) %>%
+        summarise(
+          n = n(),
+          Media = round(mean(value, na.rm = TRUE), 2),
+          Mediana = median(value, na.rm = TRUE),
+          DE = round(sd(value, na.rm = TRUE), 2),
+          Min = min(value, na.rm = TRUE),
+          Max = max(value, na.rm = TRUE),
+          .groups = 'drop'
+        )
+      print(district_stats)
+      
+      # Statistics by gender
+      cat("\nEstadísticas por Género:\n")
+      gender_stats <- data %>%
+        group_by(gender) %>%
+        summarise(
+          n = n(),
+          Media = round(mean(value, na.rm = TRUE), 2),
+          Mediana = median(value, na.rm = TRUE),
+          DE = round(sd(value, na.rm = TRUE), 2),
+          Min = min(value, na.rm = TRUE),
+          Max = max(value, na.rm = TRUE),
+          .groups = 'drop'
+        )
+      print(gender_stats)
+      
+      # Statistics by age group
+      cat("\nEstadísticas por Grupo de Edad:\n")
+      age_stats <- data %>%
+        group_by(age_group) %>%
+        summarise(
+          n = n(),
+          Media = round(mean(value, na.rm = TRUE), 2),
+          Mediana = median(value, na.rm = TRUE),
+          DE = round(sd(value, na.rm = TRUE), 2),
+          Min = min(value, na.rm = TRUE),
+          Max = max(value, na.rm = TRUE),
+          .groups = 'drop'
+        )
+      print(age_stats)
     })
     
-    # Histogram
+    # Generate summary tables for download
+    summary_tables <- reactive({
+      data <- filtered_data()
+      
+      # Create overall statistics table
+      overall_stats <- data.frame(
+        Statistic = c("Media", "Mediana", "Desviación Estándar", "Mínimo", "Máximo", "N"),
+        Value = c(
+          round(mean(data$value, na.rm = TRUE), 2),
+          median(data$value, na.rm = TRUE),
+          round(sd(data$value, na.rm = TRUE), 2),
+          min(data$value, na.rm = TRUE),
+          max(data$value, na.rm = TRUE),
+          nrow(data)
+        )
+      )
+      
+      # Calculate district statistics
+      district_stats <- data %>%
+        group_by(district) %>%
+        summarise(
+          n = n(),
+          Media = round(mean(value, na.rm = TRUE), 2),
+          Mediana = median(value, na.rm = TRUE),
+          DE = round(sd(value, na.rm = TRUE), 2),
+          Min = min(value, na.rm = TRUE),
+          Max = max(value, na.rm = TRUE),
+          .groups = 'drop'
+        )
+      
+      # Calculate gender statistics
+      gender_stats <- data %>%
+        group_by(gender) %>%
+        summarise(
+          n = n(),
+          Media = round(mean(value, na.rm = TRUE), 2),
+          Mediana = median(value, na.rm = TRUE),
+          DE = round(sd(value, na.rm = TRUE), 2),
+          Min = min(value, na.rm = TRUE),
+          Max = max(value, na.rm = TRUE),
+          .groups = 'drop'
+        )
+      
+      # Calculate age group statistics
+      age_stats <- data %>%
+        group_by(age_group) %>%
+        summarise(
+          n = n(),
+          Media = round(mean(value, na.rm = TRUE), 2),
+          Mediana = median(value, na.rm = TRUE),
+          DE = round(sd(value, na.rm = TRUE), 2),
+          Min = min(value, na.rm = TRUE),
+          Max = max(value, na.rm = TRUE),
+          .groups = 'drop'
+        )
+      
+      # Create frequency table
+      freq_table <- as.data.frame(table(data$value))
+      names(freq_table) <- c("Valor", "Frecuencia")
+      freq_table$Porcentaje <- round(100 * freq_table$Frecuencia / sum(freq_table$Frecuencia), 2)
+      
+      return(list(
+        overall = overall_stats,
+        district = district_stats,
+        gender = gender_stats,
+        age = age_stats,
+        frequency = freq_table
+      ))
+    })
+    
+    # CSV download handler
+    output$download_summary_csv <- downloadHandler(
+      filename = function() {
+        paste0("resumen_", selected_question(), "_", Sys.Date(), ".zip")
+      },
+      content = function(file) {
+        summaries <- summary_tables()
+        
+        # Create temporary directory for files
+        temp_dir <- tempdir()
+        
+        # Write each summary to a CSV file
+        write.csv(summaries$overall, file.path(temp_dir, "estadisticas_generales.csv"), row.names = FALSE)
+        write.csv(summaries$district, file.path(temp_dir, "estadisticas_por_distrito.csv"), row.names = FALSE)
+        write.csv(summaries$gender, file.path(temp_dir, "estadisticas_por_genero.csv"), row.names = FALSE)
+        write.csv(summaries$age, file.path(temp_dir, "estadisticas_por_edad.csv"), row.names = FALSE)
+        write.csv(summaries$frequency, file.path(temp_dir, "tabla_frecuencias.csv"), row.names = FALSE)
+        
+        # Create zip file with all CSVs
+        files_to_zip <- c(
+          file.path(temp_dir, "estadisticas_generales.csv"),
+          file.path(temp_dir, "estadisticas_por_distrito.csv"),
+          file.path(temp_dir, "estadisticas_por_genero.csv"),
+          file.path(temp_dir, "estadisticas_por_edad.csv"),
+          file.path(temp_dir, "tabla_frecuencias.csv")
+        )
+        
+        zip(file, files_to_zip)
+      }
+    )
+    
+    # Excel download handler
+    output$download_summary_excel <- downloadHandler(
+      filename = function() {
+        paste0("resumen_", selected_question(), "_", Sys.Date(), ".xlsx")
+      },
+      content = function(file) {
+        summaries <- summary_tables()
+        
+        if (!requireNamespace("openxlsx", quietly = TRUE)) {
+          # Fall back to csv if openxlsx is not available
+          write.csv(summaries$overall, file)
+          return()
+        }
+        
+        # Create workbook and add worksheets
+        wb <- openxlsx::createWorkbook()
+        
+        openxlsx::addWorksheet(wb, "Estadísticas Generales")
+        openxlsx::writeData(wb, "Estadísticas Generales", summaries$overall)
+        
+        openxlsx::addWorksheet(wb, "Por Distrito")
+        openxlsx::writeData(wb, "Por Distrito", summaries$district)
+        
+        openxlsx::addWorksheet(wb, "Por Género")
+        openxlsx::writeData(wb, "Por Género", summaries$gender)
+        
+        openxlsx::addWorksheet(wb, "Por Grupo de Edad")
+        openxlsx::writeData(wb, "Por Grupo de Edad", summaries$age)
+        
+        openxlsx::addWorksheet(wb, "Tabla de Frecuencias")
+        openxlsx::writeData(wb, "Tabla de Frecuencias", summaries$frequency)
+        
+        # Save workbook
+        openxlsx::saveWorkbook(wb, file, overwrite = TRUE)
+      }
+    )
+    
+    # Keep the existing plot outputs
     output$histogram_plot <- renderPlotly({
       req(filtered_data())
-      create_histogram(filtered_data(), bins = 30)
+      create_histogram(filtered_data())
     })
     
     output$ridge_plot <- renderPlot({
@@ -451,13 +651,6 @@ razonServer <- function(id, data, metadata, selected_question, geo_data) {
     })
 
     output$age_bars_plot <- renderPlotly({
-      req(filtered_data())
-      
-      if (nrow(filtered_data()) == 0) {
-        return(plotly_empty() %>% 
-                layout(title = "No hay datos suficientes para visualizar"))
-      }
-      
       age_stats <- calculate_age_distribution(filtered_data())
       
       plot_ly(
@@ -478,26 +671,13 @@ razonServer <- function(id, data, metadata, selected_question, geo_data) {
     
     # Gender dumbbell plot
     output$gender_dumbbell_plot <- renderPlotly({
-      req(filtered_data())
-      
-      if (nrow(filtered_data()) == 0) {
-        return(plotly_empty() %>% 
-                layout(title = "No hay datos suficientes para visualizar"))
-      }
-      
       gender_stats <- calculate_gender_district_stats(filtered_data())
-      
-      # Check if we have necessary columns
-      if (!"Hombre" %in% names(gender_stats) || !"Mujer" %in% names(gender_stats)) {
-        return(plotly_empty() %>% 
-                layout(title = "Faltan datos de género para visualizar"))
-      }
       
       # Create traces for each gender
       p <- plot_ly() %>%
         add_trace(
           data = gender_stats,
-          x = ~Hombre,
+          x = ~`Hombre`,
           y = ~district,
           name = "Hombre",
           type = "scatter",
@@ -506,7 +686,7 @@ razonServer <- function(id, data, metadata, selected_question, geo_data) {
         ) %>%
         add_trace(
           data = gender_stats,
-          x = ~Mujer,
+          x = ~`Mujer`,
           y = ~district,
           name = "Mujer",
           type = "scatter",
@@ -516,16 +696,14 @@ razonServer <- function(id, data, metadata, selected_question, geo_data) {
       
       # Add connecting lines
       for(i in 1:nrow(gender_stats)) {
-        if (!is.na(gender_stats$Hombre[i]) && !is.na(gender_stats$Mujer[i])) {
-          p <- add_segments(p,
-            x = gender_stats$Hombre[i],
-            xend = gender_stats$Mujer[i],
-            y = gender_stats$district[i],
-            yend = gender_stats$district[i],
-            line = list(color = theme_config$colors$neutral),
-            showlegend = FALSE
-          )
-        }
+        p <- add_segments(p,
+          x = gender_stats$Hombre[i],
+          xend = gender_stats$Mujer[i],
+          y = gender_stats$district[i],
+          yend = gender_stats$district[i],
+          line = list(color = theme_config$colors$neutral),
+          showlegend = FALSE
+        )
       }
       
       p %>% apply_plotly_theme(
@@ -538,13 +716,6 @@ razonServer <- function(id, data, metadata, selected_question, geo_data) {
     
     # Bar plot using the plot_functions from global_theme
     output$bar_plot <- renderPlotly({
-      req(filtered_data())
-      
-      if (nrow(filtered_data()) == 0) {
-        return(plotly_empty() %>% 
-                layout(title = "No hay datos suficientes para visualizar"))
-      }
-      
       district_means <- calculate_district_means(filtered_data())
       
       plot_functions$bar(

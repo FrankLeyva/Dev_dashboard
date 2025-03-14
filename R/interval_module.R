@@ -888,6 +888,21 @@ intervalUI <- function(id) {
               "Resaltar valores extremos",
               value = TRUE
             )
+          ),
+          conditionalPanel(
+            condition = sprintf("input['%s'] == 'summary'", ns("plot_type")),
+            checkboxInput(
+              ns("omit_11"),
+              "Omitir valores de 11",
+              value = FALSE
+            ),
+            div(
+              style = "margin-top: 15px;",
+              downloadButton(ns("download_summary_csv"), "Descargar Resumen (CSV)"),
+              br(),
+              br(),
+              downloadButton(ns("download_summary_excel"), "Descargar Resumen (Excel)")
+            )
           )
           )
         )
@@ -906,19 +921,14 @@ intervalServer <- function(id, data, metadata, selected_question, geo_data) {
   moduleServer(id, function(input, output, session) {
     # Initial data preparation with metadata
     prepared_data <- reactive({
-      tryCatch({
-        req(data(), selected_question(), metadata())
-        
-        # Add validation
-        if (is.null(selected_question()) || selected_question() == "") {
-          return(NULL)
-        }
-        
-        prepare_interval_data(data(), selected_question(), metadata())
-      }, error = function(e) {
-        warning(paste("Error in prepared_data:", e$message))
+      req(data(), selected_question(), metadata())
+      
+      # Add validation
+      if (is.null(selected_question()) || selected_question() == "") {
         return(NULL)
-      })
+      }
+      
+      prepare_interval_data(data(), selected_question(), metadata())
     })
     
     # Update filter choices
@@ -942,46 +952,36 @@ intervalServer <- function(id, data, metadata, selected_question, geo_data) {
         selected = character(0)
       )
     })
-# Update the observe block in intervalServer
-observe({
-  req(prepared_data())
-  data <- prepared_data()
-  
-  if(is.null(data) || nrow(data) == 0) {
-    return()
-  }
-  
-  # Get unique response values and their labels
-  value_labels <- attr(data, "value_labels")
-  unique_values <- unique(data$value_num)
-  unique_values <- sort(unique_values[!is.na(unique_values)])
-  
-  # Create choices with labels if available
-  choices <- list()
-  for(val in unique_values) {
-    display_text <- as.character(val)
-    if(!is.null(value_labels) && as.character(val) %in% names(value_labels)) {
-      display_text <- paste0(val, " = ", value_labels[as.character(val)])
-    }
-    choices[[display_text]] <- val
-  }
-  
-  # Update the choices
-  updateCheckboxGroupInput(session, "map_responses", 
-                           choices = choices,
-                           selected = NULL)
-  
-  # For question 4, pre-select options 1 and 2 for "Empeorado mucho/algo"
-  if(selected_question() == "Q4") {
-    default_selected <- c("1", "2")
-    valid_options <- intersect(default_selected, as.character(unique_values))
-    if(length(valid_options) > 0) {
+    observe({
+      req(prepared_data())
+      data <- prepared_data()
+      
+      if(is.null(data) || nrow(data) == 0) {
+        return()
+      }
+      
+      # Get unique response values and their labels
+      value_labels <- attr(data, "value_labels")
+      unique_values <- unique(data$value_num)
+      unique_values <- sort(unique_values[!is.na(unique_values)])
+      
+      # Create choices with labels if available
+      choices <- list()
+      for(val in unique_values) {
+        display_text <- as.character(val)
+        if(!is.null(value_labels) && as.character(val) %in% names(value_labels)) {
+          display_text <- paste0(val, " = ", value_labels[as.character(val)])
+        }
+        choices[[display_text]] <- val
+      }
+      
+      # Update the choices
       updateCheckboxGroupInput(session, "map_responses", 
-                              selected = valid_options)
-    }
-  }
-})
-    # Filtered data reactive
+                               choices = choices,
+                               selected = NULL)
+    })
+    
+    # Filtered data reactive - UPDATED to handle omit_11 toggle
     filtered_data <- reactive({
       data <- prepared_data()
       
@@ -995,6 +995,11 @@ observe({
       
       if (length(input$age_filter) > 0) {
         data <- data %>% filter(age_group %in% input$age_filter)
+      }
+      
+      # Add filter for omitting values of 11
+      if (input$omit_11 && "value_num" %in% names(data)) {
+        data <- data %>% filter(value_num != 11)
       }
       
       data
@@ -1015,6 +1020,7 @@ observe({
       )
     })
 
+    # ENHANCED summary statistics 
     output$summary_stats <- renderPrint({
       data <- filtered_data()
       
@@ -1034,119 +1040,298 @@ observe({
       cat("Datos faltantes:", missing_count,
           sprintf("(%.1f%%)", 100 * missing_count/total_responses), "\n")
       
-      if(is.factor(data$value)) {
-        # For labeled data, show frequency distribution with factor levels
-        cat("\nDistribución de valores (con etiquetas):\n")
-        print(table(data$value))
-        
-        # Calculate and display mode as factor level
-        mode_value <- names(which.max(table(data$value)))
-        
-        # Calculate statistics on numeric values
-        numeric_values <- get_numeric_values(data)
-        
-        cat("\nEstadísticas:\n")
-        cat("Moda (respuesta más común):", mode_value, "\n")
-        cat("Media:", round(mean(numeric_values, na.rm = TRUE), 2), "\n")
-        cat("Mediana:", median(numeric_values, na.rm = TRUE), "\n")
-        cat("Desviación Estándar:", round(sd(numeric_values, na.rm = TRUE), 2), "\n")
-        cat("Rango:", min(numeric_values, na.rm = TRUE), "a", max(numeric_values, na.rm = TRUE), "\n")
-        
-        # Show the value label mapping for reference
-        if (!is.null(value_labels) && length(value_labels) > 0) {
-          cat("\nCorrespondencia entre valores numéricos y etiquetas:\n")
-          for (i in 1:length(value_labels)) {
-            cat(paste0(names(value_labels)[i], " = ", value_labels[i]), "\n")
-          }
-        }
+      # Get numeric values for analysis
+      numeric_values <- get_numeric_values(data)
+      
+      # Display overall statistics
+      cat("\nEstadísticas Generales:\n")
+      cat("Media:", round(mean(numeric_values, na.rm = TRUE), 2), "\n")
+      cat("Mediana:", median(numeric_values, na.rm = TRUE), "\n")
+      cat("Desviación Estándar:", round(sd(numeric_values, na.rm = TRUE), 2), "\n")
+      cat("Mínimo:", min(numeric_values, na.rm = TRUE), "\n")
+      cat("Máximo:", max(numeric_values, na.rm = TRUE), "\n")
+      
+      # Find mode
+      value_counts <- table(numeric_values)
+      mode_value <- as.numeric(names(which.max(value_counts)))
+      
+      # Get mode label if available
+      mode_label <- if (!is.null(value_labels) && as.character(mode_value) %in% names(value_labels)) {
+        paste0(mode_value, " (", value_labels[as.character(mode_value)], ")")
       } else {
-        # Get numeric values and create a lookup table
-        numeric_values <- get_numeric_values(data)
+        as.character(mode_value)
+      }
+      
+      cat("Moda:", mode_label, "\n")
+      
+      # Display frequency distribution with labels
+      if (!is.null(value_labels) && length(value_labels) > 0) {
+        cat("\nDistribución de Frecuencias:\n")
+        freq_df <- data.frame(
+          Valor = names(value_counts),
+          Frecuencia = as.vector(value_counts),
+          Porcentaje = round(100 * as.vector(value_counts) / sum(value_counts), 2)
+        )
         
-        # Display distribution with labels if available
-        if (!is.null(value_labels) && length(value_labels) > 0) {
-          cat("\nDistribución de valores (con etiquetas):\n")
-          value_counts <- table(numeric_values)
-          
-          # Create a labeled table
-          labeled_counts <- data.frame(
-            Valor_Numérico = names(value_counts),
-            Frecuencia = as.vector(value_counts),
-            Etiqueta = sapply(names(value_counts), function(val) {
-              if (val %in% names(value_labels)) value_labels[val] else val
-            })
-          )
-          print(labeled_counts)
-        } else {
-          cat("\nEstadísticas descriptivas:\n")
-          print(summary(numeric_values))
-        }
-        
-        # Calculate and show mode with label
-        mode_numeric <- as.numeric(names(which.max(table(numeric_values))))
-        mode_label <- if (!is.null(value_labels) && as.character(mode_numeric) %in% names(value_labels)) {
-          value_labels[as.character(mode_numeric)]
-        } else {
-          as.character(mode_numeric)
-        }
-        
-        cat("\nEstadísticas adicionales:\n")
-        cat("Moda (respuesta más común):", mode_label, "\n")
-        cat("Desviación Estándar:", round(sd(numeric_values, na.rm = TRUE), 2), "\n")
-        cat("Coeficiente de Variación:", round(sd(numeric_values, na.rm = TRUE) / mean(numeric_values, na.rm = TRUE) * 100, 2), "%\n")
-        
-        # Show the value label mapping for reference
-        if (!is.null(value_labels) && length(value_labels) > 0) {
-          cat("\nCorrespondencia entre valores numéricos y etiquetas:\n")
-          for (i in 1:length(value_labels)) {
-            cat(paste0(names(value_labels)[i], " = ", value_labels[i]), "\n")
+        # Add labels if available
+        freq_df$Etiqueta <- sapply(freq_df$Valor, function(val) {
+          if (val %in% names(value_labels)) {
+            return(value_labels[val])
+          } else {
+            return(NA)
           }
-        }
+        })
+        
+        print(freq_df)
+      } else {
+        cat("\nDistribución de Frecuencias:\n")
+        print(value_counts)
+      }
+      
+      # Calculate district statistics
+      cat("\nEstadísticas por Distrito:\n")
+      district_stats <- data %>%
+        group_by(district) %>%
+        summarise(
+          n = n(),
+          Media = round(mean(numeric_values[district == first(district)], na.rm = TRUE), 2),
+          Mediana = median(numeric_values[district == first(district)], na.rm = TRUE),
+          DE = round(sd(numeric_values[district == first(district)], na.rm = TRUE), 2),
+          Min = min(numeric_values[district == first(district)], na.rm = TRUE),
+          Max = max(numeric_values[district == first(district)], na.rm = TRUE),
+          .groups = 'drop'
+        )
+      print(district_stats)
+      
+      # Calculate gender statistics
+      cat("\nEstadísticas por Género:\n")
+      gender_stats <- data %>%
+        group_by(gender) %>%
+        summarise(
+          n = n(),
+          Media = round(mean(numeric_values[gender == first(gender)], na.rm = TRUE), 2),
+          Mediana = median(numeric_values[gender == first(gender)], na.rm = TRUE),
+          DE = round(sd(numeric_values[gender == first(gender)], na.rm = TRUE), 2),
+          Min = min(numeric_values[gender == first(gender)], na.rm = TRUE),
+          Max = max(numeric_values[gender == first(gender)], na.rm = TRUE),
+          .groups = 'drop'
+        )
+      print(gender_stats)
+      
+      # Calculate age group statistics
+      cat("\nEstadísticas por Grupo de Edad:\n")
+      age_stats <- data %>%
+        group_by(age_group) %>%
+        summarise(
+          n = n(),
+          Media = round(mean(numeric_values[age_group == first(age_group)], na.rm = TRUE), 2),
+          Mediana = median(numeric_values[age_group == first(age_group)], na.rm = TRUE),
+          DE = round(sd(numeric_values[age_group == first(age_group)], na.rm = TRUE), 2),
+          Min = min(numeric_values[age_group == first(age_group)], na.rm = TRUE),
+          Max = max(numeric_values[age_group == first(age_group)], na.rm = TRUE),
+          .groups = 'drop'
+        )
+      print(age_stats)
+      
+      if (input$omit_11) {
+        cat("\nNota: Se han omitido los valores de 11 en los cálculos estadísticos.\n")
       }
     })
     
- # Update plot outputs
- output$histogram_plot <- renderPlotly({
-  req(filtered_data())
-  create_interval_histogram(
-    filtered_data(), 
-    bins = input$bins,
-    title = paste("Distribución de", selected_question())
-  )
-})
+    # Generate summary tables for download
+    summary_tables <- reactive({
+      data <- filtered_data()
+      numeric_values <- get_numeric_values(data)
+      value_labels <- attr(data, "value_labels")
+      
+      # Create overall statistics table
+      overall_stats <- data.frame(
+        Statistic = c("Media", "Mediana", "Desviación Estándar", "Mínimo", "Máximo", "Moda", "N"),
+        Value = c(
+          round(mean(numeric_values, na.rm = TRUE), 2),
+          median(numeric_values, na.rm = TRUE),
+          round(sd(numeric_values, na.rm = TRUE), 2),
+          min(numeric_values, na.rm = TRUE),
+          max(numeric_values, na.rm = TRUE),
+          as.numeric(names(which.max(table(numeric_values)))),
+          length(numeric_values)
+        )
+      )
+      
+      # Calculate district statistics
+      district_stats <- data %>%
+        group_by(district) %>%
+        summarise(
+          n = n(),
+          Media = round(mean(numeric_values[district == first(district)], na.rm = TRUE), 2),
+          Mediana = median(numeric_values[district == first(district)], na.rm = TRUE),
+          DE = round(sd(numeric_values[district == first(district)], na.rm = TRUE), 2),
+          Min = min(numeric_values[district == first(district)], na.rm = TRUE),
+          Max = max(numeric_values[district == first(district)], na.rm = TRUE),
+          .groups = 'drop'
+        )
+      
+      # Calculate gender statistics
+      gender_stats <- data %>%
+        group_by(gender) %>%
+        summarise(
+          n = n(),
+          Media = round(mean(numeric_values[gender == first(gender)], na.rm = TRUE), 2),
+          Mediana = median(numeric_values[gender == first(gender)], na.rm = TRUE),
+          DE = round(sd(numeric_values[gender == first(gender)], na.rm = TRUE), 2),
+          Min = min(numeric_values[gender == first(gender)], na.rm = TRUE),
+          Max = max(numeric_values[gender == first(gender)], na.rm = TRUE),
+          .groups = 'drop'
+        )
+      
+      # Calculate age group statistics
+      age_stats <- data %>%
+        group_by(age_group) %>%
+        summarise(
+          n = n(),
+          Media = round(mean(numeric_values[age_group == first(age_group)], na.rm = TRUE), 2),
+          Mediana = median(numeric_values[age_group == first(age_group)], na.rm = TRUE),
+          DE = round(sd(numeric_values[age_group == first(age_group)], na.rm = TRUE), 2),
+          Min = min(numeric_values[age_group == first(age_group)], na.rm = TRUE),
+          Max = max(numeric_values[age_group == first(age_group)], na.rm = TRUE),
+          .groups = 'drop'
+        )
+      
+      # Create frequency table
+      freq_table <- as.data.frame(table(numeric_values))
+      names(freq_table) <- c("Valor", "Frecuencia")
+      freq_table$Porcentaje <- round(100 * freq_table$Frecuencia / sum(freq_table$Frecuencia), 2)
+      
+      # Add labels if available
+      if (!is.null(value_labels)) {
+        freq_table$Etiqueta <- sapply(freq_table$Valor, function(val) {
+          if (as.character(val) %in% names(value_labels)) {
+            return(value_labels[as.character(val)])
+          } else {
+            return(NA)
+          }
+        })
+      }
+      
+      return(list(
+        overall = overall_stats,
+        district = district_stats,
+        gender = gender_stats,
+        age = age_stats,
+        frequency = freq_table
+      ))
+    })
+    
+    # CSV download handler
+    output$download_summary_csv <- downloadHandler(
+      filename = function() {
+        paste0("resumen_", selected_question(), "_", Sys.Date(), ".zip")
+      },
+      content = function(file) {
+        summaries <- summary_tables()
+        
+        # Create temporary directory for files
+        temp_dir <- tempdir()
+        
+        # Write each summary to a CSV file
+        write.csv(summaries$overall, file.path(temp_dir, "estadisticas_generales.csv"), row.names = FALSE)
+        write.csv(summaries$district, file.path(temp_dir, "estadisticas_por_distrito.csv"), row.names = FALSE)
+        write.csv(summaries$gender, file.path(temp_dir, "estadisticas_por_genero.csv"), row.names = FALSE)
+        write.csv(summaries$age, file.path(temp_dir, "estadisticas_por_edad.csv"), row.names = FALSE)
+        write.csv(summaries$frequency, file.path(temp_dir, "tabla_frecuencias.csv"), row.names = FALSE)
+        
+        # Create zip file with all CSVs
+        files_to_zip <- c(
+          file.path(temp_dir, "estadisticas_generales.csv"),
+          file.path(temp_dir, "estadisticas_por_distrito.csv"),
+          file.path(temp_dir, "estadisticas_por_genero.csv"),
+          file.path(temp_dir, "estadisticas_por_edad.csv"),
+          file.path(temp_dir, "tabla_frecuencias.csv")
+        )
+        
+        zip(file, files_to_zip)
+      }
+    )
+    
+    # Excel download handler
+    output$download_summary_excel <- downloadHandler(
+      filename = function() {
+        paste0("resumen_", selected_question(), "_", Sys.Date(), ".xlsx")
+      },
+      content = function(file) {
+        summaries <- summary_tables()
+        
+        if (!requireNamespace("openxlsx", quietly = TRUE)) {
+          # Fall back to csv if openxlsx is not available
+          write.csv(summaries$overall, file)
+          return()
+        }
+        
+        # Create workbook and add worksheets
+        wb <- openxlsx::createWorkbook()
+        
+        openxlsx::addWorksheet(wb, "Estadísticas Generales")
+        openxlsx::writeData(wb, "Estadísticas Generales", summaries$overall)
+        
+        openxlsx::addWorksheet(wb, "Por Distrito")
+        openxlsx::writeData(wb, "Por Distrito", summaries$district)
+        
+        openxlsx::addWorksheet(wb, "Por Género")
+        openxlsx::writeData(wb, "Por Género", summaries$gender)
+        
+        openxlsx::addWorksheet(wb, "Por Grupo de Edad")
+        openxlsx::writeData(wb, "Por Grupo de Edad", summaries$age)
+        
+        openxlsx::addWorksheet(wb, "Tabla de Frecuencias")
+        openxlsx::writeData(wb, "Tabla de Frecuencias", summaries$frequency)
+        
+        # Save workbook
+        openxlsx::saveWorkbook(wb, file, overwrite = TRUE)
+      }
+    )
+    
+    # Keep the rest of the output functions the same
+    output$histogram_plot <- renderPlotly({
+      req(filtered_data())
+      create_interval_histogram(
+        filtered_data(), 
+        bins = input$bins,
+        title = paste("Distribución de", selected_question())
+      )
+    })
 
-# Add this to your intervalServer function, replacing the existing district_map render
-output$district_map <- renderLeaflet({
-  req(filtered_data(), geo_data())
-  
-  create_interval_district_map(
-    filtered_data(), 
-    geo_data(),
-    selected_responses = input$map_responses,
-    highlight_extremes = input$highlight_extremes
-  )
-})
+    output$district_map <- renderLeaflet({
+      req(filtered_data(), geo_data())
+      
+      create_interval_district_map(
+        filtered_data(), 
+        geo_data(),
+        selected_responses = input$map_responses,
+        highlight_extremes = input$highlight_extremes
+      )
+    })
 
-output$age_bars_plot <- renderPlotly({
-  req(filtered_data())
-  create_interval_age_bars(filtered_data())
-})
+    output$age_bars_plot <- renderPlotly({
+      req(filtered_data())
+      create_interval_age_bars(filtered_data())
+    })
 
-output$gender_dumbbell_plot <- renderPlotly({
-  req(filtered_data())
-  create_interval_gender_dumbbell(filtered_data())
-})
+    output$gender_dumbbell_plot <- renderPlotly({
+      req(filtered_data())
+      create_interval_gender_dumbbell(filtered_data())
+    })
 
-output$bar_plot <- renderPlotly({
-  req(filtered_data())
-  create_interval_bars(
-    filtered_data(),
-    orientation = input$bar_orientation
-  )
-})
-output$ridge_plot <- renderPlot({
-  req(filtered_data())
-  create_interval_ridge_plot(filtered_data())
-})
+    output$bar_plot <- renderPlotly({
+      req(filtered_data())
+      create_interval_bars(
+        filtered_data(),
+        orientation = input$bar_orientation
+      )
+    })
+    
+    output$ridge_plot <- renderPlot({
+      req(filtered_data())
+      create_interval_ridge_plot(filtered_data())
+    })
   })
 }
