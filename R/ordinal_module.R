@@ -694,19 +694,23 @@ create_ordinal_bars <- function(data, orientation = "v") {
   # Create label lookup
   labels_lookup <- create_label_lookup(data)
   
+  # Get numeric values BEFORE grouping
+  numeric_values <- get_numeric_values(data)
+  
   # Calculate district statistics
   district_stats <- data %>%
+    mutate(numeric_value = numeric_values) %>%
     group_by(district) %>%
     summarise(
-      mean_value = mean(get_numeric_values(.), na.rm = TRUE),
-      mode_numeric = as.numeric(names(which.max(table(get_numeric_values(.))))),
+      mean_value = mean(numeric_value, na.rm = TRUE),
+      mode_numeric = as.numeric(names(which.max(table(numeric_value)))),
       n = n(),
       .groups = 'drop'
     ) %>%
     # Add text labels for modes
     mutate(
       mode_label = sapply(mode_numeric, function(val) {
-        if (as.character(val) %in% names(labels_lookup)) {
+        if (!is.na(val) && as.character(val) %in% names(labels_lookup)) {
           return(labels_lookup[as.character(val)])
         } else {
           return(as.character(val))
