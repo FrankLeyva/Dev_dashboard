@@ -977,6 +977,16 @@ categoricoUI <- function(id) {
               value = 10
             )
           ),
+           conditionalPanel(
+   condition = sprintf("input['%s'] == 'summary'", ns("plot_type")),
+   div(
+     style = "margin-top: 15px;",
+     downloadButton(ns("download_summary_csv"), "Descargar Resumen (CSV)"),
+     br(),
+     br(),
+     downloadButton(ns("download_summary_excel"), "Descargar Resumen (Excel)")
+   )
+  ),
           conditionalPanel(
             condition = sprintf("input['%s'] == 'stacked_bars'", ns("plot_type")),
             sliderInput(
@@ -1162,7 +1172,6 @@ categoricoServer <- function(id, data, metadata, selected_question, geo_data) {
         highlight_extremes = input$highlight_extremes
       )
     })
-    # Summary statistics
     output$summary_stats <- renderPrint({
       tryCatch({
         data <- filtered_data()
@@ -1186,15 +1195,19 @@ categoricoServer <- function(id, data, metadata, selected_question, geo_data) {
         cat("Datos faltantes:", missing_count,
             sprintf("(%.1f%%)", 100 * missing_count/total_responses), "\n")
         
-        # Show frequency distribution
+        # Show overall frequency distribution
         freq_table <- table(data$value)
-        cat("\nDistribución de Frecuencias:\n")
+        cat("\nDistribución de Frecuencias (General):\n")
         freq_df <- data.frame(
           Categoría = names(freq_table),
           Frecuencia = as.vector(freq_table),
           Porcentaje = round(100 * as.vector(freq_table) / sum(freq_table), 2)
         )
-        print(freq_df[order(-freq_df$Frecuencia), ])
+        
+        # Sort by frequency and print all rows
+        freq_df <- freq_df[order(-freq_df$Frecuencia), ]
+        # Force print all categories - no limit
+        print(freq_df, n = nrow(freq_df), na.print = "NA")
         
         # Show mode
         if (length(freq_table) > 0) {
@@ -1209,34 +1222,299 @@ categoricoServer <- function(id, data, metadata, selected_question, geo_data) {
           cat("Total de categorías únicas:", length(freq_table), "\n")
         }
         
-        # Show district breakdown
-        cat("\nDistribución por Distrito (Top 3 respuestas para cada distrito):\n")
-        district_breakdown <- filtered_data() %>%
+        # Show distribution by district - most common category per district
+        cat("\nDistribución por Distrito (categoría más frecuente para cada distrito):\n")
+        district_breakdown <- data %>%
           group_by(district, value) %>%
           summarise(count = n(), .groups = 'drop') %>%
           group_by(district) %>%
           mutate(percentage = round(100 * count / sum(count), 1)) %>%
-          slice_max(order_by = count, n = 3) %>%
-          arrange(district, desc(count))
+          slice_max(order_by = count, n = 1) %>%
+          arrange(district)
           
-        print(district_breakdown)
+        print(district_breakdown %>% select(district, Categoría = value, Frecuencia = count, Porcentaje = percentage), n = nrow(district_breakdown))
+        
+        # Instead of printing all district-category combinations directly, 
+        # show district by district with top categories for better readability
+        cat("\nDistribución Detallada por Distrito (Top 3 categorías por distrito):\n")
+        
+        # Process each district separately and print with cat() to avoid tibble shortening
+        district_list <- unique(data$district)
+        for (d in district_list) {
+          cat("\n--- Distrito", d, "---\n")
+          
+          dist_data <- data %>%
+            filter(district == d) %>%
+            group_by(value) %>%
+            summarise(
+              count = n(),
+              percentage = round(100 * count / sum(nrow(data[data$district == d,])), 1),
+              .groups = 'drop'
+            ) %>%
+            arrange(desc(count)) %>%
+            head(5)  # Show top 5 categories
+          
+          # Create formatted output
+          for (i in 1:nrow(dist_data)) {
+            cat(sprintf("%s: %d (%0.1f%%)\n", 
+                        dist_data$value[i], 
+                        dist_data$count[i], 
+                        dist_data$percentage[i]))
+          }
+        }
         
         # Show gender breakdown
-        cat("\nDistribución por Género:\n")
-        gender_breakdown <- filtered_data() %>%
+        cat("\nDistribución por Género (categoría más frecuente para cada género):\n")
+        gender_breakdown <- data %>%
           group_by(gender, value) %>%
           summarise(count = n(), .groups = 'drop') %>%
           group_by(gender) %>%
           mutate(percentage = round(100 * count / sum(count), 1)) %>%
-          slice_max(order_by = count, n = 3) %>%
-          arrange(gender, desc(count))
+          slice_max(order_by = count, n = 1) %>%
+          arrange(gender)
           
-        print(gender_breakdown)
+        print(gender_breakdown %>% select(gender, Categoría = value, Frecuencia = count, Porcentaje = percentage), n = nrow(gender_breakdown))
+        
+        # Show detailed gender breakdown
+        cat("\nDistribución Detallada por Género:\n")
+        for (g in unique(data$gender)) {
+          cat("\n--- Género:", g, "---\n")
+          
+          gender_data <- data %>%
+            filter(gender == g) %>%
+            group_by(value) %>%
+            summarise(
+              count = n(),
+              percentage = round(100 * count / sum(nrow(data[data$gender == g,])), 1),
+              .groups = 'drop'
+            ) %>%
+            arrange(desc(count)) %>%
+            head(5)  # Show top 5 categories
+          
+          # Create formatted output
+          for (i in 1:nrow(gender_data)) {
+            cat(sprintf("%s: %d (%0.1f%%)\n", 
+                       gender_data$value[i], 
+                       gender_data$count[i], 
+                       gender_data$percentage[i]))
+          }
+        }
+        
+        # Show age group breakdown
+        cat("\nDistribución por Grupo de Edad (categoría más frecuente para cada grupo):\n")
+        age_breakdown <- data %>%
+          group_by(age_group, value) %>%
+          summarise(count = n(), .groups = 'drop') %>%
+          group_by(age_group) %>%
+          mutate(percentage = round(100 * count / sum(count), 1)) %>%
+          slice_max(order_by = count, n = 1) %>%
+          arrange(age_group)
+          
+        print(age_breakdown %>% select(age_group, Categoría = value, Frecuencia = count, Porcentaje = percentage), n = nrow(age_breakdown))
+        
+        # Show detailed age breakdown
+        cat("\nDistribución Detallada por Grupo de Edad:\n")
+        for (a in unique(data$age_group)) {
+          cat("\n--- Grupo de Edad:", a, "---\n")
+          
+          age_data <- data %>%
+            filter(age_group == a) %>%
+            group_by(value) %>%
+            summarise(
+              count = n(),
+              percentage = round(100 * count / sum(nrow(data[data$age_group == a,])), 1),
+              .groups = 'drop'
+            ) %>%
+            arrange(desc(count)) %>%
+            head(5)  # Show top 5 categories
+          
+          # Create formatted output
+          for (i in 1:nrow(age_data)) {
+            cat(sprintf("%s: %d (%0.1f%%)\n", 
+                       age_data$value[i], 
+                       age_data$count[i], 
+                       age_data$percentage[i]))
+          }
+        }
         
       }, error = function(e) {
         cat("Error al generar estadísticas:", e$message)
       })
     })
+    
+    # Generate summary tables for download
+    summary_tables <- reactive({
+      data <- filtered_data()
+      
+      # Calculate overall frequencies
+      freq_table <- as.data.frame(table(data$value))
+      names(freq_table) <- c("Categoría", "Frecuencia")
+      freq_table$Porcentaje <- round(100 * freq_table$Frecuencia / sum(freq_table$Frecuencia), 2)
+      freq_table <- freq_table[order(-freq_table$Frecuencia), ]
+      
+      # Get the most frequent category
+      if (nrow(freq_table) > 0) {
+        mode_category <- freq_table$Categoría[1]
+        mode_count <- freq_table$Frecuencia[1]
+        mode_percent <- freq_table$Porcentaje[1]
+      } else {
+        mode_category <- NA
+        mode_count <- NA
+        mode_percent <- NA
+      }
+      
+      # Create a summary table
+      overall_stats <- data.frame(
+        Statistic = c("Categoría más frecuente", "Frecuencia", "Porcentaje", "Categorías únicas", 
+                      "Total de respuestas", "No sabe/No contesta", "Datos faltantes"),
+        Value = c(
+          as.character(mode_category),
+          as.character(mode_count),
+          paste0(mode_percent, "%"),
+          as.character(nrow(freq_table)),
+          as.character(attr(data, "total_responses")),
+          as.character(attr(data, "ns_nc_count")),
+          as.character(attr(data, "missing_count"))
+        )
+      )
+      
+      # Create district breakdown - ALL categories for each district
+      district_breakdown <- data %>%
+        group_by(district, value) %>%
+        summarise(count = n(), .groups = 'drop') %>%
+        group_by(district) %>%
+        mutate(percentage = round(100 * count / sum(count), 1)) %>%
+        arrange(district, desc(count))
+      
+      # Create gender breakdown - ALL categories for each gender
+      gender_breakdown <- data %>%
+        group_by(gender, value) %>%
+        summarise(count = n(), .groups = 'drop') %>%
+        group_by(gender) %>%
+        mutate(percentage = round(100 * count / sum(count), 1)) %>%
+        arrange(gender, desc(count))
+      
+      # Create age group breakdown - ALL categories for each age group
+      age_breakdown <- data %>%
+        group_by(age_group, value) %>%
+        summarise(count = n(), .groups = 'drop') %>%
+        group_by(age_group) %>%
+        mutate(percentage = round(100 * count / sum(count), 1)) %>%
+        arrange(age_group, desc(count))
+      
+      # Create contingency tables
+      district_contingency <- as.data.frame.matrix(table(data$district, data$value))
+      gender_contingency <- as.data.frame.matrix(table(data$gender, data$value))
+      age_contingency <- as.data.frame.matrix(table(data$age_group, data$value))
+      
+      # Add row totals
+      district_contingency$Total <- rowSums(district_contingency)
+      gender_contingency$Total <- rowSums(gender_contingency)
+      age_contingency$Total <- rowSums(age_contingency)
+      
+      return(list(
+        overall = overall_stats,
+        frequencies = freq_table,
+        district = district_breakdown,
+        gender = gender_breakdown,
+        age = age_breakdown,
+        district_table = district_contingency,
+        gender_table = gender_contingency,
+        age_table = age_contingency
+      ))
+    })
+    
+    # CSV download handler
+    output$download_summary_csv <- downloadHandler(
+      filename = function() {
+        paste0("resumen_categorico_", selected_question(), "_", Sys.Date(), ".zip")
+      },
+      content = function(file) {
+        summaries <- summary_tables()
+        
+        # Create temporary directory for files
+        temp_dir <- tempdir()
+        
+        # Write each summary to a CSV file
+        write.csv(summaries$overall, file.path(temp_dir, "estadisticas_generales.csv"), row.names = FALSE)
+        write.csv(summaries$frequencies, file.path(temp_dir, "tabla_frecuencias.csv"), row.names = FALSE)
+        write.csv(summaries$district, file.path(temp_dir, "distribucion_por_distrito.csv"), row.names = FALSE)
+        write.csv(summaries$gender, file.path(temp_dir, "distribucion_por_genero.csv"), row.names = FALSE)
+        write.csv(summaries$age, file.path(temp_dir, "distribucion_por_edad.csv"), row.names = FALSE)
+        write.csv(summaries$district_table, file.path(temp_dir, "tabla_contingencia_distrito.csv"))
+        write.csv(summaries$gender_table, file.path(temp_dir, "tabla_contingencia_genero.csv"))
+        write.csv(summaries$age_table, file.path(temp_dir, "tabla_contingencia_edad.csv"))
+        
+        # Save current working directory
+        oldwd <- getwd()
+        
+        # Change to temp directory before zipping
+        setwd(temp_dir)
+        
+        # Create zip file with all CSVs - using just filenames (not full paths)
+        files_to_zip <- c(
+          "estadisticas_generales.csv",
+          "tabla_frecuencias.csv",
+          "distribucion_por_distrito.csv",
+          "distribucion_por_genero.csv",
+          "distribucion_por_edad.csv",
+          "tabla_contingencia_distrito.csv",
+          "tabla_contingencia_genero.csv",
+          "tabla_contingencia_edad.csv"
+        )
+        
+        zip(file, files_to_zip)
+        
+        # Change back to original working directory
+        setwd(oldwd)
+      }
+    )
+    
+    # Excel download handler
+    output$download_summary_excel <- downloadHandler(
+      filename = function() {
+        paste0("resumen_categorico_", selected_question(), "_", Sys.Date(), ".xlsx")
+      },
+      content = function(file) {
+        summaries <- summary_tables()
+        
+        if (!requireNamespace("openxlsx", quietly = TRUE)) {
+          # Fall back to csv if openxlsx is not available
+          write.csv(summaries$overall, file)
+          return()
+        }
+        
+        # Create workbook and add worksheets
+        wb <- openxlsx::createWorkbook()
+        
+        openxlsx::addWorksheet(wb, "Estadísticas Generales")
+        openxlsx::writeData(wb, "Estadísticas Generales", summaries$overall)
+        
+        openxlsx::addWorksheet(wb, "Tabla de Frecuencias")
+        openxlsx::writeData(wb, "Tabla de Frecuencias", summaries$frequencies)
+        
+        openxlsx::addWorksheet(wb, "Por Distrito")
+        openxlsx::writeData(wb, "Por Distrito", summaries$district)
+        
+        openxlsx::addWorksheet(wb, "Por Género")
+        openxlsx::writeData(wb, "Por Género", summaries$gender)
+        
+        openxlsx::addWorksheet(wb, "Por Grupo de Edad")
+        openxlsx::writeData(wb, "Por Grupo de Edad", summaries$age)
+        
+        openxlsx::addWorksheet(wb, "Tabla Distrito-Categoría")
+        openxlsx::writeData(wb, "Tabla Distrito-Categoría", summaries$district_table, rowNames = TRUE)
+        
+        openxlsx::addWorksheet(wb, "Tabla Género-Categoría")
+        openxlsx::writeData(wb, "Tabla Género-Categoría", summaries$gender_table, rowNames = TRUE)
+        
+        openxlsx::addWorksheet(wb, "Tabla Edad-Categoría")
+        openxlsx::writeData(wb, "Tabla Edad-Categoría", summaries$age_table, rowNames = TRUE)
+        
+        # Save workbook
+        openxlsx::saveWorkbook(wb, file, overwrite = TRUE)
+      }
+    )
     
     # Bar plot
     output$bars_plot <- renderPlotly({

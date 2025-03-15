@@ -1062,7 +1062,16 @@ binaryUI <- function(id) {
               value = TRUE
             )
           ),
-          
+          conditionalPanel(
+               condition = sprintf("input['%s'] == 'summary'", ns("plot_type")),
+               div(
+                 style = "margin-top: 15px;",
+                 downloadButton(ns("download_summary_csv"), "Descargar Resumen (CSV)"),
+                 br(),
+                 br(),
+                 downloadButton(ns("download_summary_excel"), "Descargar Resumen (Excel)")
+               )
+             ),
           conditionalPanel(
             condition = sprintf("input['%s'] == 'multiple_comparison'", ns("plot_type")),
             selectInput(
@@ -1285,11 +1294,10 @@ binaryServer <- function(id, data, metadata, selected_question, geo_data, all_bi
           return()
         }
         
-        
         # Get the response counts
-        total_responses <- nrow(data)
+        total_responses <- attr(data, "total_responses")
         missing_count <- attr(data, "missing_count")
-        valid_responses <- total_responses - missing_count
+        valid_responses <- nrow(data)
         
         # Calculate binary proportions
         true_count <- sum(data$binary_value, na.rm = TRUE)
@@ -1304,10 +1312,10 @@ binaryServer <- function(id, data, metadata, selected_question, geo_data, all_bi
         
         cat("Estadísticas para Datos Binarios:\n")
         cat("\nDistribución de Respuestas:\n")
-        cat("Total de respuestas:", attr(data, "total_responses"), "\n")
+        cat("Total de respuestas:", total_responses, "\n")
         cat("Respuestas válidas:", valid_responses, "\n")
         cat("Datos faltantes:", missing_count,
-            sprintf("(%.1f%%)", 100 * missing_count/attr(data, "total_responses")), "\n")
+            sprintf("(%.1f%%)", 100 * missing_count/total_responses), "\n")
         
         cat("\nDistribución de valores:\n")
         cat(true_label, ":", true_count, sprintf("(%.2f%%)", true_percent), "\n")
@@ -1319,10 +1327,10 @@ binaryServer <- function(id, data, metadata, selected_question, geo_data, all_bi
           group_by(district) %>%
           summarise(
             Total = n(),
-            `Sí` = sum(binary_value, na.rm = TRUE),
-            `%Sí` = round(100 * mean(binary_value, na.rm = TRUE), 2),
-            `No` = sum(!binary_value, na.rm = TRUE),
-            `%No` = round(100 * (1 - mean(binary_value, na.rm = TRUE)), 2),
+            Positivo = sum(binary_value, na.rm = TRUE),
+            `%Positivo` = round(100 * mean(binary_value, na.rm = TRUE), 2),
+            Negativo = sum(!binary_value, na.rm = TRUE),
+            `%Negativo` = round(100 * (1 - mean(binary_value, na.rm = TRUE)), 2),
             .groups = 'drop'
           )
         
@@ -1334,10 +1342,10 @@ binaryServer <- function(id, data, metadata, selected_question, geo_data, all_bi
           group_by(gender) %>%
           summarise(
             Total = n(),
-            `Sí` = sum(binary_value, na.rm = TRUE),
-            `%Sí` = round(100 * mean(binary_value, na.rm = TRUE), 2),
-            `No` = sum(!binary_value, na.rm = TRUE),
-            `%No` = round(100 * (1 - mean(binary_value, na.rm = TRUE)), 2),
+            Positivo = sum(binary_value, na.rm = TRUE),
+            `%Positivo` = round(100 * mean(binary_value, na.rm = TRUE), 2),
+            Negativo = sum(!binary_value, na.rm = TRUE),
+            `%Negativo` = round(100 * (1 - mean(binary_value, na.rm = TRUE)), 2),
             .groups = 'drop'
           )
         
@@ -1349,17 +1357,17 @@ binaryServer <- function(id, data, metadata, selected_question, geo_data, all_bi
           group_by(age_group) %>%
           summarise(
             Total = n(),
-            `Sí` = sum(binary_value, na.rm = TRUE),
-            `%Sí` = round(100 * mean(binary_value, na.rm = TRUE), 2),
-            `No` = sum(!binary_value, na.rm = TRUE),
-            `%No` = round(100 * (1 - mean(binary_value, na.rm = TRUE)), 2),
+            Positivo = sum(binary_value, na.rm = TRUE),
+            `%Positivo` = round(100 * mean(binary_value, na.rm = TRUE), 2),
+            Negativo = sum(!binary_value, na.rm = TRUE),
+            `%Negativo` = round(100 * (1 - mean(binary_value, na.rm = TRUE)), 2),
             .groups = 'drop'
           )
         
         print(age_breakdown)
         
         cat("\nNotas sobre el procesamiento de datos:\n")
-        if (attr(data, "treat_na_as_negative")) {  # Use the correct attribute name here
+        if (attr(data, "treat_na_as_negative")) {
           cat("- Los valores vacíos (NA) se están tratando como respuestas 'No'.\n")
         } else {
           cat("- Los valores vacíos (NA) se están tratando como datos faltantes.\n")
@@ -1393,6 +1401,164 @@ binaryServer <- function(id, data, metadata, selected_question, geo_data, all_bi
       })
     })
     
+    # Add this function to generate summary tables for download
+    summary_tables <- reactive({
+      data <- filtered_data()
+      
+      # Get the appropriate labels
+      labels <- get_binary_labels(data)
+      true_label <- labels$true_label
+      false_label <- labels$false_label
+      
+      # Create overall statistics table
+      true_count <- sum(data$binary_value, na.rm = TRUE)
+      false_count <- sum(!data$binary_value, na.rm = TRUE)
+      true_percent <- round(100 * true_count / (true_count + false_count), 2)
+      false_percent <- round(100 * false_count / (true_count + false_count), 2)
+      
+      overall_stats <- data.frame(
+        Categoria = c(true_label, false_label, "Total", "Datos Faltantes"),
+        Conteo = c(true_count, false_count, attr(data, "total_responses"), attr(data, "missing_count")),
+        Porcentaje = c(true_percent, false_percent, 100, NA)
+      )
+      
+      # District breakdown
+      district_breakdown <- data %>%
+        group_by(district) %>%
+        summarise(
+          Total = n(),
+          Positivo = sum(binary_value, na.rm = TRUE),
+          `Porcentaje_Positivo` = round(100 * mean(binary_value, na.rm = TRUE), 2),
+          Negativo = sum(!binary_value, na.rm = TRUE),
+          `Porcentaje_Negativo` = round(100 * (1 - mean(binary_value, na.rm = TRUE)), 2),
+          .groups = 'drop'
+        )
+      
+      # Gender breakdown
+      gender_breakdown <- data %>%
+        group_by(gender) %>%
+        summarise(
+          Total = n(),
+          Positivo = sum(binary_value, na.rm = TRUE),
+          `Porcentaje_Positivo` = round(100 * mean(binary_value, na.rm = TRUE), 2),
+          Negativo = sum(!binary_value, na.rm = TRUE),
+          `Porcentaje_Negativo` = round(100 * (1 - mean(binary_value, na.rm = TRUE)), 2),
+          .groups = 'drop'
+        )
+      
+      # Age breakdown
+      age_breakdown <- data %>%
+        group_by(age_group) %>%
+        summarise(
+          Total = n(),
+          Positivo = sum(binary_value, na.rm = TRUE),
+          `Porcentaje_Positivo` = round(100 * mean(binary_value, na.rm = TRUE), 2),
+          Negativo = sum(!binary_value, na.rm = TRUE),
+          `Porcentaje_Negativo` = round(100 * (1 - mean(binary_value, na.rm = TRUE)), 2),
+          .groups = 'drop'
+        )
+      
+      # Technical details
+      technical_info <- data.frame(
+        Parametro = c(
+          "ID de pregunta",
+          "Tipo de pregunta",
+          "Logica invertida",
+          "Tratar NA como negativo"
+        ),
+        Valor = c(
+          attr(data, "question_id"),
+          ifelse(attr(data, "is_checkbox_question"), "Casilla de verificación", "Binaria estándar"),
+          ifelse(attr(data, "invert_selected_logic"), "Sí", "No"),
+          ifelse(attr(data, "treat_na_as_negative"), "Sí", "No")
+        )
+      )
+      
+      # Create a list of all tables
+      return(list(
+        overall = overall_stats, 
+        district = district_breakdown,
+        gender = gender_breakdown,
+        age = age_breakdown,
+        technical = technical_info
+      ))
+    })
+    output$download_summary_csv <- downloadHandler(
+      filename = function() {
+        paste0("resumen_binario_", selected_question(), "_", Sys.Date(), ".zip")
+      },
+      content = function(file) {
+        summaries <- summary_tables()
+        
+        # Create temporary directory for files
+        temp_dir <- tempdir()
+        
+        # Write each summary to a CSV file
+        write.csv(summaries$overall, file.path(temp_dir, "resumen_general.csv"), row.names = FALSE)
+        write.csv(summaries$district, file.path(temp_dir, "por_distrito.csv"), row.names = FALSE)
+        write.csv(summaries$gender, file.path(temp_dir, "por_genero.csv"), row.names = FALSE)
+        write.csv(summaries$age, file.path(temp_dir, "por_edad.csv"), row.names = FALSE)
+        write.csv(summaries$technical, file.path(temp_dir, "detalles_tecnicos.csv"), row.names = FALSE)
+        
+        # Create zip file with all CSVs - using just filenames not full paths
+        # Save current working directory
+        oldwd <- getwd()
+        
+        # Change to temp directory before zipping
+        setwd(temp_dir)
+        
+        # Create zip file with just filenames (not full paths)
+        files_to_zip <- c(
+          "resumen_general.csv",
+          "por_distrito.csv",
+          "por_genero.csv",
+          "por_edad.csv",
+          "detalles_tecnicos.csv"
+        )
+        
+        zip(file, files_to_zip)
+        
+        # Change back to original working directory
+        setwd(oldwd)
+      }
+    )
+    
+    # Add Excel download handler
+    output$download_summary_excel <- downloadHandler(
+      filename = function() {
+        paste0("resumen_binario_", selected_question(), "_", Sys.Date(), ".xlsx")
+      },
+      content = function(file) {
+        summaries <- summary_tables()
+        
+        if (!requireNamespace("openxlsx", quietly = TRUE)) {
+          # Fall back to csv if openxlsx is not available
+          write.csv(summaries$overall, file)
+          return()
+        }
+        
+        # Create workbook and add worksheets
+        wb <- openxlsx::createWorkbook()
+        
+        openxlsx::addWorksheet(wb, "Resumen General")
+        openxlsx::writeData(wb, "Resumen General", summaries$overall)
+        
+        openxlsx::addWorksheet(wb, "Por Distrito")
+        openxlsx::writeData(wb, "Por Distrito", summaries$district)
+        
+        openxlsx::addWorksheet(wb, "Por Género")
+        openxlsx::writeData(wb, "Por Género", summaries$gender)
+        
+        openxlsx::addWorksheet(wb, "Por Grupo de Edad")
+        openxlsx::writeData(wb, "Por Grupo de Edad", summaries$age)
+        
+        openxlsx::addWorksheet(wb, "Detalles Técnicos")
+        openxlsx::writeData(wb, "Detalles Técnicos", summaries$technical)
+        
+        # Save workbook
+        openxlsx::saveWorkbook(wb, file, overwrite = TRUE)
+      }
+    )
     # Bar plot
     output$bars_plot <- renderPlotly({
       req(filtered_data())

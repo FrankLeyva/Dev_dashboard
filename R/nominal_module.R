@@ -601,6 +601,16 @@ nominalUI <- function(id) {
               value = 100
             )
           ),
+           conditionalPanel(
+   condition = sprintf("input['%s'] == 'summary'", ns("plot_type")),
+   div(
+     style = "margin-top: 15px;",
+     downloadButton(ns("download_summary_csv"), "Descargar Resumen (CSV)"),
+     br(),
+     br(),
+     downloadButton(ns("download_summary_excel"), "Descargar Resumen (Excel)")
+   )
+ ),
           conditionalPanel(
             condition = sprintf("input['%s'] == 'district_heatmap'", ns("plot_type")),
             sliderInput(
@@ -789,7 +799,7 @@ nominalServer <- function(id, data, metadata, selected_question, geo_data) {
         
         if (nrow(filtered_word_freq) > 0) {
           cat("\nPalabras más frecuentes (excluyendo stopwords y palabras cortas):\n")
-          top_words <- head(filtered_word_freq, 10)
+          top_words <- head(filtered_word_freq, 15)
           print(top_words)
           
           cat("\nEstadísticas de longitud de respuesta:\n")
@@ -802,18 +812,329 @@ nominalServer <- function(id, data, metadata, selected_question, geo_data) {
           cat("\nNo hay palabras que cumplan con los criterios de filtrado.\n")
         }
         
-        cat("\nDistribución por Distrito (número de respuestas):\n")
-        print(table(data$district))
+        # District Analysis
+        cat("\nAnálisis por Distrito:\n")
+        district_data <- data.frame(distrito = character(), palabra_top = character(), 
+                                    frecuencia = integer(), total_palabras = integer(), 
+                                    palabras_unicas = integer(), stringsAsFactors = FALSE)
         
-        cat("\nDistribución por Género (número de respuestas):\n")
-        print(table(data$gender))
+        for (dist in unique(data$district)) {
+          district_text <- data$preprocessed_text[data$district == dist]
+          if (length(district_text) == 0) next
+          
+          district_tokens <- unlist(strsplit(paste(district_text, collapse = " "), "\\s+"))
+          district_tokens <- district_tokens[district_tokens != ""]
+          
+          # Apply filters
+          if (input$exclude_stopwords) {
+            stopwords <- get_spanish_stopwords()
+            district_tokens <- district_tokens[!district_tokens %in% stopwords]
+          }
+          district_tokens <- district_tokens[nchar(district_tokens) >= input$min_chars]
+          
+          if (length(district_tokens) == 0) {
+            cat("Distrito", dist, ": Sin palabras que cumplan los criterios\n")
+            next
+          }
+          
+          # Find top word
+          district_word_freq <- table(district_tokens)
+          top_word <- names(district_word_freq)[which.max(district_word_freq)]
+          top_freq <- max(district_word_freq)
+          
+          # Add to data frame
+          district_data <- rbind(district_data, data.frame(
+            distrito = dist,
+            palabra_top = top_word,
+            frecuencia = top_freq,
+            total_palabras = length(district_tokens),
+            palabras_unicas = length(unique(district_tokens)),
+            stringsAsFactors = FALSE
+          ))
+          
+          cat("Distrito", dist, "- Palabra más común:", top_word, "(", top_freq, "veces) -",
+              "Total palabras:", length(district_tokens), "-",
+              "Palabras únicas:", length(unique(district_tokens)), "\n")
+        }
         
-        cat("\nDistribución por Grupo de Edad (número de respuestas):\n")
-        print(table(data$age_group))
+        # Gender Analysis
+        cat("\nAnálisis por Género:\n")
+        gender_data <- data.frame(genero = character(), palabra_top = character(), 
+                                  frecuencia = integer(), total_palabras = integer(), 
+                                  palabras_unicas = integer(), stringsAsFactors = FALSE)
+        
+        for (gen in unique(data$gender)) {
+          gender_text <- data$preprocessed_text[data$gender == gen]
+          if (length(gender_text) == 0) next
+          
+          gender_tokens <- unlist(strsplit(paste(gender_text, collapse = " "), "\\s+"))
+          gender_tokens <- gender_tokens[gender_tokens != ""]
+          
+          # Apply filters
+          if (input$exclude_stopwords) {
+            gender_tokens <- gender_tokens[!gender_tokens %in% stopwords]
+          }
+          gender_tokens <- gender_tokens[nchar(gender_tokens) >= input$min_chars]
+          
+          if (length(gender_tokens) == 0) {
+            cat("Género", gen, ": Sin palabras que cumplan los criterios\n")
+            next
+          }
+          
+          # Find top word
+          gender_word_freq <- table(gender_tokens)
+          top_word <- names(gender_word_freq)[which.max(gender_word_freq)]
+          top_freq <- max(gender_word_freq)
+          
+          # Add to data frame
+          gender_data <- rbind(gender_data, data.frame(
+            genero = gen,
+            palabra_top = top_word,
+            frecuencia = top_freq,
+            total_palabras = length(gender_tokens),
+            palabras_unicas = length(unique(gender_tokens)),
+            stringsAsFactors = FALSE
+          ))
+          
+          cat("Género", gen, "- Palabra más común:", top_word, "(", top_freq, "veces) -",
+              "Total palabras:", length(gender_tokens), "-",
+              "Palabras únicas:", length(unique(gender_tokens)), "\n")
+        }
+        
+        # Age Group Analysis
+        cat("\nAnálisis por Grupo de Edad:\n")
+        age_data <- data.frame(edad = character(), palabra_top = character(), 
+                                frecuencia = integer(), total_palabras = integer(), 
+                                palabras_unicas = integer(), stringsAsFactors = FALSE)
+        
+        for (age in unique(data$age_group)) {
+          age_text <- data$preprocessed_text[data$age_group == age]
+          if (length(age_text) == 0) next
+          
+          age_tokens <- unlist(strsplit(paste(age_text, collapse = " "), "\\s+"))
+          age_tokens <- age_tokens[age_tokens != ""]
+          
+          # Apply filters
+          if (input$exclude_stopwords) {
+            age_tokens <- age_tokens[!age_tokens %in% stopwords]
+          }
+          age_tokens <- age_tokens[nchar(age_tokens) >= input$min_chars]
+          
+          if (length(age_tokens) == 0) {
+            cat("Grupo de Edad", age, ": Sin palabras que cumplan los criterios\n")
+            next
+          }
+          
+          # Find top word
+          age_word_freq <- table(age_tokens)
+          top_word <- names(age_word_freq)[which.max(age_word_freq)]
+          top_freq <- max(age_word_freq)
+          
+          # Add to data frame
+          age_data <- rbind(age_data, data.frame(
+            edad = age,
+            palabra_top = top_word,
+            frecuencia = top_freq,
+            total_palabras = length(age_tokens),
+            palabras_unicas = length(unique(age_tokens)),
+            stringsAsFactors = FALSE
+          ))
+          
+          cat("Grupo de Edad", age, "- Palabra más común:", top_word, "(", top_freq, "veces) -",
+              "Total palabras:", length(age_tokens), "-",
+              "Palabras únicas:", length(unique(age_tokens)), "\n")
+        }
         
       }, error = function(e) {
         cat("Error al generar estadísticas:", e$message)
       })
+    })
+    
+    # Generate summary tables for download
+    summary_tables <- reactive({
+      data <- filtered_data()
+      
+      # Get word frequency data with filters applied
+      word_freq <- attr(data, "word_freq")
+      filtered_word_freq <- word_freq
+      
+      if (input$exclude_stopwords) {
+        stopwords <- get_spanish_stopwords()
+        filtered_word_freq <- filtered_word_freq[!filtered_word_freq$word %in% stopwords, ]
+      }
+      
+      filtered_word_freq <- filtered_word_freq[nchar(filtered_word_freq$word) >= input$min_chars, ]
+      filtered_word_freq <- filtered_word_freq[order(-filtered_word_freq$freq), ]
+      
+      # Calculate response length statistics
+      response_lengths <- sapply(strsplit(data$preprocessed_text, "\\s+"), length)
+      length_stats <- data.frame(
+        Statistic = c("Promedio", "Mediana", "Mínimo", "Máximo", "Desviación Estándar"),
+        Value = c(
+          round(mean(response_lengths), 2),
+          median(response_lengths),
+          min(response_lengths),
+          max(response_lengths),
+          round(sd(response_lengths), 2)
+        )
+      )
+      
+      # Overall statistics
+      overall_stats <- data.frame(
+        Statistic = c("Total de respuestas", "Respuestas válidas", "Datos faltantes", 
+                      "Total de palabras", "Palabras únicas"),
+        Value = c(
+          attr(data, "total_responses"),
+          nrow(data),
+          attr(data, "missing_count"),
+          length(attr(data, "tokens")),
+          nrow(word_freq)
+        )
+      )
+      
+      # District Analysis
+      district_data <- data.frame(distrito = character(), palabra_top = character(), 
+                                 frecuencia = integer(), total_palabras = integer(), 
+                                 palabras_unicas = integer(), num_respuestas = integer(),
+                                 promedio_longitud = numeric(),
+                                 stringsAsFactors = FALSE)
+      
+      for (dist in unique(data$district)) {
+        district_text <- data$preprocessed_text[data$district == dist]
+        if (length(district_text) == 0) next
+        
+        # Calculate average response length
+        district_resp_lengths <- sapply(strsplit(district_text, "\\s+"), length)
+        avg_length <- mean(district_resp_lengths)
+        
+        district_tokens <- unlist(strsplit(paste(district_text, collapse = " "), "\\s+"))
+        district_tokens <- district_tokens[district_tokens != ""]
+        
+        # Apply filters
+        if (input$exclude_stopwords) {
+          stopwords <- get_spanish_stopwords()
+          district_tokens <- district_tokens[!district_tokens %in% stopwords]
+        }
+        district_tokens <- district_tokens[nchar(district_tokens) >= input$min_chars]
+        
+        if (length(district_tokens) == 0) next
+        
+        # Find top word
+        district_word_freq <- table(district_tokens)
+        top_word <- names(district_word_freq)[which.max(district_word_freq)]
+        top_freq <- max(district_word_freq)
+        
+        # Add to data frame
+        district_data <- rbind(district_data, data.frame(
+          distrito = dist,
+          palabra_top = top_word,
+          frecuencia = top_freq,
+          total_palabras = length(district_tokens),
+          palabras_unicas = length(unique(district_tokens)),
+          num_respuestas = length(district_text),
+          promedio_longitud = round(avg_length, 2),
+          stringsAsFactors = FALSE
+        ))
+      }
+      
+      # Gender Analysis - Similar to district but for gender
+      gender_data <- data.frame(genero = character(), palabra_top = character(), 
+                               frecuencia = integer(), total_palabras = integer(), 
+                               palabras_unicas = integer(), num_respuestas = integer(),
+                               promedio_longitud = numeric(),
+                               stringsAsFactors = FALSE)
+      
+      for (gen in unique(data$gender)) {
+        gender_text <- data$preprocessed_text[data$gender == gen]
+        if (length(gender_text) == 0) next
+        
+        # Calculate average response length
+        gender_resp_lengths <- sapply(strsplit(gender_text, "\\s+"), length)
+        avg_length <- mean(gender_resp_lengths)
+        
+        gender_tokens <- unlist(strsplit(paste(gender_text, collapse = " "), "\\s+"))
+        gender_tokens <- gender_tokens[gender_tokens != ""]
+        
+        # Apply filters
+        if (input$exclude_stopwords) {
+          stopwords <- get_spanish_stopwords()
+          gender_tokens <- gender_tokens[!gender_tokens %in% stopwords]
+        }
+        gender_tokens <- gender_tokens[nchar(gender_tokens) >= input$min_chars]
+        
+        if (length(gender_tokens) == 0) next
+        
+        # Find top word
+        gender_word_freq <- table(gender_tokens)
+        top_word <- names(gender_word_freq)[which.max(gender_word_freq)]
+        top_freq <- max(gender_word_freq)
+        
+        # Add to data frame
+        gender_data <- rbind(gender_data, data.frame(
+          genero = gen,
+          palabra_top = top_word,
+          frecuencia = top_freq,
+          total_palabras = length(gender_tokens),
+          palabras_unicas = length(unique(gender_tokens)),
+          num_respuestas = length(gender_text),
+          promedio_longitud = round(avg_length, 2),
+          stringsAsFactors = FALSE
+        ))
+      }
+      
+      # Age Group Analysis - Similar to district but for age groups
+      age_data <- data.frame(edad = character(), palabra_top = character(), 
+                            frecuencia = integer(), total_palabras = integer(), 
+                            palabras_unicas = integer(), num_respuestas = integer(),
+                            promedio_longitud = numeric(),
+                            stringsAsFactors = FALSE)
+      
+      for (age in unique(data$age_group)) {
+        age_text <- data$preprocessed_text[data$age_group == age]
+        if (length(age_text) == 0) next
+        
+        # Calculate average response length
+        age_resp_lengths <- sapply(strsplit(age_text, "\\s+"), length)
+        avg_length <- mean(age_resp_lengths)
+        
+        age_tokens <- unlist(strsplit(paste(age_text, collapse = " "), "\\s+"))
+        age_tokens <- age_tokens[age_tokens != ""]
+        
+        # Apply filters
+        if (input$exclude_stopwords) {
+          stopwords <- get_spanish_stopwords()
+          age_tokens <- age_tokens[!age_tokens %in% stopwords]
+        }
+        age_tokens <- age_tokens[nchar(age_tokens) >= input$min_chars]
+        
+        if (length(age_tokens) == 0) next
+        
+        # Find top word
+        age_word_freq <- table(age_tokens)
+        top_word <- names(age_word_freq)[which.max(age_word_freq)]
+        top_freq <- max(age_word_freq)
+        
+        # Add to data frame
+        age_data <- rbind(age_data, data.frame(
+          edad = age,
+          palabra_top = top_word,
+          frecuencia = top_freq,
+          total_palabras = length(age_tokens),
+          palabras_unicas = length(unique(age_tokens)),
+          num_respuestas = length(age_text),
+          promedio_longitud = round(avg_length, 2),
+          stringsAsFactors = FALSE
+        ))
+      }
+      
+      return(list(
+        overall = overall_stats,
+        length_stats = length_stats,
+        word_freq = filtered_word_freq,
+        district = district_data,
+        gender = gender_data,
+        age = age_data
+      ))
     })
     
     # Word frequency bar chart
@@ -826,7 +1147,87 @@ nominalServer <- function(id, data, metadata, selected_question, geo_data) {
         min_chars = input$min_chars
       )
     })
+    output$download_summary_csv <- downloadHandler(
+      filename = function() {
+        paste0("resumen_nominal_", selected_question(), "_", Sys.Date(), ".zip")
+      },
+      content = function(file) {
+        summaries <- summary_tables()
+        
+        # Create temporary directory for files
+        temp_dir <- tempdir()
+        
+        # Write each summary to a CSV file
+        write.csv(summaries$overall, file.path(temp_dir, "estadisticas_generales.csv"), row.names = FALSE)
+        write.csv(summaries$length_stats, file.path(temp_dir, "estadisticas_longitud.csv"), row.names = FALSE)
+        write.csv(summaries$word_freq, file.path(temp_dir, "tabla_frecuencias.csv"), row.names = FALSE)
+        write.csv(summaries$district, file.path(temp_dir, "analisis_por_distrito.csv"), row.names = FALSE)
+        write.csv(summaries$gender, file.path(temp_dir, "analisis_por_genero.csv"), row.names = FALSE)
+        write.csv(summaries$age, file.path(temp_dir, "analisis_por_edad.csv"), row.names = FALSE)
+        
+        # Save current working directory
+        oldwd <- getwd()
+        
+        # Change to temp directory before zipping
+        setwd(temp_dir)
+        
+        # Create zip file with just filenames (not full paths)
+        files_to_zip <- c(
+          "estadisticas_generales.csv",
+          "estadisticas_longitud.csv",
+          "tabla_frecuencias.csv",
+          "analisis_por_distrito.csv",
+          "analisis_por_genero.csv",
+          "analisis_por_edad.csv"
+        )
+        
+        zip(file, files_to_zip)
+        
+        # Change back to original working directory
+        setwd(oldwd)
+      }
+    )
     
+    # Excel download handler
+    output$download_summary_excel <- downloadHandler(
+      filename = function() {
+        paste0("resumen_nominal_", selected_question(), "_", Sys.Date(), ".xlsx")
+      },
+      content = function(file) {
+        summaries <- summary_tables()
+        
+        if (!requireNamespace("openxlsx", quietly = TRUE)) {
+          # Fall back to csv if openxlsx is not available
+          write.csv(summaries$overall, file)
+          return()
+        }
+        
+        # Create workbook and add worksheets
+        wb <- openxlsx::createWorkbook()
+        
+        openxlsx::addWorksheet(wb, "Estadísticas Generales")
+        openxlsx::writeData(wb, "Estadísticas Generales", summaries$overall)
+        
+        openxlsx::addWorksheet(wb, "Estadísticas de Longitud")
+        openxlsx::writeData(wb, "Estadísticas de Longitud", summaries$length_stats)
+        
+        openxlsx::addWorksheet(wb, "Frecuencia de Palabras")
+        # Limit to top 1000 rows to avoid Excel limitations
+        openxlsx::writeData(wb, "Frecuencia de Palabras", head(summaries$word_freq, 1000))
+        
+        openxlsx::addWorksheet(wb, "Análisis por Distrito")
+        openxlsx::writeData(wb, "Análisis por Distrito", summaries$district)
+        
+        openxlsx::addWorksheet(wb, "Análisis por Género")
+        openxlsx::writeData(wb, "Análisis por Género", summaries$gender)
+        
+        openxlsx::addWorksheet(wb, "Análisis por Edad")
+        openxlsx::writeData(wb, "Análisis por Edad", summaries$age)
+        
+        # Save workbook
+        openxlsx::saveWorkbook(wb, file, overwrite = TRUE)
+      }
+    )
     output$word_cloud_plot <- renderUI({
       req(filtered_data())
       # Create word frequency table

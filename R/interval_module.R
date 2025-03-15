@@ -1020,238 +1020,249 @@ intervalServer <- function(id, data, metadata, selected_question, geo_data) {
       )
     })
 
-    # ENHANCED summary statistics 
-    output$summary_stats <- renderPrint({
-      data <- filtered_data()
-      
-      # Get the response counts from attributes
-      ns_nc_count <- attr(data, "ns_nc_count")
-      missing_count <- attr(data, "missing_count")
-      total_responses <- attr(data, "total_responses")
-      valid_responses <- nrow(data)
-      value_labels <- attr(data, "value_labels")
-      
-      cat("Estadísticas para Datos de Intervalo:\n")
-      cat("\nDistribución de Respuestas:\n")
-      cat("Total de respuestas:", total_responses, "\n")
-      cat("Respuestas válidas:", valid_responses, "\n")
-      cat("No sabe/No contesta:", ns_nc_count, 
-          sprintf("(%.1f%%)", 100 * ns_nc_count/total_responses), "\n")
-      cat("Datos faltantes:", missing_count,
-          sprintf("(%.1f%%)", 100 * missing_count/total_responses), "\n")
-      
-      # Get numeric values for analysis
-      numeric_values <- get_numeric_values(data)
-      
-      # Display overall statistics
-      cat("\nEstadísticas Generales:\n")
-      cat("Media:", round(mean(numeric_values, na.rm = TRUE), 2), "\n")
-      cat("Mediana:", median(numeric_values, na.rm = TRUE), "\n")
-      cat("Desviación Estándar:", round(sd(numeric_values, na.rm = TRUE), 2), "\n")
-      cat("Mínimo:", min(numeric_values, na.rm = TRUE), "\n")
-      cat("Máximo:", max(numeric_values, na.rm = TRUE), "\n")
-      
-      # Find mode
-      value_counts <- table(numeric_values)
-      mode_value <- as.numeric(names(which.max(value_counts)))
-      
-      # Get mode label if available
-      mode_label <- if (!is.null(value_labels) && as.character(mode_value) %in% names(value_labels)) {
-        paste0(mode_value, " (", value_labels[as.character(mode_value)], ")")
-      } else {
-        as.character(mode_value)
-      }
-      
-      cat("Moda:", mode_label, "\n")
-      
-      # Display frequency distribution with labels
-      if (!is.null(value_labels) && length(value_labels) > 0) {
-        cat("\nDistribución de Frecuencias:\n")
-        freq_df <- data.frame(
-          Valor = names(value_counts),
-          Frecuencia = as.vector(value_counts),
-          Porcentaje = round(100 * as.vector(value_counts) / sum(value_counts), 2)
-        )
-        
-        # Add labels if available
-        freq_df$Etiqueta <- sapply(freq_df$Valor, function(val) {
-          if (val %in% names(value_labels)) {
-            return(value_labels[val])
-          } else {
-            return(NA)
-          }
-        })
-        
-        print(freq_df)
-      } else {
-        cat("\nDistribución de Frecuencias:\n")
-        print(value_counts)
-      }
-      
-      # Calculate district statistics
-      cat("\nEstadísticas por Distrito:\n")
-      district_stats <- data %>%
-        group_by(district) %>%
-        summarise(
-          n = n(),
-          Media = round(mean(numeric_values[district == first(district)], na.rm = TRUE), 2),
-          Mediana = median(numeric_values[district == first(district)], na.rm = TRUE),
-          DE = round(sd(numeric_values[district == first(district)], na.rm = TRUE), 2),
-          Min = min(numeric_values[district == first(district)], na.rm = TRUE),
-          Max = max(numeric_values[district == first(district)], na.rm = TRUE),
-          .groups = 'drop'
-        )
-      print(district_stats)
-      
-      # Calculate gender statistics
-      cat("\nEstadísticas por Género:\n")
-      gender_stats <- data %>%
-        group_by(gender) %>%
-        summarise(
-          n = n(),
-          Media = round(mean(numeric_values[gender == first(gender)], na.rm = TRUE), 2),
-          Mediana = median(numeric_values[gender == first(gender)], na.rm = TRUE),
-          DE = round(sd(numeric_values[gender == first(gender)], na.rm = TRUE), 2),
-          Min = min(numeric_values[gender == first(gender)], na.rm = TRUE),
-          Max = max(numeric_values[gender == first(gender)], na.rm = TRUE),
-          .groups = 'drop'
-        )
-      print(gender_stats)
-      
-      # Calculate age group statistics
-      cat("\nEstadísticas por Grupo de Edad:\n")
-      age_stats <- data %>%
-        group_by(age_group) %>%
-        summarise(
-          n = n(),
-          Media = round(mean(numeric_values[age_group == first(age_group)], na.rm = TRUE), 2),
-          Mediana = median(numeric_values[age_group == first(age_group)], na.rm = TRUE),
-          DE = round(sd(numeric_values[age_group == first(age_group)], na.rm = TRUE), 2),
-          Min = min(numeric_values[age_group == first(age_group)], na.rm = TRUE),
-          Max = max(numeric_values[age_group == first(age_group)], na.rm = TRUE),
-          .groups = 'drop'
-        )
-      print(age_stats)
-      
-      if (input$omit_11) {
-        cat("\nNota: Se han omitido los valores de 11 en los cálculos estadísticos.\n")
-      }
-    })
-    
-    # Generate summary tables for download
-    summary_tables <- reactive({
-      data <- filtered_data()
-      numeric_values <- get_numeric_values(data)
-      value_labels <- attr(data, "value_labels")
-      
-      # Create overall statistics table
-      overall_stats <- data.frame(
-        Statistic = c("Media", "Mediana", "Desviación Estándar", "Mínimo", "Máximo", "Moda", "N"),
-        Value = c(
-          round(mean(numeric_values, na.rm = TRUE), 2),
-          median(numeric_values, na.rm = TRUE),
-          round(sd(numeric_values, na.rm = TRUE), 2),
-          min(numeric_values, na.rm = TRUE),
-          max(numeric_values, na.rm = TRUE),
-          as.numeric(names(which.max(table(numeric_values)))),
-          length(numeric_values)
-        )
-      )
-      
-      # Calculate district statistics
-      district_stats <- data %>%
-        group_by(district) %>%
-        summarise(
-          n = n(),
-          Media = round(mean(numeric_values[district == first(district)], na.rm = TRUE), 2),
-          Mediana = median(numeric_values[district == first(district)], na.rm = TRUE),
-          DE = round(sd(numeric_values[district == first(district)], na.rm = TRUE), 2),
-          Min = min(numeric_values[district == first(district)], na.rm = TRUE),
-          Max = max(numeric_values[district == first(district)], na.rm = TRUE),
-          .groups = 'drop'
-        )
-      
-      # Calculate gender statistics
-      gender_stats <- data %>%
-        group_by(gender) %>%
-        summarise(
-          n = n(),
-          Media = round(mean(numeric_values[gender == first(gender)], na.rm = TRUE), 2),
-          Mediana = median(numeric_values[gender == first(gender)], na.rm = TRUE),
-          DE = round(sd(numeric_values[gender == first(gender)], na.rm = TRUE), 2),
-          Min = min(numeric_values[gender == first(gender)], na.rm = TRUE),
-          Max = max(numeric_values[gender == first(gender)], na.rm = TRUE),
-          .groups = 'drop'
-        )
-      
-      # Calculate age group statistics
-      age_stats <- data %>%
-        group_by(age_group) %>%
-        summarise(
-          n = n(),
-          Media = round(mean(numeric_values[age_group == first(age_group)], na.rm = TRUE), 2),
-          Mediana = median(numeric_values[age_group == first(age_group)], na.rm = TRUE),
-          DE = round(sd(numeric_values[age_group == first(age_group)], na.rm = TRUE), 2),
-          Min = min(numeric_values[age_group == first(age_group)], na.rm = TRUE),
-          Max = max(numeric_values[age_group == first(age_group)], na.rm = TRUE),
-          .groups = 'drop'
-        )
-      
-      # Create frequency table
-      freq_table <- as.data.frame(table(numeric_values))
-      names(freq_table) <- c("Valor", "Frecuencia")
-      freq_table$Porcentaje <- round(100 * freq_table$Frecuencia / sum(freq_table$Frecuencia), 2)
-      
-      # Add labels if available
-      if (!is.null(value_labels)) {
-        freq_table$Etiqueta <- sapply(freq_table$Valor, function(val) {
-          if (as.character(val) %in% names(value_labels)) {
-            return(value_labels[as.character(val)])
-          } else {
-            return(NA)
-          }
-        })
-      }
-      
-      return(list(
-        overall = overall_stats,
-        district = district_stats,
-        gender = gender_stats,
-        age = age_stats,
-        frequency = freq_table
-      ))
-    })
-    
-    # CSV download handler
-    output$download_summary_csv <- downloadHandler(
-      filename = function() {
-        paste0("resumen_", selected_question(), "_", Sys.Date(), ".zip")
-      },
-      content = function(file) {
-        summaries <- summary_tables()
-        
-        # Create temporary directory for files
-        temp_dir <- tempdir()
-        
-        # Write each summary to a CSV file
-        write.csv(summaries$overall, file.path(temp_dir, "estadisticas_generales.csv"), row.names = FALSE)
-        write.csv(summaries$district, file.path(temp_dir, "estadisticas_por_distrito.csv"), row.names = FALSE)
-        write.csv(summaries$gender, file.path(temp_dir, "estadisticas_por_genero.csv"), row.names = FALSE)
-        write.csv(summaries$age, file.path(temp_dir, "estadisticas_por_edad.csv"), row.names = FALSE)
-        write.csv(summaries$frequency, file.path(temp_dir, "tabla_frecuencias.csv"), row.names = FALSE)
-        
-        # Create zip file with all CSVs
-        files_to_zip <- c(
-          file.path(temp_dir, "estadisticas_generales.csv"),
-          file.path(temp_dir, "estadisticas_por_distrito.csv"),
-          file.path(temp_dir, "estadisticas_por_genero.csv"),
-          file.path(temp_dir, "estadisticas_por_edad.csv"),
-          file.path(temp_dir, "tabla_frecuencias.csv")
-        )
-        
-        zip(file, files_to_zip)
-      }
+# Fix for the district_stats calculation in the interval module
+# This fixes the identical mean values issue
+
+output$summary_stats <- renderPrint({
+  data <- filtered_data()
+  
+  # Get the response counts from attributes
+  ns_nc_count <- attr(data, "ns_nc_count")
+  missing_count <- attr(data, "missing_count")
+  total_responses <- attr(data, "total_responses")
+  valid_responses <- nrow(data)
+  value_labels <- attr(data, "value_labels")
+  
+  cat("Estadísticas para Datos de Intervalo:\n")
+  cat("\nDistribución de Respuestas:\n")
+  cat("Total de respuestas:", total_responses, "\n")
+  cat("Respuestas válidas:", valid_responses, "\n")
+  cat("No sabe/No contesta:", ns_nc_count, 
+      sprintf("(%.1f%%)", 100 * ns_nc_count/total_responses), "\n")
+  cat("Datos faltantes:", missing_count,
+      sprintf("(%.1f%%)", 100 * missing_count/total_responses), "\n")
+  
+  # Get numeric values for analysis
+  numeric_values <- get_numeric_values(data)
+  
+  # Display overall statistics
+  cat("\nEstadísticas Generales:\n")
+  cat("Media:", round(mean(numeric_values, na.rm = TRUE), 2), "\n")
+  cat("Mediana:", median(numeric_values, na.rm = TRUE), "\n")
+  cat("Desviación Estándar:", round(sd(numeric_values, na.rm = TRUE), 2), "\n")
+  cat("Mínimo:", min(numeric_values, na.rm = TRUE), "\n")
+  cat("Máximo:", max(numeric_values, na.rm = TRUE), "\n")
+  
+  # Find mode
+  value_counts <- table(numeric_values)
+  mode_value <- as.numeric(names(which.max(value_counts)))
+  
+  # Get mode label if available
+  mode_label <- if (!is.null(value_labels) && as.character(mode_value) %in% names(value_labels)) {
+    paste0(mode_value, " (", value_labels[as.character(mode_value)], ")")
+  } else {
+    as.character(mode_value)
+  }
+  
+  cat("Moda:", mode_label, "\n")
+  
+  # Display frequency distribution with labels
+  if (!is.null(value_labels) && length(value_labels) > 0) {
+    cat("\nDistribución de Frecuencias:\n")
+    freq_df <- data.frame(
+      Valor = names(value_counts),
+      Frecuencia = as.vector(value_counts),
+      Porcentaje = round(100 * as.vector(value_counts) / sum(value_counts), 2)
     )
+    
+    # Add labels if available
+    freq_df$Etiqueta <- sapply(freq_df$Valor, function(val) {
+      if (val %in% names(value_labels)) {
+        return(value_labels[val])
+      } else {
+        return(NA)
+      }
+    })
+    
+    print(freq_df)
+  } else {
+    cat("\nDistribución de Frecuencias:\n")
+    print(value_counts)
+  }
+  
+  # Calculate district statistics - FIXED to use correct grouping
+  cat("\nEstadísticas por Distrito:\n")
+  district_stats <- data %>%
+    group_by(district) %>%
+    summarise(
+      n = n(),
+      Media = round(mean(value_num, na.rm = TRUE), 2), # Fixed this line to use value_num
+      Mediana = median(value_num, na.rm = TRUE),  # Fixed this line to use value_num
+      DE = round(sd(value_num, na.rm = TRUE), 2), # Fixed this line to use value_num
+      Min = min(value_num, na.rm = TRUE),  # Fixed this line to use value_num
+      Max = max(value_num, na.rm = TRUE),  # Fixed this line to use value_num
+      .groups = 'drop'
+    )
+  print(district_stats)
+  
+  # Calculate gender statistics - FIXED to use correct grouping
+  cat("\nEstadísticas por Género:\n")
+  gender_stats <- data %>%
+    group_by(gender) %>%
+    summarise(
+      n = n(),
+      Media = round(mean(value_num, na.rm = TRUE), 2),  # Fixed this line to use value_num
+      Mediana = median(value_num, na.rm = TRUE),  # Fixed this line to use value_num
+      DE = round(sd(value_num, na.rm = TRUE), 2),  # Fixed this line to use value_num
+      Min = min(value_num, na.rm = TRUE),  # Fixed this line to use value_num
+      Max = max(value_num, na.rm = TRUE),  # Fixed this line to use value_num
+      .groups = 'drop'
+    )
+  print(gender_stats)
+  
+  # Calculate age group statistics - FIXED to use correct grouping
+  cat("\nEstadísticas por Grupo de Edad:\n")
+  age_stats <- data %>%
+    group_by(age_group) %>%
+    summarise(
+      n = n(),
+      Media = round(mean(value_num, na.rm = TRUE), 2),  # Fixed this line to use value_num
+      Mediana = median(value_num, na.rm = TRUE),  # Fixed this line to use value_num
+      DE = round(sd(value_num, na.rm = TRUE), 2),  # Fixed this line to use value_num
+      Min = min(value_num, na.rm = TRUE),  # Fixed this line to use value_num
+      Max = max(value_num, na.rm = TRUE),  # Fixed this line to use value_num
+      .groups = 'drop'
+    )
+  print(age_stats)
+  
+  if (input$omit_11) {
+    cat("\nNota: Se han omitido los valores de 11 en los cálculos estadísticos.\n")
+  }
+})
+
+# Fix for summary_tables in interval module
+summary_tables <- reactive({
+  data <- filtered_data()
+  
+  # Create overall statistics table
+  overall_stats <- data.frame(
+    Statistic = c("Media", "Mediana", "Desviación Estándar", "Mínimo", "Máximo", "Moda", "N"),
+    Value = c(
+      round(mean(data$value_num, na.rm = TRUE), 2),
+      median(data$value_num, na.rm = TRUE),
+      round(sd(data$value_num, na.rm = TRUE), 2),
+      min(data$value_num, na.rm = TRUE),
+      max(data$value_num, na.rm = TRUE),
+      as.numeric(names(which.max(table(data$value_num)))),
+      length(data$value_num)
+    )
+  )
+  
+  # Calculate district statistics - FIXED
+  district_stats <- data %>%
+    group_by(district) %>%
+    summarise(
+      n = n(),
+      Media = round(mean(value_num, na.rm = TRUE), 2),
+      Mediana = median(value_num, na.rm = TRUE),
+      DE = round(sd(value_num, na.rm = TRUE), 2),
+      Min = min(value_num, na.rm = TRUE),
+      Max = max(value_num, na.rm = TRUE),
+      .groups = 'drop'
+    )
+  
+  # Calculate gender statistics - FIXED
+  gender_stats <- data %>%
+    group_by(gender) %>%
+    summarise(
+      n = n(),
+      Media = round(mean(value_num, na.rm = TRUE), 2),
+      Mediana = median(value_num, na.rm = TRUE),
+      DE = round(sd(value_num, na.rm = TRUE), 2),
+      Min = min(value_num, na.rm = TRUE),
+      Max = max(value_num, na.rm = TRUE),
+      .groups = 'drop'
+    )
+  
+  # Calculate age group statistics - FIXED
+  age_stats <- data %>%
+    group_by(age_group) %>%
+    summarise(
+      n = n(),
+      Media = round(mean(value_num, na.rm = TRUE), 2),
+      Mediana = median(value_num, na.rm = TRUE),
+      DE = round(sd(value_num, na.rm = TRUE), 2),
+      Min = min(value_num, na.rm = TRUE),
+      Max = max(value_num, na.rm = TRUE),
+      .groups = 'drop'
+    )
+  
+  # Create frequency table
+  freq_table <- as.data.frame(table(data$value_num))
+  names(freq_table) <- c("Valor", "Frecuencia")
+  freq_table$Porcentaje <- round(100 * freq_table$Frecuencia / sum(freq_table$Frecuencia), 2)
+  
+  # Add labels if available
+  value_labels <- attr(data, "value_labels")
+  if (!is.null(value_labels)) {
+    freq_table$Etiqueta <- sapply(freq_table$Valor, function(val) {
+      if (as.character(val) %in% names(value_labels)) {
+        return(value_labels[as.character(val)])
+      } else {
+        return(NA)
+      }
+    })
+  }
+  
+  return(list(
+    overall = overall_stats,
+    district = district_stats,
+    gender = gender_stats,
+    age = age_stats,
+    frequency = freq_table
+  ))
+})
+
+# Fix the CSV download handler to not include folder structure in zip
+output$download_summary_csv <- downloadHandler(
+  filename = function() {
+    paste0("resumen_", selected_question(), "_", Sys.Date(), ".zip")
+  },
+  content = function(file) {
+    summaries <- summary_tables()
+    
+    # Create temporary directory for files
+    temp_dir <- tempdir()
+    
+    # Write each summary to a CSV file
+    write.csv(summaries$overall, file.path(temp_dir, "estadisticas_generales.csv"), row.names = FALSE)
+    write.csv(summaries$district, file.path(temp_dir, "estadisticas_por_distrito.csv"), row.names = FALSE)
+    write.csv(summaries$gender, file.path(temp_dir, "estadisticas_por_genero.csv"), row.names = FALSE)
+    write.csv(summaries$age, file.path(temp_dir, "estadisticas_por_edad.csv"), row.names = FALSE)
+    write.csv(summaries$frequency, file.path(temp_dir, "tabla_frecuencias.csv"), row.names = FALSE)
+    
+    # Create zip file with all CSVs - FIXED to use relative paths
+    files_to_zip <- c(
+      "estadisticas_generales.csv",
+      "estadisticas_por_distrito.csv",
+      "estadisticas_por_genero.csv",
+      "estadisticas_por_edad.csv",
+      "tabla_frecuencias.csv"
+    )
+    
+    # Save current working directory
+    oldwd <- getwd()
+    
+    # Change to temp directory before zipping
+    setwd(temp_dir)
+    
+    # Create zip file
+    zip(file, files_to_zip)
+    
+    # Change back to original working directory
+    setwd(oldwd)
+  }
+)
     
     # Excel download handler
     output$download_summary_excel <- downloadHandler(

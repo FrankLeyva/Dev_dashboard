@@ -813,7 +813,16 @@ ordinalUI <- function(id) {
               )
             )
           ),
-          
+           conditionalPanel(
+   condition = sprintf("input['%s'] == 'summary'", ns("plot_type")),
+   div(
+     style = "margin-top: 15px;",
+     downloadButton(ns("download_summary_csv"), "Descargar Resumen (CSV)"),
+     br(),
+     br(),
+     downloadButton(ns("download_summary_excel"), "Descargar Resumen (Excel)")
+   )
+ ),
           # Add new conditional panel for map response selection
           conditionalPanel(
             condition = sprintf("input['%s'] == 'map'", ns("plot_type")),
@@ -957,75 +966,177 @@ ordinalServer <- function(id, data, metadata, selected_question, geo_data) {
       cat("Datos faltantes:", missing_count,
           sprintf("(%.1f%%)", 100 * missing_count/total_responses), "\n")
       
-      if(is.factor(data$value)) {
-        # For labeled data, show frequency distribution with factor levels
-        cat("\nDistribución de valores (con etiquetas):\n")
-        print(table(data$value))
-        
-        # Calculate and display mode as factor level
-        mode_value <- names(which.max(table(data$value)))
-        
-        cat("\nEstadísticas:\n")
-        cat("Moda (respuesta más común):", mode_value, "\n")
-        
-        # For these statistics, we use the numeric values but explain they're based on códigos
-        cat("Media (basada en códigos numéricos):", round(mean(get_numeric_values(data), na.rm = TRUE), 2), "\n")
-        cat("Mediana (basada en códigos numéricos):", median(get_numeric_values(data), na.rm = TRUE), "\n")
-        
-        # Show the value label mapping for reference
-        if (!is.null(value_labels) && length(value_labels) > 0) {
-          cat("\nCorrespondencia entre valores numéricos y etiquetas:\n")
-          for (i in 1:length(value_labels)) {
-            cat(paste0(names(value_labels)[i], " = ", value_labels[i]), "\n")
-          }
-        }
-      } else {
-        # Get numeric values and create a lookup table
-        numeric_values <- get_numeric_values(data)
-        
-        # Display distribution with labels if available
-        if (!is.null(value_labels) && length(value_labels) > 0) {
-          cat("\nDistribución de valores (con etiquetas):\n")
-          value_counts <- table(numeric_values)
-          
-          # Create a labeled table
-          labeled_counts <- data.frame(
-            Valor_Numérico = names(value_counts),
-            Frecuencia = as.vector(value_counts),
-            Etiqueta = sapply(names(value_counts), function(val) {
-              if (val %in% names(value_labels)) value_labels[val] else val
-            })
-          )
-          print(labeled_counts)
-        } else {
-          cat("\nDistribución de valores:\n")
-          print(table(numeric_values))
-        }
-        
-        # Calculate and show mode with label
-        mode_numeric <- as.numeric(names(which.max(table(numeric_values))))
-        mode_label <- if (!is.null(value_labels) && as.character(mode_numeric) %in% names(value_labels)) {
-          value_labels[as.character(mode_numeric)]
-        } else {
-          as.character(mode_numeric)
-        }
-        
-        cat("\nEstadísticas:\n")
-        cat("Moda (respuesta más común):", mode_label, "\n")
-        cat("Media:", round(mean(numeric_values, na.rm = TRUE), 2), "\n")
-        cat("Mediana:", median(numeric_values, na.rm = TRUE), "\n")
-        
-        # Show the value label mapping for reference
-        if (!is.null(value_labels) && length(value_labels) > 0) {
-          cat("\nCorrespondencia entre valores numéricos y etiquetas:\n")
-          for (i in 1:length(value_labels)) {
-            cat(paste0(names(value_labels)[i], " = ", value_labels[i]), "\n")
-          }
+      # Get numeric values for calculating statistics
+      numeric_values <- get_numeric_values(data)
+      
+      # Display overall statistics
+      cat("\nEstadísticas Generales (basadas en códigos numéricos):\n")
+      cat("Media:", round(mean(numeric_values, na.rm = TRUE), 2), "\n")
+      cat("Mediana:", median(numeric_values, na.rm = TRUE), "\n")
+      cat("Desviación Estándar:", round(sd(numeric_values, na.rm = TRUE), 2), "\n")
+      cat("Mínimo:", min(numeric_values, na.rm = TRUE), "\n")
+      cat("Máximo:", max(numeric_values, na.rm = TRUE), "\n")
+      
+      # Find mode
+      value_counts <- table(data$value)
+      mode_value <- names(which.max(value_counts))
+      cat("Moda (respuesta más común):", mode_value, "\n")
+      
+      # Display frequency distribution
+      cat("\nDistribución de Frecuencias:\n")
+      freq_df <- data.frame(
+        Categoría = names(value_counts),
+        Frecuencia = as.vector(value_counts),
+        Porcentaje = round(100 * as.vector(value_counts) / sum(value_counts), 2)
+      )
+      print(freq_df)
+      
+      # Calculate district statistics - Fixed to use the correct value column
+      cat("\nEstadísticas por Distrito:\n")
+      district_stats <- data %>%
+        group_by(district) %>%
+        summarise(
+          n = n(),
+          Media = round(mean(value_num, na.rm = TRUE), 2),
+          Mediana = median(value_num, na.rm = TRUE),
+          DE = round(sd(value_num, na.rm = TRUE), 2),
+          Moda = get_mode_with_label(data[district == first(district), ]),
+          .groups = 'drop'
+        )
+      print(district_stats)
+      
+      # Calculate gender statistics
+      cat("\nEstadísticas por Género:\n")
+      gender_stats <- data %>%
+        group_by(gender) %>%
+        summarise(
+          n = n(),
+          Media = round(mean(value_num, na.rm = TRUE), 2),
+          Mediana = median(value_num, na.rm = TRUE),
+          DE = round(sd(value_num, na.rm = TRUE), 2),
+          Moda = get_mode_with_label(data[gender == first(gender), ]),
+          .groups = 'drop'
+        )
+      print(gender_stats)
+      
+      # Calculate age group statistics
+      cat("\nEstadísticas por Grupo de Edad:\n")
+      age_stats <- data %>%
+        group_by(age_group) %>%
+        summarise(
+          n = n(),
+          Media = round(mean(value_num, na.rm = TRUE), 2),
+          Mediana = median(value_num, na.rm = TRUE),
+          DE = round(sd(value_num, na.rm = TRUE), 2),
+          Moda = get_mode_with_label(data[age_group == first(age_group), ]),
+          .groups = 'drop'
+        )
+      print(age_stats)
+      
+      # Show the value label mapping for reference
+      if (!is.null(value_labels) && length(value_labels) > 0) {
+        cat("\nCorrespondencia entre valores numéricos y etiquetas:\n")
+        for (i in 1:length(value_labels)) {
+          cat(paste0(names(value_labels)[i], " = ", value_labels[i]), "\n")
         }
       }
       
       cat("\nNota: Para datos ordinales, la media se usa como indicador de posición relativa,\n")
       cat("pero debe interpretarse considerando que las distancias entre categorías pueden no ser iguales.\n")
+    })
+    
+    # Generate summary tables for download
+    summary_tables <- reactive({
+      data <- filtered_data()
+      numeric_values <- get_numeric_values(data)
+      value_labels <- attr(data, "value_labels")
+      
+      # Create overall statistics table
+      overall_stats <- data.frame(
+        Statistic = c("Media", "Mediana", "Desviación Estándar", "Mínimo", "Máximo", "Moda", "N",
+                      "No sabe/No contesta", "Datos faltantes", "Total de respuestas"),
+        Value = c(
+          round(mean(numeric_values, na.rm = TRUE), 2),
+          median(numeric_values, na.rm = TRUE),
+          round(sd(numeric_values, na.rm = TRUE), 2),
+          min(numeric_values, na.rm = TRUE),
+          max(numeric_values, na.rm = TRUE),
+          get_mode_with_label(data),
+          length(numeric_values),
+          attr(data, "ns_nc_count"),
+          attr(data, "missing_count"),
+          attr(data, "total_responses")
+        )
+      )
+      
+      # Calculate district statistics - Using the correct value column
+      district_stats <- data %>%
+        group_by(district) %>%
+        summarise(
+          n = n(),
+          Media = round(mean(value_num, na.rm = TRUE), 2),
+          Mediana = median(value_num, na.rm = TRUE),
+          DE = round(sd(value_num, na.rm = TRUE), 2),
+          Moda = get_mode_with_label(data[district == first(district), ]),
+          Min = min(value_num, na.rm = TRUE),
+          Max = max(value_num, na.rm = TRUE),
+          .groups = 'drop'
+        )
+      
+      # Calculate gender statistics
+      gender_stats <- data %>%
+        group_by(gender) %>%
+        summarise(
+          n = n(),
+          Media = round(mean(value_num, na.rm = TRUE), 2),
+          Mediana = median(value_num, na.rm = TRUE),
+          DE = round(sd(value_num, na.rm = TRUE), 2),
+          Moda = get_mode_with_label(data[gender == first(gender), ]),
+          Min = min(value_num, na.rm = TRUE),
+          Max = max(value_num, na.rm = TRUE),
+          .groups = 'drop'
+        )
+      
+      # Calculate age group statistics
+      age_stats <- data %>%
+        group_by(age_group) %>%
+        summarise(
+          n = n(),
+          Media = round(mean(value_num, na.rm = TRUE), 2),
+          Mediana = median(value_num, na.rm = TRUE),
+          DE = round(sd(value_num, na.rm = TRUE), 2),
+          Moda = get_mode_with_label(data[age_group == first(age_group), ]),
+          Min = min(value_num, na.rm = TRUE),
+          Max = max(value_num, na.rm = TRUE),
+          .groups = 'drop'
+        )
+      
+      # Create frequency table
+      freq_table <- as.data.frame(table(data$value))
+      names(freq_table) <- c("Categoría", "Frecuencia")
+      freq_table$Porcentaje <- round(100 * freq_table$Frecuencia / sum(freq_table$Frecuencia), 2)
+      
+      # Create value labels table if available
+      if (!is.null(value_labels)) {
+        label_table <- data.frame(
+          Valor = names(value_labels),
+          Etiqueta = unname(value_labels)
+        )
+      } else {
+        label_table <- data.frame(
+          Valor = character(0),
+          Etiqueta = character(0)
+        )
+      }
+      
+      return(list(
+        overall = overall_stats,
+        district = district_stats,
+        gender = gender_stats,
+        age = age_stats,
+        frequency = freq_table,
+        labels = label_table
+      ))
     })
     
     # Update plot outputs
@@ -1058,6 +1169,86 @@ ordinalServer <- function(id, data, metadata, selected_question, geo_data) {
       req(filtered_data())
       create_ordinal_gender_dumbbell(filtered_data())
     })
+    output$download_summary_csv <- downloadHandler(
+      filename = function() {
+        paste0("resumen_ordinal_", selected_question(), "_", Sys.Date(), ".zip")
+      },
+      content = function(file) {
+        summaries <- summary_tables()
+        
+        # Create temporary directory for files
+        temp_dir <- tempdir()
+        
+        # Write each summary to a CSV file
+        write.csv(summaries$overall, file.path(temp_dir, "estadisticas_generales.csv"), row.names = FALSE)
+        write.csv(summaries$district, file.path(temp_dir, "estadisticas_por_distrito.csv"), row.names = FALSE)
+        write.csv(summaries$gender, file.path(temp_dir, "estadisticas_por_genero.csv"), row.names = FALSE)
+        write.csv(summaries$age, file.path(temp_dir, "estadisticas_por_edad.csv"), row.names = FALSE)
+        write.csv(summaries$frequency, file.path(temp_dir, "tabla_frecuencias.csv"), row.names = FALSE)
+        write.csv(summaries$labels, file.path(temp_dir, "etiquetas_valores.csv"), row.names = FALSE)
+        
+        # Save current working directory
+        oldwd <- getwd()
+        
+        # Change to temp directory before zipping
+        setwd(temp_dir)
+        
+        # Create zip file with just filenames (not full paths)
+        files_to_zip <- c(
+          "estadisticas_generales.csv",
+          "estadisticas_por_distrito.csv",
+          "estadisticas_por_genero.csv",
+          "estadisticas_por_edad.csv",
+          "tabla_frecuencias.csv",
+          "etiquetas_valores.csv"
+        )
+        
+        zip(file, files_to_zip)
+        
+        # Change back to original working directory
+        setwd(oldwd)
+      }
+    )
+    
+    # Excel download handler
+    output$download_summary_excel <- downloadHandler(
+      filename = function() {
+        paste0("resumen_ordinal_", selected_question(), "_", Sys.Date(), ".xlsx")
+      },
+      content = function(file) {
+        summaries <- summary_tables()
+        
+        if (!requireNamespace("openxlsx", quietly = TRUE)) {
+          # Fall back to csv if openxlsx is not available
+          write.csv(summaries$overall, file)
+          return()
+        }
+        
+        # Create workbook and add worksheets
+        wb <- openxlsx::createWorkbook()
+        
+        openxlsx::addWorksheet(wb, "Estadísticas Generales")
+        openxlsx::writeData(wb, "Estadísticas Generales", summaries$overall)
+        
+        openxlsx::addWorksheet(wb, "Por Distrito")
+        openxlsx::writeData(wb, "Por Distrito", summaries$district)
+        
+        openxlsx::addWorksheet(wb, "Por Género")
+        openxlsx::writeData(wb, "Por Género", summaries$gender)
+        
+        openxlsx::addWorksheet(wb, "Por Grupo de Edad")
+        openxlsx::writeData(wb, "Por Grupo de Edad", summaries$age)
+        
+        openxlsx::addWorksheet(wb, "Tabla de Frecuencias")
+        openxlsx::writeData(wb, "Tabla de Frecuencias", summaries$frequency)
+        
+        openxlsx::addWorksheet(wb, "Etiquetas de Valores")
+        openxlsx::writeData(wb, "Etiquetas de Valores", summaries$labels)
+        
+        # Save workbook
+        openxlsx::saveWorkbook(wb, file, overwrite = TRUE)
+      }
+    )
     
     output$bar_plot <- renderPlotly({
       req(filtered_data())
