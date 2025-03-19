@@ -863,6 +863,39 @@
         "RemoteSha": "2.1-1"
       }
     },
+    "colourpicker": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "colourpicker",
+        "Title": "A Colour Picker Tool for Shiny and for Selecting Colours in\nPlots",
+        "Version": "1.3.0",
+        "Authors@R": "c(\n    person(\"Dean\", \"Attali\", \n        email = \"daattali@gmail.com\",\n        role = c(\"aut\", \"cre\"),\n        comment= c(ORCID=\"0000-0002-5645-3493\")),\n    person(\"David\", \"Griswold\", email=\"novachild@gmail.com\",\n    role = \"ctb\")\n  )",
+        "Description": "A colour picker that can be used as an input in 'Shiny' apps\n    or Rmarkdown documents. The colour picker supports alpha opacity, custom\n    colour palettes, and many more options. A Plot Colour Helper tool is\n    available as an 'RStudio' Addin, which helps you pick colours to use in your\n    plots. A more generic Colour Picker 'RStudio' Addin is also provided to let \n    you select colours to use in your R code.",
+        "URL": "https://github.com/daattali/colourpicker,\nhttps://daattali.com/shiny/colourInput/",
+        "BugReports": "https://github.com/daattali/colourpicker/issues",
+        "Depends": "R (>= 3.1.0)",
+        "Imports": "ggplot2, htmltools, htmlwidgets (>= 0.7), jsonlite, miniUI (>=\n0.1.1), shiny (>= 0.11.1), shinyjs (>= 2.0.0), utils",
+        "Suggests": "knitr (>= 1.7), rmarkdown, rstudioapi (>= 0.5),\nshinydisconnect",
+        "License": "MIT + file LICENSE",
+        "Encoding": "UTF-8",
+        "RoxygenNote": "7.2.3",
+        "NeedsCompilation": "no",
+        "Packaged": "2023-08-20 00:23:47 UTC; Dean-X1C",
+        "Author": "Dean Attali [aut, cre] (<https://orcid.org/0000-0002-5645-3493>),\n  David Griswold [ctb]",
+        "Maintainer": "Dean Attali <daattali@gmail.com>",
+        "Repository": "CRAN",
+        "Date/Publication": "2023-08-21 08:12:46 UTC",
+        "Built": "R 4.4.3; ; 2025-03-17 04:20:33 UTC; windows",
+        "RemoteType": "standard",
+        "RemotePkgRef": "colourpicker",
+        "RemoteRef": "colourpicker",
+        "RemoteRepos": "https://cran.rstudio.com",
+        "RemoteReposName": "CRAN",
+        "RemotePkgPlatform": "x86_64-w64-mingw32",
+        "RemoteSha": "1.3.0"
+      }
+    },
     "commonmark": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -2276,7 +2309,7 @@
       "Repository": "https://cran.rstudio.com",
       "description": {
         "Package": "jsonlite",
-        "Version": "1.8.9",
+        "Version": "1.9.1",
         "Title": "A Simple and Robust JSON Parser and Generator for R",
         "License": "MIT + file LICENSE",
         "Depends": "methods",
@@ -2290,11 +2323,11 @@
         "RoxygenNote": "7.2.3",
         "Encoding": "UTF-8",
         "NeedsCompilation": "yes",
-        "Packaged": "2024-09-19 15:41:06 UTC; jeroen",
+        "Packaged": "2025-03-03 14:17:56 UTC; jeroen",
         "Author": "Jeroen Ooms [aut, cre] (<https://orcid.org/0000-0002-4035-0289>),\n  Duncan Temple Lang [ctb],\n  Lloyd Hilaiel [cph] (author of bundled libyajl)",
         "Repository": "CRAN",
-        "Date/Publication": "2024-09-20 08:40:14 UTC",
-        "Built": "R 4.4.2; x86_64-w64-mingw32; 2025-01-09 01:43:55 UTC; windows",
+        "Date/Publication": "2025-03-03 22:10:02 UTC",
+        "Built": "R 4.4.3; x86_64-w64-mingw32; 2025-03-17 02:22:45 UTC; windows",
         "Archs": "x64",
         "RemoteType": "standard",
         "RemotePkgRef": "jsonlite",
@@ -2302,7 +2335,7 @@
         "RemoteRepos": "https://cran.rstudio.com",
         "RemoteReposName": "CRAN",
         "RemotePkgPlatform": "x86_64-w64-mingw32",
-        "RemoteSha": "1.8.9"
+        "RemoteSha": "1.9.1"
       }
     },
     "knitr": {
@@ -2747,6 +2780,36 @@
         "RemoteReposName": "CRAN",
         "RemotePkgPlatform": "x86_64-w64-mingw32",
         "RemoteSha": "0.12"
+      }
+    },
+    "miniUI": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "miniUI",
+        "Type": "Package",
+        "Title": "Shiny UI Widgets for Small Screens",
+        "Version": "0.1.1.1",
+        "Authors@R": "c(\n    person(\"Joe\", \"Cheng\", role = c(\"cre\", \"aut\"), email = \"joe@rstudio.com\"),\n    person(family = \"RStudio\", role = \"cph\")\n    )",
+        "Description": "Provides UI widget and layout functions for writing Shiny apps\n    that work well on small screens.",
+        "License": "GPL-3",
+        "LazyData": "TRUE",
+        "Imports": "shiny (>= 0.13), htmltools (>= 0.3), utils",
+        "RoxygenNote": "5.0.1",
+        "NeedsCompilation": "no",
+        "Packaged": "2018-05-18 17:00:34 UTC; jcheng",
+        "Author": "Joe Cheng [cre, aut],\n  RStudio [cph]",
+        "Maintainer": "Joe Cheng <joe@rstudio.com>",
+        "Repository": "CRAN",
+        "Date/Publication": "2018-05-18 18:37:18 UTC",
+        "Built": "R 4.4.3; ; 2025-03-17 03:59:14 UTC; windows",
+        "RemoteType": "standard",
+        "RemotePkgRef": "miniUI",
+        "RemoteRef": "miniUI",
+        "RemoteRepos": "https://cran.rstudio.com",
+        "RemoteReposName": "CRAN",
+        "RemotePkgPlatform": "x86_64-w64-mingw32",
+        "RemoteSha": "0.1.1.1"
       }
     },
     "modelr": {
@@ -3569,7 +3632,7 @@
         "Package": "renv",
         "Type": "Package",
         "Title": "Project Environments",
-        "Version": "1.0.11",
+        "Version": "1.1.3",
         "Authors@R": "c(\n    person(\"Kevin\", \"Ushey\", role = c(\"aut\", \"cre\"), email = \"kevin@rstudio.com\",\n           comment = c(ORCID = \"0000-0003-2880-7407\")),\n    person(\"Hadley\", \"Wickham\", role = c(\"aut\"), email = \"hadley@rstudio.com\",\n           comment = c(ORCID = \"0000-0003-4757-117X\")),\n    person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\"))\n    )",
         "Description": "A dependency management toolkit for R. Using 'renv', you can create\n    and manage project-local R libraries, save the state of these libraries to\n    a 'lockfile', and later restore your library as required. Together, these\n    tools can help make your projects more isolated, portable, and reproducible.",
         "License": "MIT + file LICENSE",
@@ -3585,12 +3648,19 @@
         "Config/testthat/parallel": "true",
         "Config/testthat/start-first": "bioconductor,python,install,restore,snapshot,retrieve,remotes",
         "NeedsCompilation": "no",
-        "Packaged": "2024-10-11 18:36:11 UTC; kevin",
+        "Packaged": "2025-03-17 20:30:29 UTC; kevin",
         "Author": "Kevin Ushey [aut, cre] (<https://orcid.org/0000-0003-2880-7407>),\n  Hadley Wickham [aut] (<https://orcid.org/0000-0003-4757-117X>),\n  Posit Software, PBC [cph, fnd]",
         "Maintainer": "Kevin Ushey <kevin@rstudio.com>",
         "Repository": "CRAN",
-        "Date/Publication": "2024-10-12 07:30:02 UTC",
-        "Built": "R 4.4.2; ; 2025-01-09 01:46:05 UTC; windows"
+        "Date/Publication": "2025-03-18 10:50:02 UTC",
+        "Built": "R 4.4.3; ; 2025-03-19 00:51:02 UTC; windows",
+        "RemoteType": "standard",
+        "RemotePkgRef": "renv",
+        "RemoteRef": "renv",
+        "RemoteRepos": "https://cran.rstudio.com",
+        "RemoteReposName": "CRAN",
+        "RemotePkgPlatform": "x86_64-w64-mingw32",
+        "RemoteSha": "1.1.3"
       }
     },
     "reprex": {
@@ -5162,10 +5232,10 @@
   },
   "files": {
     ".Rprofile": {
-      "checksum": "52e5bb596987a8556ed01cb281866792"
+      "checksum": "66bfaea89d4147f01daa21bc50196c04"
     },
     "app.R": {
-      "checksum": "994635b5ef9e0964921f1a26235b54f3"
+      "checksum": "fec4fa1ef82e6266bae5f52fe2868533"
     },
     "Classifierapp.R": {
       "checksum": "e432a9d5c3884351e601e08e1abda1f7"
@@ -5474,7 +5544,7 @@
       "checksum": "37f0a6432a88fc56312f6a3a231cb2de"
     },
     "R/global_theme.R": {
-      "checksum": "960fc0f87375fadb3e99587a275e4d8c"
+      "checksum": "0dbf9a5e8b83b62ad776fb0069e7e161"
     },
     "R/interval_module.R": {
       "checksum": "97c58b944af201d608b3627f86f57d3b"
@@ -5489,10 +5559,10 @@
       "checksum": "30e2eb244c5488dd5f07e5751984efeb"
     },
     "R/razon_module.R": {
-      "checksum": "c049eb68c041fcde2e080eefc3ad339a"
+      "checksum": "c001de3854e3f08325df55a1bd5faa03"
     },
     "R/server.R": {
-      "checksum": "0d6c9751a9924dea0341a0b920272315"
+      "checksum": "582ec55f098a122257afb4c6ba5fdeeb"
     },
     "R/survey_config.R": {
       "checksum": "8732a007b32185447c4edf2961f14638"
@@ -5501,7 +5571,7 @@
       "checksum": "c05a0fec895c9a46651b46155538d1c5"
     },
     "R/ui.R": {
-      "checksum": "266b88a780f38bc07588037c0880d6f2"
+      "checksum": "7414fd4bf6440fbf9203582625f60179"
     },
     "R/utils.R": {
       "checksum": "caf202f8fa5ade5565fa07340857fc71"
@@ -5510,7 +5580,7 @@
       "checksum": "9343d232581bcc020ba4e595a406def6"
     },
     "renv.lock": {
-      "checksum": "715a1e370db53d225c51329e8ae7bba8"
+      "checksum": "ae6ab61203067800d050bdf8386c3579"
     }
   },
   "users": null

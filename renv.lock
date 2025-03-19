@@ -327,6 +327,24 @@
       ],
       "Hash": "d954cb1c57e8d8b756165d7ba18aa55a"
     },
+    "colourpicker": {
+      "Package": "colourpicker",
+      "Version": "1.3.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "ggplot2",
+        "htmltools",
+        "htmlwidgets",
+        "jsonlite",
+        "miniUI",
+        "shiny",
+        "shinyjs",
+        "utils"
+      ],
+      "Hash": "daec8f7d4ba89df06fe2c0802c3a9dac"
+    },
     "commonmark": {
       "Package": "commonmark",
       "Version": "1.9.2",
@@ -901,13 +919,13 @@
     },
     "jsonlite": {
       "Package": "jsonlite",
-      "Version": "1.8.9",
+      "Version": "1.9.1",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
         "methods"
       ],
-      "Hash": "4e993b65c2c3ffbffce7bb3e2c6f832b"
+      "Hash": "c72fbb0e7ee73ea7497ffeebe44f0d91"
     },
     "knitr": {
       "Package": "knitr",
@@ -1081,6 +1099,18 @@
         "tools"
       ],
       "Hash": "18e9c28c1d3ca1560ce30658b22ce104"
+    },
+    "miniUI": {
+      "Package": "miniUI",
+      "Version": "0.1.1.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "htmltools",
+        "shiny",
+        "utils"
+      ],
+      "Hash": "fec5f52652d60615fdb3957b3d74324a"
     },
     "modelr": {
       "Package": "modelr",
@@ -1403,13 +1433,13 @@
     },
     "renv": {
       "Package": "renv",
-      "Version": "1.0.11",
+      "Version": "1.1.3",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
         "utils"
       ],
-      "Hash": "47623f66b4e80b3b0587bc5d7b309888"
+      "Hash": "c0d8c54dfb87bb37029065173a71f185"
     },
     "reprex": {
       "Package": "reprex",

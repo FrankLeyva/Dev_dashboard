@@ -1,3 +1,7 @@
+library(colourpicker)
+library(RColorBrewer)
+library(viridisLite)
+
 server <- function(input, output, session) {
   data <- reactive({
     req(input$survey_selector)
@@ -11,7 +15,33 @@ server <- function(input, output, session) {
     
     return(survey_data)
   })
+  current_theme <- reactiveVal(theme_config)
+  palette_options <- list(
+    Default = theme_config$palettes$district,
+    Viridis = viridisLite::viridis(9),
+    Plasma = viridisLite::plasma(9),
+    Inferno = viridisLite::inferno(9),
+    Magma = viridisLite::magma(9),
+    Blues = colorRampPalette(c("#deebf7", "#08519c"))(9),
+    Greens = colorRampPalette(c("#e5f5e0", "#31a354"))(9)
+  )
   
+  gender_palette_options <- list(
+    Default = theme_config$palettes$gender,
+    Pastel = c("#FFB6C1", "#ADD8E6"),
+    Dark = c("#8B0046", "#00008B"),
+    Set1 = RColorBrewer::brewer.pal(3, "Set1")[1:2],
+    Set2 = RColorBrewer::brewer.pal(3, "Set2")[1:2]
+  )
+  
+  age_palette_options <- list(
+    Default = theme_config$palettes$age_group,
+    Pastel = RColorBrewer::brewer.pal(5, "Pastel1"),
+    Dark = RColorBrewer::brewer.pal(5, "Dark2"),
+    Set1 = RColorBrewer::brewer.pal(5, "Set1"),
+    Set2 = RColorBrewer::brewer.pal(5, "Set2")
+  )
+
   geo_data <- reactive({
     tryCatch({
       sf::st_read('data/geo/Jrz_Map.geojson', quiet = TRUE)
@@ -40,6 +70,327 @@ server <- function(input, output, session) {
     updateSelectInput(session, "question_type", selected = "razon")
   })
 
+  
+  observe({
+    # Skip if no input values yet
+    req(input$primary_color, input$font_family)
+    
+    # Colors
+    new_colors <- list(
+      primary = input$primary_color,
+      secondary = input$secondary_color,
+      highlight = input$highlight_color,
+      neutral = theme_config$colors$neutral,
+      background = theme_config$colors$background,
+      text = theme_config$colors$text
+    )
+    
+    # Typography
+    new_typography <- list(
+      font_family = input$font_family,
+      sizes = list(
+        title = input$title_size,
+        subtitle = theme_config$typography$sizes$subtitle,
+        axis = input$axis_size,
+        text = theme_config$typography$sizes$text
+      )
+    )
+    
+    # Update palettes
+    new_palettes <- theme_config$palettes
+    
+    # Update district palette
+    if (input$district_palette != "Default" && !is.null(palette_options[[input$district_palette]])) {
+      new_palettes$district <- palette_options[[input$district_palette]]
+    }
+    
+    # Update gender palette
+    if (input$gender_palette != "Default" && !is.null(gender_palette_options[[input$gender_palette]])) {
+      new_palettes$gender <- gender_palette_options[[input$gender_palette]]
+    }
+    
+    # Update age group palette
+    if (input$age_palette != "Default" && !is.null(age_palette_options[[input$age_palette]])) {
+      new_palettes$age_group <- age_palette_options[[input$age_palette]]
+    }
+    
+    # Update derived palettes
+    new_palettes$sequential <- colorRampPalette(c("#FFFFFF", new_colors$text))(9)
+    new_palettes$diverging <- colorRampPalette(c(new_colors$secondary, "#FFFFFF", new_colors$primary))(11)
+    
+    # Update current theme
+    theme_update <- theme_config
+    theme_update$colors <- new_colors
+    theme_update$typography <- new_typography
+    theme_update$palettes <- new_palettes
+    
+    current_theme(theme_update)
+  })
+  
+  # Reset theme to defaults
+  observeEvent(input$reset_theme, {
+    # Reset all inputs to defaults
+    updateColourInput(session, "primary_color", value = theme_config$colors$primary)
+    updateColourInput(session, "secondary_color", value = theme_config$colors$secondary)
+    updateColourInput(session, "highlight_color", value = theme_config$colors$highlight)
+    
+    updateSelectInput(session, "district_palette", selected = "Default")
+    updateSelectInput(session, "gender_palette", selected = "Default")
+    updateSelectInput(session, "age_palette", selected = "Default")
+    
+    updateSelectInput(session, "font_family", selected = theme_config$typography$font_family)
+    updateNumericInput(session, "title_size", value = theme_config$typography$sizes$title)
+    updateNumericInput(session, "axis_size", value = theme_config$typography$sizes$axis)
+    
+    # Reset theme to original
+    current_theme(theme_config)
+    
+    showNotification("Tema restablecido a valores predeterminados", type = "message")
+  })
+  
+  # Save theme
+  observeEvent(input$save_theme, {
+    # Generate JSON string of current theme
+    theme_json <- toJSON(current_theme(), pretty = TRUE)
+    
+    # Save to a file in a config directory
+    dir.create("config", showWarnings = FALSE)
+    write(theme_json, file = "config/custom_theme.json")
+    
+    showNotification("Tema guardado correctamente", type = "message")
+  })
+  
+  # Download theme
+  output$download_theme <- downloadHandler(
+    filename = function() {
+      paste("custom_theme_", format(Sys.time(), "%Y%m%d_%H%M"), ".json", sep = "")
+    },
+    content = function(file) {
+      theme_json <- toJSON(current_theme(), pretty = TRUE)
+      write(theme_json, file)
+    }
+  )
+  
+  # Upload theme
+  observeEvent(input$upload_theme, {
+    req(input$upload_theme)
+    
+    # Read the uploaded JSON file
+    tryCatch({
+      uploaded_theme <- fromJSON(input$upload_theme$datapath)
+      
+      # Validate the uploaded theme - simple check for required elements
+      if (!all(c("colors", "typography", "palettes") %in% names(uploaded_theme))) {
+        showNotification("Archivo de tema inválido", type = "error")
+        return()
+      }
+      
+      # Update the current theme
+      current_theme(uploaded_theme)
+      
+      # Update UI controls to match the uploaded theme
+      updateColourInput(session, "primary_color", value = uploaded_theme$colors$primary)
+      updateColourInput(session, "secondary_color", value = uploaded_theme$colors$secondary)
+      updateColourInput(session, "highlight_color", value = uploaded_theme$colors$highlight)
+      
+      updateSelectInput(session, "font_family", selected = uploaded_theme$typography$font_family)
+      updateNumericInput(session, "title_size", value = uploaded_theme$typography$sizes$title)
+      updateNumericInput(session, "axis_size", value = uploaded_theme$typography$sizes$axis)
+      
+      showNotification("Tema importado correctamente", type = "message")
+    }, error = function(e) {
+      showNotification(paste("Error al importar tema:", e$message), type = "error")
+    })
+  })
+  output$theme_preview_gender <- renderPlotly({
+  # Create a sample dataset for gender comparison
+  sample_gender <- data.frame(
+    gender = c("Hombre", "Mujer"),
+    value = c(65, 75)
+  )
+  
+  # Create gender preview
+  plot_ly(
+    data = sample_gender,
+    x = ~gender,
+    y = ~value,
+    type = "bar",
+    marker = list(
+      color = current_theme()$palettes$gender
+    )
+  ) %>%
+    layout(
+      title = list(
+        text = "Vista Previa: Paleta de Género",
+        font = list(
+          family = current_theme()$typography$font_family,
+          size = current_theme()$typography$sizes$title,
+          color = current_theme()$colors$text
+        )
+      ),
+      xaxis = list(
+        title = "Género",
+        titlefont = list(
+          family = current_theme()$typography$font_family,
+          size = current_theme()$typography$sizes$axis,
+          color = current_theme()$colors$text
+        )
+      ),
+      yaxis = list(
+        title = "Valor",
+        titlefont = list(
+          family = current_theme()$typography$font_family,
+          size = current_theme()$typography$sizes$axis,
+          color = current_theme()$colors$text
+        )
+      ),
+      paper_bgcolor = current_theme()$colors$background,
+      plot_bgcolor = current_theme()$colors$background
+    )
+})
+
+# Preview plot for age group palette
+output$theme_preview_age <- renderPlotly({
+  # Create a sample dataset for age groups
+  sample_age <- data.frame(
+    age_group = c("18-24", "25-34", "35-44", "45-64", "65+"),
+    value = c(45, 60, 75, 65, 55)
+  )
+  
+  # Create age group preview
+  plot_ly(
+    data = sample_age,
+    x = ~age_group,
+    y = ~value,
+    type = "bar",
+    marker = list(
+      color = current_theme()$palettes$age_group
+    )
+  ) %>%
+    layout(
+      title = list(
+        text = "Vista Previa: Paleta de Grupos de Edad",
+        font = list(
+          family = current_theme()$typography$font_family,
+          size = current_theme()$typography$sizes$title,
+          color = current_theme()$colors$text
+        )
+      ),
+      xaxis = list(
+        title = "Grupo de Edad",
+        titlefont = list(
+          family = current_theme()$typography$font_family,
+          size = current_theme()$typography$sizes$axis,
+          color = current_theme()$colors$text
+        )
+      ),
+      yaxis = list(
+        title = "Valor",
+        titlefont = list(
+          family = current_theme()$typography$font_family,
+          size = current_theme()$typography$sizes$axis,
+          color = current_theme()$colors$text
+        )
+      ),
+      paper_bgcolor = current_theme()$colors$background,
+      plot_bgcolor = current_theme()$colors$background
+    )
+})
+  # Sample previews with the current theme
+  output$theme_preview_plot <- renderPlotly({
+    # Create a sample dataset
+    set.seed(123)
+    sample_data <- data.frame(
+      category = LETTERS[1:6],
+      value = sample(10:50, 6),
+      group = rep(c("Grupo A", "Grupo B"), each = 3)
+    )
+    
+    # Use the current theme to create a plot
+    plot_ly(
+      data = sample_data,
+      x = ~category,
+      y = ~value,
+      type = "bar",
+      color = ~group,
+      colors = c(current_theme()$colors$primary, current_theme()$colors$secondary)
+    ) %>%
+      layout(
+        title = list(
+          text = "Vista Previa: Gráfico de Barras",
+          font = list(
+            family = current_theme()$typography$font_family,
+            size = current_theme()$typography$sizes$title,
+            color = current_theme()$colors$text
+          )
+        ),
+        xaxis = list(
+          title = "Categorías",
+          titlefont = list(
+            family = current_theme()$typography$font_family,
+            size = current_theme()$typography$sizes$axis,
+            color = current_theme()$colors$text
+          )
+        ),
+        yaxis = list(
+          title = "Valores",
+          titlefont = list(
+            family = current_theme()$typography$font_family,
+            size = current_theme()$typography$sizes$axis,
+            color = current_theme()$colors$text
+          )
+        ),
+        paper_bgcolor = current_theme()$colors$background,
+        plot_bgcolor = current_theme()$colors$background
+      )
+  })
+  
+  output$theme_preview_district <- renderPlotly({
+    # Create a sample dataset for districts
+    sample_district <- data.frame(
+      district = factor(1:9),
+      value = sample(30:70, 9)
+    )
+    
+    # Create district preview
+    plot_ly(
+      data = sample_district,
+      x = ~district,
+      y = ~value,
+      type = "bar",
+      marker = list(
+        color = current_theme()$palettes$district
+      )
+    ) %>%
+      layout(
+        title = list(
+          text = "Vista Previa: Paleta de Distritos",
+          font = list(
+            family = current_theme()$typography$font_family,
+            size = current_theme()$typography$sizes$title,
+            color = current_theme()$colors$text
+          )
+        ),
+        xaxis = list(
+          title = "Distrito",
+          titlefont = list(
+            family = current_theme()$typography$font_family,
+            size = current_theme()$typography$sizes$axis,
+            color = current_theme()$colors$text
+          )
+        ),
+        yaxis = list(
+          title = "Valor",
+          titlefont = list(
+            family = current_theme()$typography$font_family,
+            size = current_theme()$typography$sizes$axis,
+            color = current_theme()$colors$text
+          )
+        ),
+        paper_bgcolor = current_theme()$colors$background,
+        plot_bgcolor = current_theme()$colors$background
+      )
+  })
   output$survey_info <- renderUI({
     req(data())
     
@@ -137,7 +488,8 @@ server <- function(input, output, session) {
         data = reactive(data()$responses),
         selected_question = selected_question,
         geo_data = geo_data,
-        metadata = reactive(data()$metadata)
+        metadata = reactive(data()$metadata),
+        current_theme = current_theme  # Pass the current theme reactive
       )
     } else if(input$test_module == "intervalo") {
       intervalServer(
@@ -145,7 +497,8 @@ server <- function(input, output, session) {
         data = reactive(data()$responses),
         metadata = reactive(data()$metadata),
         selected_question = selected_question,
-        geo_data = geo_data
+        geo_data = geo_data,
+        current_theme = current_theme  # Pass the current theme
       )
     } else if(input$test_module == "ordinal") {
       ordinalServer(
@@ -153,7 +506,8 @@ server <- function(input, output, session) {
         data = reactive(data()$responses),
         metadata = reactive(data()$metadata),
         selected_question = selected_question,
-        geo_data = geo_data
+        geo_data = geo_data,
+        current_theme = current_theme  # Pass the current theme
       )
     } else if(input$test_module == "categorico") {
       categoricoServer(
@@ -161,7 +515,8 @@ server <- function(input, output, session) {
         data = reactive(data()$responses),
         metadata = reactive(data()$metadata),
         selected_question = selected_question,
-        geo_data = geo_data
+        geo_data = geo_data,
+        current_theme = current_theme  # Pass the current theme
       )
     } else if(input$test_module == "binaria") {
       # Get all binary questions for the comparison feature
@@ -173,7 +528,8 @@ server <- function(input, output, session) {
         metadata = reactive(data()$metadata),
         selected_question = selected_question,
         geo_data = geo_data,
-        all_binary_questions = all_binary_questions
+        all_binary_questions = all_binary_questions,
+        current_theme = current_theme  # Pass the current theme
       )
     } else if(input$test_module == "nominal") {
       # Add the nominal module server
@@ -182,7 +538,8 @@ server <- function(input, output, session) {
         data = reactive(data()$responses),
         metadata = reactive(data()$metadata),
         selected_question = selected_question,
-        geo_data = geo_data
+        geo_data = geo_data,
+        current_theme = current_theme  # Pass the current theme
       )
     }
   })

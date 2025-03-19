@@ -1,5 +1,6 @@
 library(bslib)
 library(shinyjs)
+library(colourpicker) 
 ui <- page_fluid(
   useShinyjs(),
   theme = bs_theme(
@@ -154,6 +155,79 @@ ui <- page_fluid(
           ),
           DT::dataTableOutput("search_results_table"),
           uiOutput("search_info")
+        )
+      )
+    ),
+    nav_panel(
+      title = "Personalización de Tema",
+      icon = icon("paint-brush"),
+      
+      layout_sidebar(
+        sidebar = sidebar(
+          h4("Configuración de Colores"),
+          
+          # Primary colors
+          colourInput("primary_color", "Color Primario", value = theme_config$colors$primary),
+          colourInput("secondary_color", "Color Secundario", value = theme_config$colors$secondary),
+          colourInput("highlight_color", "Color de Resaltado", value = theme_config$colors$highlight),
+          
+          hr(),
+          
+          h4("Configuración de Paletas"),
+          selectInput("district_palette", "Paleta de Distritos",
+                     choices = c("Default", "Viridis", "Plasma", "Inferno", "Magma", "Blues", "Greens"),
+                     selected = "Default"),
+          
+          selectInput("gender_palette", "Paleta de Género",
+                     choices = c("Default", "Pastel", "Dark", "Set1", "Set2"),
+                     selected = "Default"),
+                     selectInput("age_palette", "Paleta de Grupos de Edad",
+           choices = c("Default", "Pastel", "Dark", "Set1", "Set2"),
+           selected = "Default"),
+                     
+          hr(),
+          
+          h4("Tipografía"),
+          selectInput("font_family", "Fuente Principal", 
+                      choices = c("Arial", "Helvetica", "Times New Roman", "Georgia", "Verdana"), 
+                      selected = theme_config$typography$font_family),
+          
+          numericInput("title_size", "Tamaño de Título", 
+                       value = theme_config$typography$sizes$title, min = 10, max = 24),
+          
+          numericInput("axis_size", "Tamaño de Ejes", 
+                       value = theme_config$typography$sizes$axis, min = 8, max = 18),
+          
+          hr(),
+          
+          actionButton("reset_theme", "Restablecer Valores Predeterminados", 
+                       class = "btn-warning", width = "100%")
+        ),
+        
+        card(
+          card_header("Vista Previa"),
+          
+          # Sample visualizations to preview theme changes
+          plotlyOutput("theme_preview_plot", height = "300px"),
+          
+          hr(),
+          
+          plotlyOutput("theme_preview_district", height = "300px"),
+          hr(),
+          
+          plotlyOutput("theme_preview_gender", height = "300px"),
+          hr(),
+          
+          plotlyOutput("theme_preview_age", height = "300px"),
+          
+          card_footer(
+            div(
+              style = "display: flex; justify-content: space-between;",
+              actionButton("save_theme", "Guardar Tema", class = "btn-primary"),
+              downloadButton("download_theme", "Exportar Tema"),
+              fileInput("upload_theme", "Importar Tema", accept = ".json")
+            )
+          )
         )
       )
     )

@@ -48,48 +48,51 @@ theme_config <- list(
 #' @param xlab x-axis label
 #' @param ylab y-axis label
 #' @export
-apply_plotly_theme <- function(p, title = "", xlab = "", ylab = "") {
+apply_plotly_theme <- function(p, title = "", xlab = "", ylab = "", custom_theme = NULL) {
+  # Use provided custom theme or fall back to default theme_config
+  active_theme <- if (!is.null(custom_theme)) custom_theme else theme_config
+  
   p %>%
     layout(
       title = list(
         text = title,
         font = list(
-          family = theme_config$typography$font_family,
-          size = theme_config$typography$sizes$title,
-          color = theme_config$colors$text
+          family = active_theme$typography$font_family,
+          size = active_theme$typography$sizes$title,
+          color = active_theme$colors$text
         )
       ),
       xaxis = list(
         title = xlab,
         titlefont = list(
-          family = theme_config$typography$font_family,
-          size = theme_config$typography$sizes$axis,
-          color = theme_config$colors$text
+          family = active_theme$typography$font_family,
+          size = active_theme$typography$sizes$axis,
+          color = active_theme$colors$text
         ),
         tickfont = list(
-          family = theme_config$typography$font_family,
-          size = theme_config$typography$sizes$text
+          family = active_theme$typography$font_family,
+          size = active_theme$typography$sizes$text
         ),
-        gridcolor = theme_config$colors$neutral,
+        gridcolor = active_theme$colors$neutral,
         showgrid = TRUE
       ),
       yaxis = list(
         title = ylab,
         titlefont = list(
-          family = theme_config$typography$font_family,
-          size = theme_config$typography$sizes$axis,
-          color = theme_config$colors$text
+          family = active_theme$typography$font_family,
+          size = active_theme$typography$sizes$axis,
+          color = active_theme$colors$text
         ),
         tickfont = list(
-          family = theme_config$typography$font_family,
-          size = theme_config$typography$sizes$text
+          family = active_theme$typography$font_family,
+          size = active_theme$typography$sizes$text
         ),
-        gridcolor = theme_config$colors$neutral,
+        gridcolor = active_theme$colors$neutral,
         showgrid = TRUE
       ),
-      paper_bgcolor = theme_config$colors$background,
-      plot_bgcolor = theme_config$colors$background,
-      margin = theme_config$layout$margin
+      paper_bgcolor = active_theme$colors$background,
+      plot_bgcolor = active_theme$colors$background,
+      margin = active_theme$layout$margin
     ) %>%
     config(displayModeBar = FALSE)
 }
@@ -231,3 +234,49 @@ plot_functions <- list(
     apply_plotly_theme(p, title = title, xlab = xlab, ylab = ylab)
   }
 )
+# Add to global_theme.R
+apply_custom_theme <- function(p, custom_theme, title = "", xlab = "", ylab = "") {
+  p %>%
+    layout(
+      title = list(
+        text = title,
+        font = list(
+          family = custom_theme$typography$font_family,
+          size = custom_theme$typography$sizes$title,
+          color = custom_theme$colors$text
+        )
+      ),
+      xaxis = list(
+        title = xlab,
+        titlefont = list(
+          family = custom_theme$typography$font_family,
+          size = custom_theme$typography$sizes$axis,
+          color = custom_theme$colors$text
+        ),
+        tickfont = list(
+          family = custom_theme$typography$font_family,
+          size = custom_theme$typography$sizes$text
+        ),
+        gridcolor = custom_theme$colors$neutral,
+        showgrid = TRUE
+      ),
+      yaxis = list(
+        title = ylab,
+        titlefont = list(
+          family = custom_theme$typography$font_family,
+          size = custom_theme$typography$sizes$axis,
+          color = custom_theme$colors$text
+        ),
+        tickfont = list(
+          family = custom_theme$typography$font_family,
+          size = custom_theme$typography$sizes$text
+        ),
+        gridcolor = custom_theme$colors$neutral,
+        showgrid = TRUE
+      ),
+      paper_bgcolor = custom_theme$colors$background,
+      plot_bgcolor = custom_theme$colors$background,
+      margin = custom_theme$layout$margin
+    ) %>%
+    config(displayModeBar = FALSE)
+}

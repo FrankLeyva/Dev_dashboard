@@ -14,7 +14,9 @@ library(ggridges)
 library(openxlsx)
 library(stringr)
 library(shinyjs)
-
+library(colourpicker)
+library(RColorBrewer)
+library(viridisLite)
 # Source all necessary files
 source("R/global_theme.R")
 source("R/utils.R")

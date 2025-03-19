@@ -1,4 +1,7 @@
+# Modified razon_module.R with theme customization support
+
 prepare_razon_data <- function(data, question_id, metadata) {
+  # This function remains unchanged
   # Get the column mapping from attributes
   col_mapping <- attr(data, "col_mapping")
   
@@ -53,6 +56,7 @@ prepare_razon_data <- function(data, question_id, metadata) {
 }
 
 find_mode <- function(x) {
+  # Unchanged helper function
   # Safely handle empty or all-NA input
   if(length(x) == 0 || all(is.na(x))) {
     return(NA)
@@ -71,8 +75,9 @@ find_mode <- function(x) {
   u[tab == max(tab)]
 }
 
-# Add these helper functions at the top
+# Helper functions - modified to accept custom_theme
 calculate_district_means <- function(data) {
+  # Unchanged calculation function
   # Handle empty dataframe
   if(nrow(data) == 0) {
     return(data.frame(
@@ -92,6 +97,7 @@ calculate_district_means <- function(data) {
 }
 
 calculate_age_distribution <- function(data) {
+  # Unchanged calculation function
   # Handle empty dataframe
   if(nrow(data) == 0) {
     return(data.frame(
@@ -112,6 +118,7 @@ calculate_age_distribution <- function(data) {
 }
 
 calculate_gender_district_stats <- function(data) {
+  # Unchanged calculation function
   # Handle empty dataframe
   if(nrow(data) == 0) {
     return(data.frame(
@@ -133,7 +140,8 @@ calculate_gender_district_stats <- function(data) {
     )
 }
 
-create_histogram <- function(data, bins = 30, title = NULL) {
+# Visualization functions - modified to accept custom_theme
+create_histogram <- function(data, bins = 30, title = NULL, custom_theme = NULL) {
   # Check for empty data
   if(nrow(data) == 0) {
     return(plotly_empty() %>% 
@@ -146,27 +154,37 @@ create_histogram <- function(data, bins = 30, title = NULL) {
     title <- paste("Distribución de", question_label)
   }
   
+  # Use colors from custom theme if provided
+  bar_color <- ifelse(!is.null(custom_theme), 
+                      custom_theme$colors$primary, 
+                      theme_config$colors$primary)
+  
+  line_color <- ifelse(!is.null(custom_theme), 
+                       custom_theme$colors$neutral, 
+                       theme_config$colors$neutral)
+  
   plot_ly(
     data = data,
     x = ~value,
     type = "histogram",
     nbinsx = bins,
     marker = list(
-      color = theme_config$colors$primary,
+      color = bar_color,
       line = list(
-        color = theme_config$colors$neutral,
+        color = line_color,
         width = 1
       )
     )
-  )%>%
+  ) %>%
     apply_plotly_theme(
       title = title,
       xlab = "Valor",
-      ylab = "Frecuencia"
+      ylab = "Frecuencia",
+      custom_theme = custom_theme
     )
 }
 
-create_district_map <- function(data, geo_data) {
+create_district_map <- function(data, geo_data, custom_theme = NULL) {
   # Check inputs
   if(is.null(data) || nrow(data) == 0 || is.null(geo_data)) {
     return(leaflet() %>% 
@@ -182,9 +200,15 @@ create_district_map <- function(data, geo_data) {
       .groups = 'drop'
     )
   
-  # Create color palette for districts
+  # Create color palette for districts - use custom theme if provided
+  district_palette <- if (!is.null(custom_theme)) {
+    custom_theme$palettes$district
+  } else {
+    theme_config$palettes$district
+  }
+  
   pal <- colorNumeric(
-    palette = theme_config$palettes$district,
+    palette = district_palette,
     domain = district_stats$mean_value
   )
   
@@ -212,8 +236,7 @@ create_district_map <- function(data, geo_data) {
     )
 }
 
-
-create_ridge_plot <- function(data, title = NULL) {
+create_ridge_plot <- function(data, title = NULL, custom_theme = NULL) {
   # Check for empty data
   if(nrow(data) == 0) {
     return(ggplot() + 
@@ -234,6 +257,13 @@ create_ridge_plot <- function(data, title = NULL) {
     title <- paste("Distribución de", question_label, "por distrito")
   }
   
+  # Use district palette from custom theme if provided
+  district_colors <- if (!is.null(custom_theme)) {
+    custom_theme$palettes$district
+  } else {
+    get_color_palette("district")
+  }
+  
   # Create the plot
   p <- ggplot(data, aes(x = value, y = district, fill = district)) +
     ggridges::geom_density_ridges(
@@ -242,7 +272,7 @@ create_ridge_plot <- function(data, title = NULL) {
       alpha = 0.7,
       scale = 0.9
     ) +
-    scale_fill_manual(values = get_color_palette("district")) +
+    scale_fill_manual(values = district_colors) +
     theme_minimal() +
     labs(
       title = title,
@@ -251,10 +281,21 @@ create_ridge_plot <- function(data, title = NULL) {
     ) +
     theme(legend.position = "none")
   
+  # Apply custom typography if available
+  if (!is.null(custom_theme)) {
+    p <- p + 
+      theme(
+        text = element_text(family = custom_theme$typography$font_family),
+        plot.title = element_text(size = custom_theme$typography$sizes$title),
+        axis.title = element_text(size = custom_theme$typography$sizes$axis),
+        axis.text = element_text(size = custom_theme$typography$sizes$text)
+      )
+  }
+  
   return(p)
 }
 
-
+# Modified UI function to accept the custom theme
 razonUI <- function(id) {
   ns <- NS(id)
   
@@ -337,10 +378,24 @@ razonUI <- function(id) {
   )
 }
 
-
-razonServer <- function(id, data, selected_question, geo_data, metadata) {
+# Modified server function to accept the custom theme
+razonServer <- function(id, data, selected_question, geo_data, metadata, current_theme = NULL) {
   moduleServer(id, function(input, output, session) {
      
+    # Get the active theme (custom or default)
+    active_theme <- reactive({
+      if (is.function(current_theme)) {
+        # If current_theme is a reactive function, call it to get the value
+        current_theme()
+      } else if (!is.null(current_theme)) {
+        # If it's a direct value, use it
+        current_theme
+      } else {
+        # Default to theme_config if nothing provided
+        theme_config
+      }
+    })
+    
     # Reactive dataset preparation
     prepared_data <- reactive({
       tryCatch({
@@ -409,7 +464,7 @@ razonServer <- function(id, data, selected_question, geo_data, metadata) {
       )
     })
     
-    # Enhanced Statistical Summary
+    # Enhanced Statistical Summary - unchanged
     output$summary_stats <- renderPrint({
       data <- filtered_data()
       
@@ -501,7 +556,7 @@ razonServer <- function(id, data, selected_question, geo_data, metadata) {
       print(age_stats)
     })
     
-    # Generate summary tables for download
+    # Generate summary tables for download - unchanged
     summary_tables <- reactive({
       data <- filtered_data()
       
@@ -571,7 +626,7 @@ razonServer <- function(id, data, selected_question, geo_data, metadata) {
       ))
     })
     
-    # CSV download handler
+    # CSV download handler - unchanged
     output$download_summary_csv <- downloadHandler(
       filename = function() {
         paste0("resumen_", selected_question(), "_", Sys.Date(), ".zip")
@@ -602,7 +657,7 @@ razonServer <- function(id, data, selected_question, geo_data, metadata) {
       }
     )
     
-    # Excel download handler
+    # Excel download handler - unchanged
     output$download_summary_excel <- downloadHandler(
       filename = function() {
         paste0("resumen_", selected_question(), "_", Sys.Date(), ".xlsx")
@@ -639,19 +694,26 @@ razonServer <- function(id, data, selected_question, geo_data, metadata) {
       }
     )
     
-    # Keep the existing plot outputs
+    # Modified plot outputs that use custom theme
     output$histogram_plot <- renderPlotly({
       req(filtered_data())
-      create_histogram(filtered_data())
+      create_histogram(filtered_data(), custom_theme = active_theme())
     })
     
     output$ridge_plot <- renderPlot({
       req(filtered_data())
-      create_ridge_plot(filtered_data())
+      create_ridge_plot(filtered_data(), custom_theme = active_theme())
     })
 
     output$age_bars_plot <- renderPlotly({
       age_stats <- calculate_age_distribution(filtered_data())
+      
+      # Use colors from active theme
+      age_colors <- if (!is.null(active_theme())) {
+        active_theme()$palettes$age_group
+      } else {
+        get_color_palette("age_group")
+      }
       
       plot_ly(
         data = age_stats,
@@ -659,19 +721,27 @@ razonServer <- function(id, data, selected_question, geo_data, metadata) {
         y = ~mean_value,
         type = "bar",
         marker = list(
-          color = get_color_palette("age_group")
+          color = age_colors
         )
       ) %>%
         apply_plotly_theme(
           title = "Promedio por Grupo de Edad",
           xlab = "Grupo de Edad",
-          ylab = "Valor Promedio"
+          ylab = "Valor Promedio",
+          custom_theme = active_theme()
         )
     })
     
-    # Gender dumbbell plot
+    # Gender dumbbell plot - with custom theme
     output$gender_dumbbell_plot <- renderPlotly({
       gender_stats <- calculate_gender_district_stats(filtered_data())
+      
+      # Get custom gender colors if available
+      gender_colors <- if (!is.null(active_theme())) {
+        active_theme()$palettes$gender
+      } else {
+        get_color_palette("gender")
+      }
       
       # Create traces for each gender
       p <- plot_ly() %>%
@@ -682,7 +752,7 @@ razonServer <- function(id, data, selected_question, geo_data, metadata) {
           name = "Hombre",
           type = "scatter",
           mode = "markers",
-          marker = list(color = get_color_palette("gender")[2])
+          marker = list(color = gender_colors[2])
         ) %>%
         add_trace(
           data = gender_stats,
@@ -691,8 +761,15 @@ razonServer <- function(id, data, selected_question, geo_data, metadata) {
           name = "Mujer",
           type = "scatter",
           mode = "markers",
-          marker = list(color = get_color_palette("gender")[1])
+          marker = list(color = gender_colors[1])
         )
+      
+      # Get neutral color from theme
+      neutral_color <- if (!is.null(active_theme())) {
+        active_theme()$colors$neutral
+      } else {
+        theme_config$colors$neutral
+      }
       
       # Add connecting lines
       for(i in 1:nrow(gender_stats)) {
@@ -701,7 +778,7 @@ razonServer <- function(id, data, selected_question, geo_data, metadata) {
           xend = gender_stats$Mujer[i],
           y = gender_stats$district[i],
           yend = gender_stats$district[i],
-          line = list(color = theme_config$colors$neutral),
+          line = list(color = neutral_color),
           showlegend = FALSE
         )
       }
@@ -709,7 +786,8 @@ razonServer <- function(id, data, selected_question, geo_data, metadata) {
       p %>% apply_plotly_theme(
         title = "Comparación por Género y Distrito",
         xlab = "Valor Promedio",
-        ylab = "Distrito"
+        ylab = "Distrito",
+        custom_theme = active_theme()
       ) %>%
         layout(showlegend = TRUE)
     })
@@ -718,21 +796,53 @@ razonServer <- function(id, data, selected_question, geo_data, metadata) {
     output$bar_plot <- renderPlotly({
       district_means <- calculate_district_means(filtered_data())
       
-      plot_functions$bar(
-        data = district_means,
-        x = "district",
-        y = "mean_value",
-        title = "Promedio por Distrito",
-        xlab = "Distrito",
-        ylab = "Valor Promedio",
-        orientation = input$bar_orientation,
-        color_by = 'district'
-      )
+      # Use district colors from custom theme
+      district_colors <- if (!is.null(active_theme())) {
+        active_theme()$palettes$district
+      } else {
+        get_color_palette("district")
+      }
+      
+      # Create plot directly instead of using plot_functions to handle custom theme
+      if (input$bar_orientation == "h") {
+        plot_ly(
+          data = district_means,
+          y = ~district,
+          x = ~mean_value,
+          type = "bar",
+          orientation = 'h',
+          marker = list(color = district_colors)
+        ) %>%
+          apply_plotly_theme(
+            title = "Promedio por Distrito",
+            xlab = "Valor Promedio",
+            ylab = "Distrito",
+            custom_theme = active_theme()
+          )
+      } else {
+        plot_ly(
+          data = district_means,
+          x = ~district,
+          y = ~mean_value,
+          type = "bar",
+          marker = list(color = district_colors)
+        ) %>%
+          apply_plotly_theme(
+            title = "Promedio por Distrito",
+            xlab = "Distrito",
+            ylab = "Valor Promedio",
+            custom_theme = active_theme()
+          )
+      }
     })
     
     output$district_map <- renderLeaflet({
       req(filtered_data(), geo_data())
-      create_district_map(filtered_data(), geo_data())
+      create_district_map(
+        filtered_data(), 
+        geo_data(), 
+        custom_theme = active_theme()
+      )
     })
   })
 }
