@@ -23,7 +23,7 @@ ui <- page_fluid(
             "Percepción Ciudadana 2024 (PER 2024)" = "PER_2024",
             "Participación Ciudadana 2024 (PER 2024)" = "PAR_2024"
           ),
-          selected = "PER_2023",
+          selected = "PER_2024",
           inline = TRUE
         )
       ),
