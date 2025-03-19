@@ -130,9 +130,9 @@ server <- function(input, output, session) {
   # Reset theme to defaults
   observeEvent(input$reset_theme, {
     # Reset all inputs to defaults
-    updateColourInput(session, "primary_color", value = theme_config$colors$primary)
-    updateColourInput(session, "secondary_color", value = theme_config$colors$secondary)
-    updateColourInput(session, "highlight_color", value = theme_config$colors$highlight)
+    colourpicker::updateColourInput(session, "primary_color", value = theme_config$colors$primary)
+    colourpicker::updateColourInput(session, "secondary_color", value = theme_config$colors$secondary)
+    colourpicker::updateColourInput(session, "highlight_color", value = theme_config$colors$highlight)
     
     updateSelectInput(session, "district_palette", selected = "Default")
     updateSelectInput(session, "gender_palette", selected = "Default")
@@ -189,9 +189,9 @@ server <- function(input, output, session) {
       current_theme(uploaded_theme)
       
       # Update UI controls to match the uploaded theme
-      updateColourInput(session, "primary_color", value = uploaded_theme$colors$primary)
-      updateColourInput(session, "secondary_color", value = uploaded_theme$colors$secondary)
-      updateColourInput(session, "highlight_color", value = uploaded_theme$colors$highlight)
+      colourpicker::updateColourInput(session, "primary_color", value = uploaded_theme$colors$primary)
+      colourpicker::updateColourInput(session, "secondary_color", value = uploaded_theme$colors$secondary)
+      colourpicker::updateColourInput(session, "highlight_color", value = uploaded_theme$colors$highlight)
       
       updateSelectInput(session, "font_family", selected = uploaded_theme$typography$font_family)
       updateNumericInput(session, "title_size", value = uploaded_theme$typography$sizes$title)
