@@ -383,7 +383,7 @@ prepare_multiple_binary <- function(data, question_ids, metadata) {
 }
 
 # Visualization functions
-create_binary_bar <- function(data, title = "Distribución de Respuestas") {
+create_binary_bar <- function(data, title = "Distribución de Respuestas", custom_theme = NULL) {
   # Calculate proportions
   response_counts <- table(data$binary_value)
   
@@ -411,6 +411,13 @@ create_binary_bar <- function(data, title = "Distribución de Respuestas") {
     )
   )
   
+  # Get colors from custom theme if provided
+  bar_colors <- if (!is.null(custom_theme)) {
+    c(custom_theme$colors$primary, custom_theme$colors$secondary)
+  } else {
+    c(theme_config$colors$primary, theme_config$colors$secondary)
+  }
+  
   # Create bar chart
   plot_ly(
     data = plot_df,
@@ -420,17 +427,18 @@ create_binary_bar <- function(data, title = "Distribución de Respuestas") {
     text = ~paste0(Response, ": ", Count, " (", Percentage, "%)"),
     hoverinfo = "text",
     marker = list(
-      color = c(theme_config$colors$primary, theme_config$colors$secondary)
+      color = bar_colors
     )
   ) %>%
     apply_plotly_theme(
       title = title,
       xlab = "Respuesta",
-      ylab = "Frecuencia"
+      ylab = "Frecuencia",
+      custom_theme = custom_theme
     )
 }
 
-create_binary_pie <- function(data, title = "Distribución de Respuestas") {
+create_binary_pie <- function(data, title = "Distribución de Respuestas", custom_theme = NULL) {
   # Calculate proportions
   if (nrow(data) == 0) {
     return(plotly_empty() %>% 
@@ -455,6 +463,13 @@ create_binary_pie <- function(data, title = "Distribución de Respuestas") {
     round(100 * false_count / (true_count + false_count), 1)
   )
   
+  # Get colors from custom theme if provided
+  pie_colors <- if (!is.null(custom_theme)) {
+    c(custom_theme$colors$primary, custom_theme$colors$secondary)
+  } else {
+    c(theme_config$colors$primary, theme_config$colors$secondary)
+  }
+  
   # Create pie chart
   plot_ly(
     labels = ~labels,
@@ -463,20 +478,35 @@ create_binary_pie <- function(data, title = "Distribución de Respuestas") {
     textinfo = "label+percent",
     insidetextorientation = "radial",
     marker = list(
-      colors = c(theme_config$colors$primary, theme_config$colors$secondary),
+      colors = pie_colors,
       line = list(color = '#FFFFFF', width = 1)
     ),
     hoverinfo = "text",
     text = ~paste0(labels, ": ", values, " respuestas (", percentages, "%)")
   ) %>%
     layout(
-      title = title,
+      title = list(
+        text = title,
+        font = if (!is.null(custom_theme)) {
+          list(
+            family = custom_theme$typography$font_family,
+            size = custom_theme$typography$sizes$title,
+            color = custom_theme$colors$text
+          )
+        } else {
+          list(
+            family = theme_config$typography$font_family,
+            size = theme_config$typography$sizes$title,
+            color = theme_config$colors$text
+          )
+        }
+      ),
       showlegend = FALSE
     )
 }
 
 # Updated district map visualization
-create_binary_district_map <- function(data, geo_data, highlight_extremes = TRUE, focus_on_true = TRUE) {
+create_binary_district_map <- function(data, geo_data, highlight_extremes = TRUE, focus_on_true = TRUE, custom_theme = NULL) {
   # Check if we have data
   if (is.null(data) || nrow(data) == 0 || is.null(geo_data)) {
     return(plotly_empty() %>% 
@@ -487,6 +517,13 @@ create_binary_district_map <- function(data, geo_data, highlight_extremes = TRUE
   labels <- get_binary_labels(data)
   true_label <- labels$true_label
   false_label <- labels$false_label
+  
+  # Get district colors from custom theme if provided
+  district_colors <- if (!is.null(custom_theme)) {
+    custom_theme$palettes$district
+  } else {
+    theme_config$palettes$district
+  }
   
   # Calculate percentages by district - we'll focus on TRUE values by default
   district_stats <- data %>%
@@ -530,7 +567,15 @@ create_binary_district_map <- function(data, geo_data, highlight_extremes = TRUE
     addPolygons(
       fillOpacity = 0.7,
       weight = 1,
-      color = theme_config$palette$district[match(geo_data$No_Distrit, district_stats$district)],
+      color = ~{
+        # Safer color mapping
+        district_idx <- match(No_Distrit, as.numeric(district_stats$district))
+        if(!is.na(district_idx) && district_idx <= length(district_colors)) {
+          district_colors[district_idx]
+        } else {
+          "#CCCCCC"  # Default gray
+        }
+      },
       dashArray = "3",
       highlight = highlightOptions(
         weight = 2,
@@ -604,7 +649,7 @@ create_binary_district_map <- function(data, geo_data, highlight_extremes = TRUE
   return(map)
 }
 
-create_binary_district_bars <- function(data, orientation = "v") {
+create_binary_district_bars <- function(data, orientation = "v", custom_theme = NULL) {
   # Check if we have data
   if (nrow(data) == 0) {
     return(plotly_empty() %>% 
@@ -626,6 +671,13 @@ create_binary_district_bars <- function(data, orientation = "v") {
       .groups = 'drop'
     )
   
+  # Get primary color from theme
+  bar_color <- if (!is.null(custom_theme)) {
+    custom_theme$colors$primary
+  } else {
+    theme_config$colors$primary
+  }
+  
   # Create bar chart
   if (orientation == "h") {
     plot_ly(
@@ -640,12 +692,13 @@ create_binary_district_bars <- function(data, orientation = "v") {
         "Total: ", count_total
       ),
       hoverinfo = "text",
-      marker = list(color = theme_config$colors$primary)
+      marker = list(color = bar_color)
     ) %>%
       apply_plotly_theme(
         title = paste0("Porcentaje de ", true_label, " por Distrito"),
         xlab = paste0("% de ", true_label),
-        ylab = "Distrito"
+        ylab = "Distrito",
+        custom_theme = custom_theme
       )
   } else {
     plot_ly(
@@ -659,12 +712,13 @@ create_binary_district_bars <- function(data, orientation = "v") {
         "Total: ", count_total
       ),
       hoverinfo = "text",
-      marker = list(color = theme_config$colors$primary)
+      marker = list(color = bar_color)
     ) %>%
       apply_plotly_theme(
         title = paste0("Porcentaje de ", true_label, " por Distrito"),
         xlab = "Distrito",
-        ylab = paste0("% de ", true_label)
+        ylab = paste0("% de ", true_label),
+        custom_theme = custom_theme
       ) %>%
       layout(
         xaxis = list(tickangle = 45)
@@ -672,7 +726,7 @@ create_binary_district_bars <- function(data, orientation = "v") {
   }
 }
 
-create_binary_gender_dumbbell <- function(data) {
+create_binary_gender_dumbbell <- function(data, custom_theme = NULL) {
   # Check if we have data
   if (nrow(data) == 0) {
     return(plotly_empty() %>% 
@@ -701,6 +755,20 @@ create_binary_gender_dumbbell <- function(data) {
       values_from = c(percentage_true, count_true, count_total)
     )
   
+  # Get gender colors from custom theme if provided
+  gender_colors <- if (!is.null(custom_theme)) {
+    custom_theme$palettes$gender
+  } else {
+    get_color_palette("gender")
+  }
+  
+  # Get neutral color from theme
+  neutral_color <- if (!is.null(custom_theme)) {
+    custom_theme$colors$neutral
+  } else {
+    theme_config$colors$neutral
+  }
+  
   # Create the plot
   p <- plot_ly() %>%
     add_trace(
@@ -716,7 +784,7 @@ create_binary_gender_dumbbell <- function(data) {
         "Total: ", count_total_Hombre
       ),
       hoverinfo = "text",
-      marker = list(color = get_color_palette("gender")[2])
+      marker = list(color = gender_colors[2])
     ) %>%
     add_trace(
       data = gender_stats_wide,
@@ -731,7 +799,7 @@ create_binary_gender_dumbbell <- function(data) {
         "Total: ", count_total_Mujer
       ),
       hoverinfo = "text",
-      marker = list(color = get_color_palette("gender")[1])
+      marker = list(color = gender_colors[1])
     )
   
   # Add connecting lines
@@ -741,7 +809,7 @@ create_binary_gender_dumbbell <- function(data) {
       xend = gender_stats_wide$percentage_true_Mujer[i],
       y = gender_stats_wide$district[i],
       yend = gender_stats_wide$district[i],
-      line = list(color = theme_config$colors$neutral),
+      line = list(color = neutral_color),
       showlegend = FALSE
     )
   }
@@ -750,12 +818,13 @@ create_binary_gender_dumbbell <- function(data) {
     apply_plotly_theme(
       title = paste0("Comparación por Género: % de ", true_label, " por Distrito"),
       xlab = paste0("% de ", true_label),
-      ylab = "Distrito"
+      ylab = "Distrito",
+      custom_theme = custom_theme
     ) %>%
     layout(showlegend = TRUE)
 }
 
-create_binary_demographics_bars <- function(data, group_var = "gender") {
+create_binary_demographics_bars <- function(data, group_var = "gender", custom_theme = NULL) {
   # Check if we have data
   if (nrow(data) == 0) {
     return(plotly_empty() %>% 
@@ -778,6 +847,27 @@ create_binary_demographics_bars <- function(data, group_var = "gender") {
       .groups = 'drop'
     )
   
+  # Get colors from custom theme if provided
+  demo_colors <- if (group_var == "gender") {
+    if (!is.null(custom_theme)) {
+      custom_theme$palettes$gender
+    } else {
+      get_color_palette("gender")
+    }
+  } else if (group_var == "age_group") {
+    if (!is.null(custom_theme)) {
+      custom_theme$palettes$age_group
+    } else {
+      get_color_palette("age_group")
+    }
+  } else {
+    if (!is.null(custom_theme)) {
+      custom_theme$colors$primary
+    } else {
+      theme_config$colors$primary
+    }
+  }
+  
   # Create grouped bar chart
   plot_ly(
     data = demo_stats,
@@ -791,20 +881,17 @@ create_binary_demographics_bars <- function(data, group_var = "gender") {
       "Total: ", count_total
     ),
     hoverinfo = "text",
-    marker = list(
-      color = if(group_var == "gender") get_color_palette("gender") else 
-             if(group_var == "age_group") get_color_palette("age_group") else 
-             theme_config$colors$primary
-    )
+    marker = list(color = demo_colors)
   ) %>%
     apply_plotly_theme(
       title = paste("Distribución por", ifelse(group_var == "gender", "Género", "Grupo de Edad")),
       xlab = ifelse(group_var == "gender", "Género", "Grupo de Edad"),
-      ylab = paste0("Porcentaje de ", true_label)
+      ylab = paste0("Porcentaje de ", true_label),
+      custom_theme = custom_theme
     )
 }
 
-create_multiple_binary_comparison <- function(data_list, comparison_type = "bars", top_n = 5) {
+create_multiple_binary_comparison <- function(data_list, comparison_type = "bars", top_n = 5, custom_theme = NULL) {
   # Check if we have data
   if (length(data_list) == 0) {
     return(plotly_empty() %>% 
@@ -877,6 +964,13 @@ create_multiple_binary_comparison <- function(data_list, comparison_type = "bars
     comparison_data <- comparison_data[1:top_n, ]
   }
   
+  # Get color palette from custom theme if provided
+  color_ramp <- if (!is.null(custom_theme)) {
+    colorRampPalette(c(custom_theme$colors$primary, custom_theme$colors$highlight))
+  } else {
+    colorRampPalette(c(theme_config$colors$primary, theme_config$colors$highlight))
+  }
+  
   # Create visualization based on type
   if (comparison_type == "bars") {
     # Horizontal bar chart
@@ -893,13 +987,14 @@ create_multiple_binary_comparison <- function(data_list, comparison_type = "bars
       ),
       hoverinfo = "text",
       marker = list(
-        color = colorRampPalette(c(theme_config$colors$primary, theme_config$colors$highlight))(nrow(comparison_data))
+        color = color_ramp(nrow(comparison_data))
       )
     ) %>%
       apply_plotly_theme(
         title = "Comparación de Preguntas Binarias",
         xlab = "Porcentaje de Respuestas Positivas",
-        ylab = ""
+        ylab = "",
+        custom_theme = custom_theme
       )
   } else if (comparison_type == "pie") {
     # Create pie chart data
@@ -920,12 +1015,38 @@ create_multiple_binary_comparison <- function(data_list, comparison_type = "bars
         comparison_data$QuestionLabel, "<br>",
         comparison_data$TrueLabel, ": ", comparison_data$CountTrue, " (", round(comparison_data$PercentageTrue, 1), "%)<br>",
         "Total: ", comparison_data$CountTotal
+      ),
+      marker = list(
+        colors = color_ramp(nrow(comparison_data))
       )
     ) %>%
       layout(
-        title = "Distribución de Respuestas Positivas por Pregunta"
+        title = list(
+          text = "Distribución de Respuestas Positivas por Pregunta",
+          font = if (!is.null(custom_theme)) {
+            list(
+              family = custom_theme$typography$font_family,
+              size = custom_theme$typography$sizes$title,
+              color = custom_theme$colors$text
+            )
+          } else {
+            list(
+              family = theme_config$typography$font_family,
+              size = theme_config$typography$sizes$title,
+              color = theme_config$colors$text
+            )
+          }
+        ),
+        showlegend = FALSE
       )
   } else if (comparison_type == "bubbles") {
+    # Apply theme-based colorscale
+    colorscale <- if (!is.null(custom_theme) && !is.null(custom_theme$palettes$sequential)) {
+      custom_theme$palettes$sequential
+    } else {
+      "Blues"
+    }
+    
     # Create bubble chart
     plot_ly(
       data = comparison_data,
@@ -939,8 +1060,8 @@ create_multiple_binary_comparison <- function(data_list, comparison_type = "bars
         sizeref = 2 * max(comparison_data$CountTotal) / (40^2),
         sizemin = 5,
         color = ~PercentageTrue,
-        colorscale = "Blues",
-        colorbar = list(title = "% Respuestas Positivas")
+        colorscale = colorscale,
+        colorbar = list(title = list(text = "% Respuestas Positivas"))
       ),
       text = ~paste0(
         QuestionLabel, "<br>",
@@ -952,7 +1073,8 @@ create_multiple_binary_comparison <- function(data_list, comparison_type = "bars
       apply_plotly_theme(
         title = "Comparación de Preguntas Binarias",
         xlab = "",
-        ylab = "Porcentaje de Respuestas Positivas"
+        ylab = "Porcentaje de Respuestas Positivas",
+        custom_theme = custom_theme
       ) %>%
       layout(
         xaxis = list(tickangle = 45)
@@ -972,13 +1094,14 @@ create_multiple_binary_comparison <- function(data_list, comparison_type = "bars
       ),
       hoverinfo = "text",
       marker = list(
-        color = colorRampPalette(c(theme_config$colors$primary, theme_config$colors$highlight))(nrow(comparison_data))
+        color = color_ramp(nrow(comparison_data))
       )
     ) %>%
       apply_plotly_theme(
         title = "Comparación de Preguntas Binarias",
         xlab = "Porcentaje de Respuestas Positivas",
-        ylab = ""
+        ylab = "",
+        custom_theme = custom_theme
       )
   }
 }
@@ -1121,8 +1244,20 @@ binaryUI <- function(id) {
 }
 
 # Server Definition for the binary module
-binaryServer <- function(id, data, metadata, selected_question, geo_data, all_binary_questions = NULL) {
+binaryServer <- function(id, data, metadata, selected_question, geo_data, all_binary_questions = NULL,current_theme = NULL) {
   moduleServer(id, function(input, output, session) {
+    active_theme <- reactive({
+      if (is.function(current_theme)) {
+        # If current_theme is a reactive function, call it to get the value
+        current_theme()
+      } else if (!is.null(current_theme)) {
+        # If it's a direct value, use it
+        current_theme
+      } else {
+        # Default to theme_config if nothing provided
+        theme_config
+      }
+    })
     # Initial data preparation with metadata
     prepared_data <- reactive({
       tryCatch({
@@ -1567,11 +1702,11 @@ binaryServer <- function(id, data, metadata, selected_question, geo_data, all_bi
       
       create_binary_bar(
         filtered_data(), 
-        title = paste("Distribución de", question_label)
+        title = paste("Distribución de", question_label),
+        custom_theme = active_theme()  # Pass the active theme
       )
     })
     
-    # Pie chart
     output$pie_plot <- renderPlotly({
       req(filtered_data())
       question_label <- attr(filtered_data(), "question_label")
@@ -1579,11 +1714,11 @@ binaryServer <- function(id, data, metadata, selected_question, geo_data, all_bi
       
       create_binary_pie(
         filtered_data(),
-        title = paste("Distribución de", question_label)
+        title = paste("Distribución de", question_label),
+        custom_theme = active_theme()  # Pass the active theme
       )
     })
     
-    # District map
     output$district_map <- renderLeaflet({
       req(filtered_data(), geo_data())
       focus_on_true <- input$map_focus == "true"
@@ -1592,44 +1727,53 @@ binaryServer <- function(id, data, metadata, selected_question, geo_data, all_bi
         filtered_data(), 
         geo_data(),
         highlight_extremes = input$highlight_extremes,
-        focus_on_true = focus_on_true
+        focus_on_true = focus_on_true,
+        custom_theme = active_theme()  # Pass the active theme
       )
     })
     
-    # District bars
     output$district_bars_plot <- renderPlotly({
       req(filtered_data())
       create_binary_district_bars(
         filtered_data(),
-        orientation = input$bar_orientation
+        orientation = input$bar_orientation,
+        custom_theme = active_theme()  # Pass the active theme
       )
     })
     
-    # Gender dumbbell plot
     output$gender_dumbbell_plot <- renderPlotly({
       req(filtered_data())
-      create_binary_gender_dumbbell(filtered_data())
+      create_binary_gender_dumbbell(
+        filtered_data(),
+        custom_theme = active_theme()  # Pass the active theme
+      )
     })
     
-    # Gender bars
     output$gender_bars_plot <- renderPlotly({
       req(filtered_data())
-      create_binary_demographics_bars(filtered_data(), "gender")
+      create_binary_demographics_bars(
+        filtered_data(), 
+        "gender",
+        custom_theme = active_theme()  # Pass the active theme
+      )
     })
     
-    # Age bars
     output$age_bars_plot <- renderPlotly({
       req(filtered_data())
-      create_binary_demographics_bars(filtered_data(), "age_group")
+      create_binary_demographics_bars(
+        filtered_data(), 
+        "age_group",
+        custom_theme = active_theme()  # Pass the active theme
+      )
     })
     
-    # Multiple comparison
     output$multiple_comparison_plot <- renderPlotly({
       req(multiple_questions_data())
       create_multiple_binary_comparison(
         multiple_questions_data(),
         comparison_type = input$comparison_type,
-        top_n = input$top_n
+        top_n = input$top_n,
+        custom_theme = active_theme()  # Pass the active theme
       )
     })
   })

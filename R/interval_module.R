@@ -980,6 +980,10 @@ intervalUI <- function(id) {
               ns("omit_11"),
               "Omitir valores de 11",
               value = FALSE
+            ),checkboxInput(
+              ns("omit_0"),
+              "Omitir valores de 0",
+              value = FALSE
             ),
             div(
               style = "margin-top: 15px;",
@@ -1101,7 +1105,9 @@ intervalServer <- function(id, data, metadata, selected_question, geo_data, curr
       if (input$omit_11 && "value_num" %in% names(data)) {
         data <- data %>% filter(value_num != 11)
       }
-      
+      if (input$omit_0 && "value_num" %in% names(data)) {
+        data <- data %>% filter(value_num != 0)
+      }
       data
     })
     
@@ -1235,6 +1241,9 @@ intervalServer <- function(id, data, metadata, selected_question, geo_data, curr
       
       if (input$omit_11) {
         cat("\nNota: Se han omitido los valores de 11 en los cálculos estadísticos.\n")
+      }
+      if (input$omit_0) {
+        cat("\nNota: Se han omitido los valores de 0 en los cálculos estadísticos.\n")
       }
     })
     

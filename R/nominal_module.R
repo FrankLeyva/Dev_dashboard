@@ -176,349 +176,400 @@ create_word_freq_table <- function(data,
 
 # Create horizontal bar chart of word frequencies
 create_word_freq_bars <- function(data, 
-                                  max_words = 20, 
-                                  exclude_stopwords = TRUE,
-                                  min_chars = 3) {
-  # Check if we have word frequency data
-  if (is.null(attr(data, "word_freq"))) {
-    return(plotly_empty() %>% 
-             layout(title = "No hay datos de frecuencia de palabras disponibles"))
-  }
-  
-  # Get the word frequency table
-  tryCatch({
-    word_freq <- create_word_freq_table(data, max_words, exclude_stopwords, min_chars)
-    
-    if (nrow(word_freq) == 0) {
-      return(plotly_empty() %>% 
-               layout(title = "No hay palabras que cumplan con los criterios de filtrado"))
-    }
-    
-    # Create horizontal bar chart
-    plot_ly(
-      data = word_freq,
-      y = ~reorder(word, freq),
-      x = ~freq,
-      type = "bar",
-      orientation = 'h',
-      marker = list(
-        color = theme_config$colors$primary
-      ),
-      text = ~paste0(word, ": ", freq),
-      hoverinfo = "text"
-    ) %>%
-      apply_plotly_theme(
-        title = "Frecuencia de Palabras",
-        xlab = "Frecuencia",
-        ylab = ""
-      )
-  }, error = function(e) {
-    warning(paste("Error in create_word_freq_bars:", e$message))
-    return(plotly_empty() %>% 
-             layout(title = paste("Error en la visualización:", e$message)))
-  })
+  max_words = 20, 
+  exclude_stopwords = TRUE,
+  min_chars = 3,
+  custom_theme = NULL) {
+# Check if we have word frequency data
+if (is.null(attr(data, "word_freq"))) {
+return(plotly_empty() %>% 
+layout(title = "No hay datos de frecuencia de palabras disponibles"))
 }
 
-# Create word cloud
-create_word_cloud <- function(data, max_words = 100, exclude_stopwords = TRUE, min_chars = 3) {
-  tryCatch({
-    # Check if wordcloud2 is available
-    if (!requireNamespace("wordcloud2", quietly = TRUE)) {
-      return(plotly_empty() %>% 
-               layout(title = "Paquete wordcloud2 no disponible. Instale con install.packages('wordcloud2')"))
-    }
-    
-    # Get word frequency table
-    word_freq <- create_word_freq_table(data, max_words, exclude_stopwords, min_chars)
-    
-    if (nrow(word_freq) == 0) {
-      return(plotly_empty() %>% 
-               layout(title = "No hay palabras que cumplan con los criterios de filtrado"))
-    }
-    
-    # Create wordcloud
-    wordcloud2::wordcloud2(data = word_freq, size = 0.5, color = "random-dark")
-    
-  }, error = function(e) {
-    warning(paste("Error in create_word_cloud:", e$message))
-    return(plotly_empty() %>% 
-             layout(title = paste("Error en la visualización:", e$message)))
-  })
+# Get the word frequency table
+tryCatch({
+word_freq <- create_word_freq_table(data, max_words, exclude_stopwords, min_chars)
+
+if (nrow(word_freq) == 0) {
+return(plotly_empty() %>% 
+layout(title = "No hay palabras que cumplan con los criterios de filtrado"))
 }
+
+# Get primary color from theme
+bar_color <- if (!is.null(custom_theme)) {
+custom_theme$colors$primary
+} else {
+theme_config$colors$primary
+}
+
+# Create horizontal bar chart
+plot_ly(
+data = word_freq,
+y = ~reorder(word, freq),
+x = ~freq,
+type = "bar",
+orientation = 'h',
+marker = list(
+color = bar_color
+),
+text = ~paste0(word, ": ", freq),
+hoverinfo = "text"
+) %>%
+apply_plotly_theme(
+title = "Frecuencia de Palabras",
+xlab = "Frecuencia",
+ylab = "",
+custom_theme = custom_theme
+)
+}, error = function(e) {
+warning(paste("Error in create_word_freq_bars:", e$message))
+return(plotly_empty() %>% 
+layout(title = paste("Error en la visualización:", e$message)))
+})
+}
+
 
 # Create district-word heatmap
 create_district_word_heatmap <- function(data, 
-                                        max_words = 10, 
-                                        exclude_stopwords = TRUE,
-                                        min_chars = 3) {
-  tryCatch({
-    # Input validation
-    if (is.null(data) || nrow(data) == 0) {
-      return(plotly_empty() %>% 
-               layout(title = "No hay datos suficientes para visualizar"))
-    }
-    
-    # Process data by district and word
-    word_list <- list()
-    districts <- unique(data$district)
-    
-    for (dist in districts) {
-      # Get text for this district
-      district_text <- data$preprocessed_text[data$district == dist]
-      district_text <- paste(district_text, collapse = " ")
-      
-      # Tokenize
-      tokens <- unlist(strsplit(district_text, "\\s+"))
-      tokens <- tokens[tokens != ""]  # Remove empty strings
-      
-      # Filter stopwords and short words
-      if (exclude_stopwords) {
-        stopwords <- get_spanish_stopwords()
-        tokens <- tokens[!tokens %in% stopwords]
-      }
-      # Convert to character to ensure nchar works properly
-      tokens <- as.character(tokens)
-      tokens <- tokens[nchar(tokens) >= min_chars]
-      
-      # Calculate frequencies
-      word_freq <- as.data.frame(table(tokens))
-      names(word_freq) <- c("word", "freq")
-      word_freq <- word_freq[order(-word_freq$freq), ]
-      
-      # Add to list
-      word_list[[as.character(dist)]] <- word_freq
-    }
-    
-    # Get top words across all districts
-    all_words <- unique(unlist(lapply(word_list, function(df) df$word)))
-    top_words <- numeric(length(all_words))
-    names(top_words) <- all_words
-    
-    for (dist in names(word_list)) {
-      for (i in 1:nrow(word_list[[dist]])) {
-        word <- as.character(word_list[[dist]]$word[i])
-        top_words[word] <- top_words[word] + word_list[[dist]]$freq[i]
-      }
-    }
-    
-    top_words <- sort(top_words, decreasing = TRUE)
-    if (length(top_words) > max_words) {
-      top_words <- top_words[1:max_words]
-    }
-    
-    # Create matrix for heatmap
-    heatmap_data <- matrix(0, nrow = length(names(word_list)), ncol = length(names(top_words)))
-    rownames(heatmap_data) <- names(word_list)
-    colnames(heatmap_data) <- names(top_words)
-    
-    for (i in 1:length(names(word_list))) {
-      dist <- names(word_list)[i]
-      for (j in 1:length(names(top_words))) {
-        word <- names(top_words)[j]
-        idx <- which(word_list[[dist]]$word == word)
-        if (length(idx) > 0) {
-          heatmap_data[i, j] <- word_list[[dist]]$freq[idx]
-        }
-      }
-    }
-    
-    # Convert to data frame for plotly
-    heatmap_df <- expand.grid(district = rownames(heatmap_data), word = colnames(heatmap_data))
-    heatmap_df$freq <- as.vector(heatmap_data)
-    
-    # Create heatmap
-    plot_ly(
-      data = heatmap_df,
-      x = ~word,
-      y = ~district,
-      z = ~freq,
-      type = "heatmap",
-      colorscale = "Blues",
-      text = ~paste0(district, " - ", word, ": ", freq),
-      hoverinfo = "text"
-    ) %>%
-      apply_plotly_theme(
-        title = "Palabras Clave por Distrito",
-        xlab = "",
-        ylab = "Distrito"
-      ) %>%
-      layout(
-        xaxis = list(tickangle = 45)
-      )
-    
-  }, error = function(e) {
-    warning(paste("Error in create_district_word_heatmap:", e$message))
-    return(plotly_empty() %>% 
-             layout(title = paste("Error en la visualización:", e$message)))
-  })
+  max_words = 10, 
+  exclude_stopwords = TRUE,
+  min_chars = 3,
+  custom_theme = NULL) {
+tryCatch({
+# Input validation
+if (is.null(data) || nrow(data) == 0) {
+return(plotly_empty() %>% 
+layout(title = "No hay datos suficientes para visualizar"))
+}
+
+# Process data by district and word
+word_list <- list()
+districts <- unique(data$district)
+
+for (dist in districts) {
+# Get text for this district
+district_text <- data$preprocessed_text[data$district == dist]
+district_text <- paste(district_text, collapse = " ")
+
+# Tokenize
+tokens <- unlist(strsplit(district_text, "\\s+"))
+tokens <- tokens[tokens != ""]  # Remove empty strings
+
+# Filter stopwords and short words
+if (exclude_stopwords) {
+stopwords <- get_spanish_stopwords()
+tokens <- tokens[!tokens %in% stopwords]
+}
+# Convert to character to ensure nchar works properly
+tokens <- as.character(tokens)
+tokens <- tokens[nchar(tokens) >= min_chars]
+
+# Calculate frequencies
+word_freq <- as.data.frame(table(tokens))
+names(word_freq) <- c("word", "freq")
+word_freq <- word_freq[order(-word_freq$freq), ]
+
+# Add to list
+word_list[[as.character(dist)]] <- word_freq
+}
+
+# Get top words across all districts
+all_words <- unique(unlist(lapply(word_list, function(df) df$word)))
+top_words <- numeric(length(all_words))
+names(top_words) <- all_words
+
+for (dist in names(word_list)) {
+for (i in 1:nrow(word_list[[dist]])) {
+word <- as.character(word_list[[dist]]$word[i])
+top_words[word] <- top_words[word] + word_list[[dist]]$freq[i]
+}
+}
+
+top_words <- sort(top_words, decreasing = TRUE)
+if (length(top_words) > max_words) {
+top_words <- top_words[1:max_words]
+}
+
+# Create matrix for heatmap
+heatmap_data <- matrix(0, nrow = length(names(word_list)), ncol = length(names(top_words)))
+rownames(heatmap_data) <- names(word_list)
+colnames(heatmap_data) <- names(top_words)
+
+for (i in 1:length(names(word_list))) {
+dist <- names(word_list)[i]
+for (j in 1:length(names(top_words))) {
+word <- names(top_words)[j]
+idx <- which(word_list[[dist]]$word == word)
+if (length(idx) > 0) {
+heatmap_data[i, j] <- word_list[[dist]]$freq[idx]
+}
+}
+}
+
+# Convert to data frame for plotly
+heatmap_df <- expand.grid(district = rownames(heatmap_data), word = colnames(heatmap_data))
+heatmap_df$freq <- as.vector(heatmap_data)
+
+# Get colorscale from theme
+colorscale <- if (!is.null(custom_theme) && !is.null(custom_theme$palettes$sequential)) {
+custom_theme$palettes$sequential
+} else {
+"Blues"
+}
+
+# Create heatmap
+plot_ly(
+data = heatmap_df,
+x = ~word,
+y = ~district,
+z = ~freq,
+type = "heatmap",
+colorscale = colorscale,
+text = ~paste0(district, " - ", word, ": ", freq),
+hoverinfo = "text"
+) %>%
+apply_plotly_theme(
+title = "Palabras Clave por Distrito",
+xlab = "",
+ylab = "Distrito",
+custom_theme = custom_theme
+) %>%
+layout(
+xaxis = list(tickangle = 45)
+)
+
+}, error = function(e) {
+warning(paste("Error in create_district_word_heatmap:", e$message))
+return(plotly_empty() %>% 
+layout(title = paste("Error en la visualización:", e$message)))
+})
 }
 
 # Create word treemap
 create_word_treemap <- function(data, 
-                               max_words = 30, 
-                               exclude_stopwords = TRUE,
-                               min_chars = 3) {
-  tryCatch({
-    # Get word frequency table
-    word_freq <- create_word_freq_table(data, max_words, exclude_stopwords, min_chars)
-    
-    if (nrow(word_freq) == 0) {
-      return(plotly_empty() %>% 
-               layout(title = "No hay palabras que cumplan con los criterios de filtrado"))
-    }
-    
-    # Create treemap data
-    treemap_data <- data.frame(
-      ids = word_freq$word,
-      labels = word_freq$word,
-      parents = rep("", nrow(word_freq)),
-      values = word_freq$freq
-    )
-    
-    # Create treemap
-    plot_ly(
-      data = treemap_data,
-      ids = ~ids,
-      labels = ~labels,
-      parents = ~parents,
-      values = ~values,
-      type = "treemap",
-      branchvalues = "total",
-      textinfo = "label+value",
-      hoverinfo = "label+value",
-      marker = list(
-        colorscale = "Blues",
-        line = list(width = 1)
-      )
-    ) %>%
-      layout(
-        title = "Treemap de Palabras"
-      )
-  }, error = function(e) {
-    warning(paste("Error in create_word_treemap:", e$message))
-    return(plotly_empty() %>% 
-             layout(title = paste("Error en la visualización:", e$message)))
-  })
+  max_words = 30, 
+  exclude_stopwords = TRUE,
+  min_chars = 3,
+  custom_theme = NULL) {
+tryCatch({
+# Get word frequency table
+word_freq <- create_word_freq_table(data, max_words, exclude_stopwords, min_chars)
+
+if (nrow(word_freq) == 0) {
+return(plotly_empty() %>% 
+layout(title = "No hay palabras que cumplan con los criterios de filtrado"))
+}
+
+# Create treemap data
+treemap_data <- data.frame(
+ids = word_freq$word,
+labels = word_freq$word,
+parents = rep("", nrow(word_freq)),
+values = word_freq$freq
+)
+
+# Get colorscale from theme
+colorscale <- if (!is.null(custom_theme) && !is.null(custom_theme$palettes$sequential)) {
+custom_theme$palettes$sequential
+} else {
+"Blues"
+}
+
+# Create treemap
+plot_ly(
+data = treemap_data,
+ids = ~ids,
+labels = ~labels,
+parents = ~parents,
+values = ~values,
+type = "treemap",
+branchvalues = "total",
+textinfo = "label+value",
+hoverinfo = "label+value",
+marker = list(
+colorscale = colorscale,
+line = list(width = 1)
+)
+) %>%
+layout(
+title = list(
+text = "Treemap de Palabras",
+font = if (!is.null(custom_theme)) {
+list(
+family = custom_theme$typography$font_family,
+size = custom_theme$typography$sizes$title,
+color = custom_theme$colors$text
+)
+} else {
+list(
+family = theme_config$typography$font_family,
+size = theme_config$typography$sizes$title,
+color = theme_config$colors$text
+)
+}
+)
+)
+}, error = function(e) {
+warning(paste("Error in create_word_treemap:", e$message))
+return(plotly_empty() %>% 
+layout(title = paste("Error en la visualización:", e$message)))
+})
 }
 
 # Create bigram network (word pairs that appear together)
 create_bigram_network <- function(data, 
-                                 max_bigrams = 30, 
-                                 exclude_stopwords = TRUE,
-                                 min_chars = 3) {
-  tryCatch({
-    # Check for required packages
-    if (!requireNamespace("igraph", quietly = TRUE)) {
-      return(plotly_empty() %>% 
-               layout(title = "Paquete igraph no disponible. Instale con install.packages('igraph')"))
-    }
-    
-    # Extract and process text
-    all_text <- paste(data$preprocessed_text, collapse = " ")
-    
-    # Create bigrams
-    words <- unlist(strsplit(all_text, "\\s+"))
-    words <- words[words != ""]  # Remove empty strings
-    
-    # Filter by stopwords and length
-    if (exclude_stopwords) {
-      stopwords <- get_spanish_stopwords()
-      words <- words[!words %in% stopwords]
-    }
-    # Convert to character to ensure nchar works properly
-    words <- as.character(words)
-    words <- words[nchar(words) >= min_chars]
-    
-    # Create bigrams
-    if (length(words) < 2) {
-      return(plotly_empty() %>% 
-               layout(title = "No hay suficientes palabras para crear bigramas"))
-    }
-    
-    bigrams <- data.frame(
-      word1 = words[1:(length(words)-1)],
-      word2 = words[2:length(words)]
-    )
-    
-    # Count bigram frequencies
-    bigram_counts <- bigrams %>%
-      group_by(word1, word2) %>%
-      summarise(weight = n(), .groups = 'drop') %>%
-      arrange(desc(weight))
-    
-    # Limit to max_bigrams
-    if (nrow(bigram_counts) > max_bigrams) {
-      bigram_counts <- bigram_counts[1:max_bigrams, ]
-    }
-    
-    # Create network graph
-    g <- igraph::graph_from_data_frame(bigram_counts)
-    
-    # Calculate node sizes based on degree
-    deg <- igraph::degree(g)
-    V(g)$size <- 5 + 3 * log(deg + 1)
-    
-    # Create layout
-    layout <- igraph::layout_with_fr(g)
-    
-    # Create plotly network visualization
-    edge_x <- c()
-    edge_y <- c()
-    for (i in 1:nrow(bigram_counts)) {
-      from_idx <- match(bigram_counts$word1[i], names(V(g)))
-      to_idx <- match(bigram_counts$word2[i], names(V(g)))
-      
-      edge_x <- c(edge_x, layout[from_idx, 1], layout[to_idx, 1], NA)
-      edge_y <- c(edge_y, layout[from_idx, 2], layout[to_idx, 2], NA)
-    }
-    
-    edge_trace <- list(
-      type = "scatter",
-      x = edge_x,
-      y = edge_y,
-      mode = "lines",
-      line = list(width = 0.5, color = 'lightgrey'),
-      hoverinfo = "none"
-    )
-    
-    node_x <- layout[, 1]
-    node_y <- layout[, 2]
-    
-    node_trace <- list(
-      type = "scatter",
-      x = node_x,
-      y = node_y,
-      mode = "markers+text",
-      text = names(V(g)),
-      textfont = list(family = "Arial", size = 10),
-      marker = list(
-        size = V(g)$size,
-        color = theme_config$colors$primary,
-        line = list(width = 1)
-      ),
-      hoverinfo = "text"
-    )
-    
-    plot_ly() %>%
-      add_trace(type = edge_trace$type, x = edge_trace$x, y = edge_trace$y, 
-                mode = edge_trace$mode, line = edge_trace$line, hoverinfo = edge_trace$hoverinfo,
-                name = "Connections") %>%
-      add_trace(type = node_trace$type, x = node_trace$x, y = node_trace$y, 
-                mode = node_trace$mode, text = node_trace$text, textfont = node_trace$textfont,
-                marker = node_trace$marker, hoverinfo = node_trace$hoverinfo,
-                name = "Words") %>%
-      layout(
-        title = "Red de Bigramas (Pares de Palabras)",
-        showlegend = FALSE,
-        xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
-        yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE)
-      )
-    
-  }, error = function(e) {
-    warning(paste("Error in create_bigram_network:", e$message))
-    return(plotly_empty() %>% 
-             layout(title = paste("Error en la visualización:", e$message)))
-  })
+  max_bigrams = 30, 
+  exclude_stopwords = TRUE,
+  min_chars = 3,
+  custom_theme = NULL) {
+tryCatch({
+# Check for required packages
+if (!requireNamespace("igraph", quietly = TRUE)) {
+return(plotly_empty() %>% 
+layout(title = "Paquete igraph no disponible. Instale con install.packages('igraph')"))
+}
+
+# Extract and process text
+all_text <- paste(data$preprocessed_text, collapse = " ")
+
+# Create bigrams
+words <- unlist(strsplit(all_text, "\\s+"))
+words <- words[words != ""]  # Remove empty strings
+
+# Filter by stopwords and length
+if (exclude_stopwords) {
+stopwords <- get_spanish_stopwords()
+words <- words[!words %in% stopwords]
+}
+# Convert to character to ensure nchar works properly
+words <- as.character(words)
+words <- words[nchar(words) >= min_chars]
+
+# Create bigrams
+if (length(words) < 2) {
+return(plotly_empty() %>% 
+layout(title = "No hay suficientes palabras para crear bigramas"))
+}
+
+bigrams <- data.frame(
+word1 = words[1:(length(words)-1)],
+word2 = words[2:length(words)]
+)
+
+# Count bigram frequencies
+bigram_counts <- bigrams %>%
+group_by(word1, word2) %>%
+summarise(weight = n(), .groups = 'drop') %>%
+arrange(desc(weight))
+
+# Limit to max_bigrams
+if (nrow(bigram_counts) > max_bigrams) {
+bigram_counts <- bigram_counts[1:max_bigrams, ]
+}
+
+# Create network graph
+g <- igraph::graph_from_data_frame(bigram_counts)
+
+# Calculate node sizes based on degree
+deg <- igraph::degree(g)
+V(g)$size <- 5 + 3 * log(deg + 1)
+
+# Create layout
+layout <- igraph::layout_with_fr(g)
+
+# Get primary and neutral colors from theme
+primary_color <- if (!is.null(custom_theme)) {
+custom_theme$colors$primary
+} else {
+theme_config$colors$primary
+}
+
+edge_color <- if (!is.null(custom_theme)) {
+custom_theme$colors$neutral
+} else {
+"lightgrey"
+}
+
+# Create plotly network visualization
+edge_x <- c()
+edge_y <- c()
+for (i in 1:nrow(bigram_counts)) {
+from_idx <- match(bigram_counts$word1[i], names(V(g)))
+to_idx <- match(bigram_counts$word2[i], names(V(g)))
+
+edge_x <- c(edge_x, layout[from_idx, 1], layout[to_idx, 1], NA)
+edge_y <- c(edge_y, layout[from_idx, 2], layout[to_idx, 2], NA)
+}
+
+edge_trace <- list(
+type = "scatter",
+x = edge_x,
+y = edge_y,
+mode = "lines",
+line = list(width = 0.5, color = edge_color),
+hoverinfo = "none"
+)
+
+node_x <- layout[, 1]
+node_y <- layout[, 2]
+
+# Apply custom font if available
+text_font <- if (!is.null(custom_theme)) {
+list(family = custom_theme$typography$font_family, size = 10)
+} else {
+list(family = "Arial", size = 10)
+}
+
+node_trace <- list(
+type = "scatter",
+x = node_x,
+y = node_y,
+mode = "markers+text",
+text = names(V(g)),
+textfont = text_font,
+marker = list(
+size = V(g)$size,
+color = primary_color,
+line = list(width = 1)
+),
+hoverinfo = "text"
+)
+
+plot_ly() %>%
+add_trace(type = edge_trace$type, x = edge_trace$x, y = edge_trace$y, 
+mode = edge_trace$mode, line = edge_trace$line, hoverinfo = edge_trace$hoverinfo,
+name = "Connections") %>%
+add_trace(type = node_trace$type, x = node_trace$x, y = node_trace$y, 
+mode = node_trace$mode, text = node_trace$text, textfont = node_trace$textfont,
+marker = node_trace$marker, hoverinfo = node_trace$hoverinfo,
+name = "Words") %>%
+layout(
+title = list(
+text = "Red de Bigramas (Pares de Palabras)",
+font = if (!is.null(custom_theme)) {
+list(
+family = custom_theme$typography$font_family,
+size = custom_theme$typography$sizes$title,
+color = custom_theme$colors$text
+)
+} else {
+list(
+family = theme_config$typography$font_family,
+size = theme_config$typography$sizes$title,
+color = theme_config$colors$text
+)
+}
+),
+showlegend = FALSE,
+xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE)
+)
+
+}, error = function(e) {
+warning(paste("Error in create_bigram_network:", e$message))
+return(plotly_empty() %>% 
+layout(title = paste("Error en la visualización:", e$message)))
+})
 }
 
 # UI Definition for the nominal module
@@ -656,9 +707,21 @@ nominalUI <- function(id) {
 }
 
 # Server Definition for the nominal module
-nominalServer <- function(id, data, metadata, selected_question, geo_data) {
+nominalServer <- function(id, data, metadata, selected_question, geo_data,current_theme = NULL) {
   moduleServer(id, function(input, output, session) {
     # Initial data preparation with metadata
+    active_theme <- reactive({
+      if (is.function(current_theme)) {
+        # If current_theme is a reactive function, call it to get the value
+        current_theme()
+      } else if (!is.null(current_theme)) {
+        # If it's a direct value, use it
+        current_theme
+      } else {
+        # Default to theme_config if nothing provided
+        theme_config
+      }
+    })
     prepared_data <- reactive({
       tryCatch({
         req(data(), selected_question(), metadata())
@@ -1144,9 +1207,11 @@ nominalServer <- function(id, data, metadata, selected_question, geo_data) {
         filtered_data(),
         max_words = input$max_words_freq,
         exclude_stopwords = input$exclude_stopwords,
-        min_chars = input$min_chars
+        min_chars = input$min_chars,
+        custom_theme = active_theme()  # Pass the active theme
       )
     })
+
     output$download_summary_csv <- downloadHandler(
       filename = function() {
         paste0("resumen_nominal_", selected_question(), "_", Sys.Date(), ".zip")
@@ -1228,6 +1293,7 @@ nominalServer <- function(id, data, metadata, selected_question, geo_data) {
         openxlsx::saveWorkbook(wb, file, overwrite = TRUE)
       }
     )
+
     output$word_cloud_plot <- renderUI({
       req(filtered_data())
       # Create word frequency table
@@ -1244,8 +1310,15 @@ nominalServer <- function(id, data, metadata, selected_question, geo_data) {
       
       # Create and return the wordcloud
       tryCatch({
+        # Get theme colors if available
+        colors <- if (!is.null(active_theme()) && !is.null(active_theme()$palettes$sequential)) {
+          "random-dark"  # Default
+        } else {
+          "random-dark"  # wordcloud2 doesn't easily support custom colors, stick with defaults
+        }
+        
         # Use the simpler version without elementId
-        html <- wordcloud2::wordcloud2(data = word_freq, size = 0.5, color = "random-dark")
+        html <- wordcloud2::wordcloud2(data = word_freq, size = 0.5, color = colors)
         return(html)
       }, error = function(e) {
         return(p(paste("Error al generar la nube de palabras:", e$message)))
@@ -1259,7 +1332,8 @@ nominalServer <- function(id, data, metadata, selected_question, geo_data) {
         filtered_data(),
         max_words = input$max_words_heatmap,
         exclude_stopwords = input$exclude_stopwords,
-        min_chars = input$min_chars
+        min_chars = input$min_chars,
+        custom_theme = active_theme()  # Pass the active theme
       )
     })
     
@@ -1270,7 +1344,8 @@ nominalServer <- function(id, data, metadata, selected_question, geo_data) {
         filtered_data(),
         max_words = input$max_words_treemap,
         exclude_stopwords = input$exclude_stopwords,
-        min_chars = input$min_chars
+        min_chars = input$min_chars,
+        custom_theme = active_theme()  # Pass the active theme
       )
     })
     
@@ -1281,7 +1356,8 @@ nominalServer <- function(id, data, metadata, selected_question, geo_data) {
         filtered_data(),
         max_bigrams = input$max_bigrams,
         exclude_stopwords = input$exclude_stopwords,
-        min_chars = input$min_chars
+        min_chars = input$min_chars,
+        custom_theme = active_theme()  # Pass the active theme
       )
     })
   })

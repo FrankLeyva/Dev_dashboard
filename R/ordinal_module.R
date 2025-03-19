@@ -295,9 +295,22 @@ create_label_lookup <- function(data) {
 }
 # Visualization functions for ordinal data
 
-create_ordinal_histogram <- function(data, bins = 30, title = "Distribución") {
+create_ordinal_histogram <- function(data, bins = 30, title = "Distribución", custom_theme = NULL) {
   # Check if we have labels
   has_labels <- attr(data, "has_labels")
+  
+  # Use colors from custom theme if provided
+  bar_color <- if (!is.null(custom_theme)) {
+    custom_theme$colors$primary
+  } else {
+    theme_config$colors$primary
+  }
+  
+  line_color <- if (!is.null(custom_theme)) {
+    custom_theme$colors$neutral
+  } else {
+    theme_config$colors$neutral
+  }
   
   plot <- plot_ly(
     data = data,
@@ -305,9 +318,9 @@ create_ordinal_histogram <- function(data, bins = 30, title = "Distribución") {
     type = "histogram",
     nbinsx = if(has_labels) length(levels(data$value)) else bins,
     marker = list(
-      color = theme_config$colors$primary,
+      color = bar_color,
       line = list(
-        color = theme_config$colors$neutral,
+        color = line_color,
         width = 1
       )
     )
@@ -315,7 +328,8 @@ create_ordinal_histogram <- function(data, bins = 30, title = "Distribución") {
     apply_plotly_theme(
       title = title,
       xlab = "Valor",
-      ylab = "Frecuencia"
+      ylab = "Frecuencia",
+      custom_theme = custom_theme
     )
   
   if(!has_labels) {
@@ -331,7 +345,7 @@ create_ordinal_histogram <- function(data, bins = 30, title = "Distribución") {
   
   return(plot)
 }
-create_ordinal_district_map <- function(data, geo_data, selected_responses = NULL, highlight_extremes = TRUE) {
+create_ordinal_district_map <- function(data, geo_data, selected_responses = NULL, highlight_extremes = TRUE, custom_theme = NULL) {
   # Check if we have data
   if (is.null(data) || nrow(data) == 0 || is.null(geo_data)) {
     return(plotly_empty() %>% 
@@ -340,6 +354,13 @@ create_ordinal_district_map <- function(data, geo_data, selected_responses = NUL
   
   # Create label lookup
   labels_lookup <- create_label_lookup(data)
+  
+  # Get district colors from custom theme if provided
+  district_colors <- if (!is.null(custom_theme)) {
+    custom_theme$palettes$district
+  } else {
+    theme_config$palettes$district
+  }
   
   # Handle case when no responses are selected
   if (is.null(selected_responses) || length(selected_responses) == 0) {
@@ -381,7 +402,15 @@ create_ordinal_district_map <- function(data, geo_data, selected_responses = NUL
       addPolygons(
         fillOpacity = 0.7,
         weight = 1,
-        color = theme_config$palette$district[match(geo_data$No_Distrit, district_stats$district)],
+        color = ~{
+          # Safer color mapping
+          district_idx <- match(No_Distrit, as.numeric(district_stats$district))
+          if(!is.na(district_idx) && district_idx <= length(district_colors)) {
+            district_colors[district_idx]
+          } else {
+            "#CCCCCC"  # Default gray
+          }
+        },
         dashArray = "3",
         highlight = highlightOptions(
           weight = 2,
@@ -534,38 +563,53 @@ create_ordinal_district_map <- function(data, geo_data, selected_responses = NUL
   return(map)
 }
 
-create_ordinal_age_bars <- function(data) {
+create_ordinal_age_bars <- function(data, custom_theme = NULL) {
   # Create label lookup
   labels_lookup <- create_label_lookup(data)
   
   # Get numeric values BEFORE grouping
   numeric_values <- get_numeric_values(data)
   
-  # Add numeric values as a column to the data
-  data_with_numeric <- data %>%
-    mutate(numeric_value = numeric_values)
-  
-  # Calculate age group statistics with mode in a single operation
-  age_stats <- data_with_numeric %>%
+  # Calculate age group statistics 
+  age_stats <- data %>%
+    # Add the numeric values as a column
+    mutate(numeric_value = numeric_values) %>%
     group_by(age_group) %>%
     summarise(
       mean_value = mean(numeric_value, na.rm = TRUE),
-      mode_numeric = as.numeric(names(which.max(table(numeric_value)))),
       n = n(),
       .groups = 'drop'
     )
   
-  # Add text labels for modes
-  age_stats <- age_stats %>%
+  # Get mode values for each age group with labels 
+  age_modes <- data %>%
+    mutate(numeric_value = numeric_values) %>%
+    group_by(age_group) %>%
+    summarise(
+      mode_numeric = as.numeric(names(which.max(table(numeric_value)))),
+      .groups = 'drop'
+    ) %>%
+    # Add text labels for modes
     mutate(
       mode_label = sapply(mode_numeric, function(val) {
-        if (!is.na(val) && as.character(val) %in% names(labels_lookup)) {
+        if (as.character(val) %in% names(labels_lookup)) {
           return(labels_lookup[as.character(val)])
         } else {
           return(as.character(val))
         }
       })
     )
+  
+  # Join the mode values
+  age_stats <- age_stats %>%
+    left_join(age_modes, by = "age_group")
+  
+  # Get age group colors from custom theme if provided
+  age_colors <- if (!is.null(custom_theme)) {
+    custom_theme$palettes$age_group
+  } else {
+    get_color_palette("age_group")
+  }
   
   # Create the plot
   plot_ly(
@@ -579,17 +623,18 @@ create_ordinal_age_bars <- function(data) {
     ),
     hoverinfo = "text+y",
     marker = list(
-      color = get_color_palette("age_group")
+      color = age_colors
     )
   ) %>%
     apply_plotly_theme(
       title = "Distribución por Grupo de Edad",
       xlab = "Grupo de Edad",
-      ylab = "Valor Promedio"
+      ylab = "Valor Promedio",
+      custom_theme = custom_theme
     )
 }
 
-create_ordinal_gender_dumbbell <- function(data) {
+create_ordinal_gender_dumbbell <- function(data, custom_theme = NULL) {
   # Create label lookup
   labels_lookup <- create_label_lookup(data)
   
@@ -630,6 +675,20 @@ create_ordinal_gender_dumbbell <- function(data) {
       values_from = c(mean_value, mode_label, n)
     )
   
+  # Get gender colors from custom theme if provided
+  gender_colors <- if (!is.null(custom_theme)) {
+    custom_theme$palettes$gender
+  } else {
+    get_color_palette("gender")
+  }
+  
+  # Get neutral color from theme
+  neutral_color <- if (!is.null(custom_theme)) {
+    custom_theme$colors$neutral
+  } else {
+    theme_config$colors$neutral
+  }
+  
   # Create the plot
   p <- plot_ly() %>%
     add_trace(
@@ -644,7 +703,7 @@ create_ordinal_gender_dumbbell <- function(data) {
         mode_label_Hombre, n_Hombre
       ),
       hoverinfo = "text+x",
-      marker = list(color = get_color_palette("gender")[2])
+      marker = list(color = gender_colors[2])
     ) %>%
     add_trace(
       data = gender_stats_wide,
@@ -658,7 +717,7 @@ create_ordinal_gender_dumbbell <- function(data) {
         mode_label_Mujer, n_Mujer
       ),
       hoverinfo = "text+x",
-      marker = list(color = get_color_palette("gender")[1])
+      marker = list(color = gender_colors[1])
     )
   
   # Add connecting lines
@@ -668,7 +727,7 @@ create_ordinal_gender_dumbbell <- function(data) {
       xend = gender_stats_wide$mean_value_Mujer[i],
       y = gender_stats_wide$district[i],
       yend = gender_stats_wide$district[i],
-      line = list(color = theme_config$colors$neutral),
+      line = list(color = neutral_color),
       showlegend = FALSE
     )
   }
@@ -677,12 +736,13 @@ create_ordinal_gender_dumbbell <- function(data) {
     apply_plotly_theme(
       title = "Comparación por Género y Distrito",
       xlab = "Valor Promedio",
-      ylab = "Distrito"
+      ylab = "Distrito",
+      custom_theme = custom_theme
     ) %>%
     layout(showlegend = TRUE)
 }
 
-create_ordinal_bars <- function(data, orientation = "v") {
+create_ordinal_bars <- function(data, orientation = "v", custom_theme = NULL) {
   # Check if we have valid data
   if (nrow(data) == 0) {
     return(plot_ly() %>% 
@@ -733,18 +793,106 @@ create_ordinal_bars <- function(data, orientation = "v") {
     district_stats$n
   )
   
-  plot_functions$bar(
-    data = district_stats,
-    x = "district",
-    y = "mean_value",
-    title = "Distribución por Distrito",
-    xlab = "Distrito",
-    ylab = "Valor Promedio",
-    orientation = orientation,
-    color_by = 'district'
-  )
+  # Get district colors from custom theme if provided
+  district_colors <- if (!is.null(custom_theme)) {
+    custom_theme$palettes$district
+  } else {
+    theme_config$palettes$district
+  }
+  
+  # Create bar chart with proper theme
+  if (orientation == "h") {
+    plot_ly(
+      data = district_stats,
+      y = ~reorder(district, mean_value),
+      x = ~mean_value,
+      type = "bar",
+      orientation = 'h',
+      text = ~hover_text,
+      hoverinfo = "text",
+      marker = list(color = district_colors)
+    ) %>%
+      apply_plotly_theme(
+        title = "Distribución por Distrito",
+        xlab = "Valor Promedio",
+        ylab = "Distrito",
+        custom_theme = custom_theme
+      )
+  } else {
+    plot_ly(
+      data = district_stats,
+      x = ~district,
+      y = ~mean_value,
+      type = "bar",
+      text = ~hover_text,
+      hoverinfo = "text",
+      marker = list(color = district_colors)
+    ) %>%
+      apply_plotly_theme(
+        title = "Distribución por Distrito",
+        xlab = "Distrito",
+        ylab = "Valor Promedio",
+        custom_theme = custom_theme
+      )
+  }
 }
 
+create_ordinal_ridge_plot <- function(data, title = NULL, custom_theme = NULL) {
+  # Check if we have ggridges
+  if (!requireNamespace("ggridges", quietly = TRUE)) {
+    stop("Package 'ggridges' is required for this visualization. Please install it with install.packages('ggridges')")
+  }
+  
+  question_label <- attr(data, "question_label")
+  # If no title provided, use the question label
+  if (is.null(title)) {
+    title <- paste("Distribución de", question_label, "por distrito")
+  }
+  
+  # Get numeric values for the plot
+  plot_data <- data %>%
+    mutate(
+      numeric_value = get_numeric_values(.),
+      district = factor(district, levels = rev(sort(unique(as.character(district)))))
+    )
+  
+  # Get district colors from custom theme if provided
+  district_colors <- if (!is.null(custom_theme)) {
+    custom_theme$palettes$district
+  } else {
+    get_color_palette("district")
+  }
+  
+  # Create the plot
+  p <- ggplot(plot_data, aes(x = numeric_value, y = district, fill = district)) +
+    ggridges::geom_density_ridges(
+      quantile_lines = TRUE, 
+      quantiles = 2,
+      alpha = 0.7,
+      scale = 0.9
+    ) +
+    scale_fill_manual(values = district_colors) +
+    theme_minimal() +
+    labs(
+      title = title,
+      x = "Valor",
+      y = "Distrito"
+    ) +
+    theme(legend.position = "none")
+  
+  # Apply custom typography if available
+  if (!is.null(custom_theme)) {
+    p <- p + 
+      theme(
+        text = element_text(family = custom_theme$typography$font_family),
+        plot.title = element_text(size = custom_theme$typography$sizes$title),
+        axis.title = element_text(size = custom_theme$typography$sizes$axis),
+        axis.text = element_text(size = custom_theme$typography$sizes$text)
+      )
+  }
+  
+  return(p)
+}
 # UI Definition
 ordinalUI <- function(id) {
   ns <- NS(id)
@@ -763,7 +911,8 @@ ordinalUI <- function(id) {
               "Mapa de Distritos" = "map",
               "Barras por Edad" = "age_bars",
               "Comparación por Género" = "gender_dumbbell",
-              "Gráfico de Barras" = "bars"
+              "Gráfico de Barras" = "bars",
+              "Gráfico de Crestas" = "ridge_plot"
             )
           )
         ),
@@ -851,9 +1000,20 @@ ordinalUI <- function(id) {
 }
 
 # Server Definition
-ordinalServer <- function(id, data, metadata, selected_question, geo_data) {
+ordinalServer <- function(id, data, metadata, selected_question, geo_data, current_theme = NULL) {
   moduleServer(id, function(input, output, session) {
-    # Initial data preparation with metadata
+    active_theme <- reactive({
+      if (is.function(current_theme)) {
+        # If current_theme is a reactive function, call it to get the value
+        current_theme()
+      } else if (!is.null(current_theme)) {
+        # If it's a direct value, use it
+        current_theme
+      } else {
+        # Default to theme_config if nothing provided
+        theme_config
+      }
+    })# Initial data preparation with metadata
     prepared_data <- reactive({
       req(data(), selected_question(), metadata())
       
@@ -943,7 +1103,8 @@ ordinalServer <- function(id, data, metadata, selected_question, geo_data) {
         "map" = leafletOutput(session$ns("district_map")),
         "age_bars" = plotlyOutput(session$ns("age_bars_plot")),
         "gender_dumbbell" = plotlyOutput(session$ns("gender_dumbbell_plot")),
-        "bars" = plotlyOutput(session$ns("bar_plot"))
+        "bars" = plotlyOutput(session$ns("bar_plot")),
+        "ridge_plot" = plotOutput(session$ns("ridge_plot"))
       )
     })
 
@@ -1139,13 +1300,13 @@ ordinalServer <- function(id, data, metadata, selected_question, geo_data) {
       ))
     })
     
-    # Update plot outputs
     output$histogram_plot <- renderPlotly({
       req(filtered_data())
       create_ordinal_histogram(
         filtered_data(), 
         bins = input$bins,
-        title = paste("Distribución de", selected_question())
+        title = paste("Distribución de", selected_question()),
+        custom_theme = active_theme()  # Pass the active theme
       )
     })
     
@@ -1156,18 +1317,25 @@ ordinalServer <- function(id, data, metadata, selected_question, geo_data) {
         filtered_data(), 
         geo_data(),
         selected_responses = input$map_responses,
-        highlight_extremes = input$highlight_extremes
+        highlight_extremes = input$highlight_extremes,
+        custom_theme = active_theme()  # Pass the active theme
       )
     })
     
     output$age_bars_plot <- renderPlotly({
       req(filtered_data())
-      create_ordinal_age_bars(filtered_data())
+      create_ordinal_age_bars(
+        filtered_data(),
+        custom_theme = active_theme()  # Pass the active theme
+      )
     })
     
     output$gender_dumbbell_plot <- renderPlotly({
       req(filtered_data())
-      create_ordinal_gender_dumbbell(filtered_data())
+      create_ordinal_gender_dumbbell(
+        filtered_data(),
+        custom_theme = active_theme()  # Pass the active theme
+      )
     })
     output$download_summary_csv <- downloadHandler(
       filename = function() {
@@ -1254,8 +1422,18 @@ ordinalServer <- function(id, data, metadata, selected_question, geo_data) {
       req(filtered_data())
       create_ordinal_bars(
         filtered_data(),
-        orientation = input$bar_orientation
+        orientation = input$bar_orientation,
+        custom_theme = active_theme()  # Pass the active theme
       )
     })
+    
+    output$ridge_plot <- renderPlot({
+      req(filtered_data())
+      create_ordinal_ridge_plot(
+        filtered_data(),
+        custom_theme = active_theme()  # Pass the active theme
+      )
+    })
+
   })
 }
