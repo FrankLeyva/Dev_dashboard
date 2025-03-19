@@ -28,6 +28,8 @@ server <- function(input, output, session) {
       "2023 Percepción Ciudadana (PER 2023)"
     } else if (input$survey_selector == "PER_2024"){
       "2024 Percepción Ciudadana (PER 2024)"
+    }else if (input$survey_selector == "PAR_2024"){
+      "2024 Participación Ciudadana (PAR 2024)"
     }
   })
   observeEvent(input$survey_selector, {

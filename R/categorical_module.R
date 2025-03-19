@@ -1213,10 +1213,10 @@ categoricoServer <- function(id, data, metadata, selected_question, geo_data) {
         if (length(freq_table) > 0) {
           mode_category <- names(freq_table)[which.max(freq_table)]
           mode_count <- max(freq_table)
-          mode_percent <- round(100 * mode_count / sum(freq_table), 2)
+          mode_percent <- round(100 * mode_count / sum(freq_table), 2)    
           
           cat("\nEstadísticas Descriptivas:\n")
-          cat("Categoría más frecuente:", mode_category, "\n")
+          cat("Categoría más frecuente:", mode_cateagory, "\n")
           cat("Frecuencia:", mode_count, "\n")
           cat("Porcentaje:", mode_percent, "%\n")
           cat("Total de categorías únicas:", length(freq_table), "\n")

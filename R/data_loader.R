@@ -6,8 +6,10 @@ load_survey_data <- function(survey_id = "PER_2023") {
   } else if (survey_id == "PER_2024") { 
     response_path <- "data/processed/PER_2024_responses.csv"
     metadata_path <- "data/processed/PER_2024_metadata_classified.csv"
-  } 
-  else { 
+  } else if (survey_id == "PAR_2024") {
+    response_path <- "data/processed/PAR_2024_responses.csv"
+    metadata_path <- "data/processed/PAR_2024_metadata_classified.csv"
+  } else { 
     response_path <- "data/processed/PER_2023_responses.csv"
     metadata_path <- "data/processed/PER_2023_metadata_classified.csv"
   }

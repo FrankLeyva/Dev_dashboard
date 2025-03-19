@@ -15,7 +15,8 @@ ui <- page_fluid(
         choices = c(
         "Percepción Ciudadana  (PER 2023)" = "PER_2023",
           "Participación Ciudadana (PAR 2023)" = "PAR_2023",
-          "Percepción Ciudadana 2024 (PER 2024)" = "PER_2024"
+          "Percepción Ciudadana 2024 (PER 2024)" = "PER_2024",
+          "Participación Ciudadana 2024 (PER 2024)" = "PAR_2024"
         ),
         selected = "PER_2023"
       )
