@@ -167,9 +167,9 @@ ui <- page_fluid(
           h4("Configuración de Colores"),
           
           # Primary colors
-          colourInput("primary_color", "Color Primario", value = theme_config$colors$primary),
-          colourInput("secondary_color", "Color Secundario", value = theme_config$colors$secondary),
-          colourInput("highlight_color", "Color de Resaltado", value = theme_config$colors$highlight),
+          colourpicker::colourInput("primary_color", "Color Primario", value = theme_config$colors$primary),
+          colourpicker::colourInput("secondary_color", "Color Secundario", value = theme_config$colors$secondary),
+          colourpicker::colourInput("highlight_color", "Color de Resaltado", value = theme_config$colors$highlight),
           
           hr(),
           
