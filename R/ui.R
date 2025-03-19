@@ -12,17 +12,33 @@ ui <- page_fluid(
     fill = FALSE,
     card(
       card_header("Configuración de Encuesta"),
-      selectInput(
-        "survey_selector",
-        "Seleccionar Encuesta:",
-        choices = c(
-        "Percepción Ciudadana  (PER 2023)" = "PER_2023",
-          "Participación Ciudadana (PAR 2023)" = "PAR_2023",
-          "Percepción Ciudadana 2024 (PER 2024)" = "PER_2024",
-          "Participación Ciudadana 2024 (PER 2024)" = "PAR_2024"
-        ),
-        selected = "PER_2023"
-      )
+      div(
+        style = "display: flex; justify-content: space-between;",
+        radioButtons(
+          "survey_selector",
+          "Seleccionar Encuesta:",
+          choices = c(
+          "Percepción Ciudadana 2023 (PER 2023)" = "PER_2023",
+            "Participación Ciudadana 2023 (PAR 2023)" = "PAR_2023",
+            "Percepción Ciudadana 2024 (PER 2024)" = "PER_2024",
+            "Participación Ciudadana 2024 (PER 2024)" = "PAR_2024"
+          ),
+          selected = "PER_2023",
+          inline = TRUE
+        )
+      ),
+      tags$style(HTML("
+        .radio-inline {
+          width: 25%;
+          margin-right: 0;
+          text-align: center;
+        }
+        .shiny-options-group {
+          width: 100%;
+          display: flex;
+          justify-content: space-between;
+        }
+      "))
     )
   ),
   navset_tab(
