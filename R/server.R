@@ -1,6 +1,7 @@
 library(colourpicker)
 library(RColorBrewer)
 library(viridisLite)
+library(plotly)
 
 server <- function(input, output, session) {
   data <- reactive({
