@@ -295,10 +295,19 @@ get_numeric_values <- function(data) {
 }
 
 
-# Visualization functions
-create_interval_histogram <- function(data, bins = 30, title = "Distribución") {
+# Visualization functions - Updated to accept custom_theme
+create_interval_histogram <- function(data, bins = 30, title = "Distribución", custom_theme = NULL) {
   # Check if we have labels
   has_labels <- attr(data, "has_labels")
+  
+  # Use colors from custom theme if provided
+  bar_color <- ifelse(!is.null(custom_theme), 
+                    custom_theme$colors$primary, 
+                    theme_config$colors$primary)
+  
+  line_color <- ifelse(!is.null(custom_theme), 
+                     custom_theme$colors$neutral, 
+                     theme_config$colors$neutral)
   
   plot <- plot_ly(
     data = data,
@@ -306,9 +315,9 @@ create_interval_histogram <- function(data, bins = 30, title = "Distribución") 
     type = "histogram",
     nbinsx = if(has_labels) length(levels(data$value)) else bins,
     marker = list(
-      color = theme_config$colors$primary,
+      color = bar_color,
       line = list(
-        color = theme_config$colors$neutral,
+        color = line_color,
         width = 1
       )
     )
@@ -316,7 +325,8 @@ create_interval_histogram <- function(data, bins = 30, title = "Distribución") 
     apply_plotly_theme(
       title = title,
       xlab = "Valor",
-      ylab = "Frecuencia"
+      ylab = "Frecuencia",
+      custom_theme = custom_theme  # Pass the custom theme
     )
   
   if(!has_labels) {
@@ -333,9 +343,8 @@ create_interval_histogram <- function(data, bins = 30, title = "Distribución") 
   return(plot)
 }
 
-# Modified create_interval_district_map function
-# Modified function to handle the coercion error
-create_interval_district_map <- function(data, geo_data, selected_responses = NULL, highlight_extremes = TRUE) {
+# Modified function to handle the coercion error and accept custom_theme
+create_interval_district_map <- function(data, geo_data, selected_responses = NULL, highlight_extremes = TRUE, custom_theme = NULL) {
   # Check if we have data
   if (is.null(data) || nrow(data) == 0 || is.null(geo_data)) {
     return(plotly_empty() %>% 
@@ -345,10 +354,16 @@ create_interval_district_map <- function(data, geo_data, selected_responses = NU
   # Create label lookup
   labels_lookup <- create_label_lookup(data)
   
+  # Get district palette from custom theme if provided
+  district_palette <- if (!is.null(custom_theme)) {
+    custom_theme$palettes$district
+  } else {
+    theme_config$palettes$district
+  }
+  
   # Handle case when no responses are selected
   if (is.null(selected_responses) || length(selected_responses) == 0) {
     # Original behavior - use mean values
-    # Code as before...
     district_stats <- data %>%
       mutate(numeric_value = get_numeric_values(.)) %>%
       group_by(district) %>%
@@ -357,9 +372,6 @@ create_interval_district_map <- function(data, geo_data, selected_responses = NU
         n = n(),
         .groups = 'drop'
       )
-    
-    # Rest of the original function...
-    # [Keep the rest of this branch the same]
     
     # Get mode values for each district
     district_modes <- data %>%
@@ -389,7 +401,7 @@ create_interval_district_map <- function(data, geo_data, selected_responses = NU
       addPolygons(
         fillOpacity = 0.7,
         weight = 1,
-        color = theme_config$palette$district[match(geo_data$No_Distrit, district_stats$district)],
+        color = district_palette[match(geo_data$No_Distrit, district_stats$district)],
         dashArray = "3",
         highlight = highlightOptions(
           weight = 2,
@@ -405,16 +417,11 @@ create_interval_district_map <- function(data, geo_data, selected_responses = NU
           district_stats$mean_value[match(No_Distrit, district_stats$district)],
           district_stats$n[match(No_Distrit, district_stats$district)]
         ) %>% lapply(HTML)
-      ) )
+      ))
   }
   
   # For selected responses, calculate percentage
-  # THIS IS THE ISSUE: Fix this part to handle coercion properly
   selected_responses_numeric <- suppressWarnings(as.numeric(selected_responses))
-  
-  # Debug info to help diagnose the issue
-  print(paste("Selected responses:", paste(selected_responses, collapse=", ")))
-  print(paste("Converted to numeric:", paste(selected_responses_numeric, collapse=", ")))
   
   # Calculate district statistics using percentages of selected responses
   district_stats <- data %>%
@@ -448,7 +455,6 @@ create_interval_district_map <- function(data, geo_data, selected_responses = NU
    }
    
    # Create response labels for title
-   # Fix this part to handle labels correctly
    response_labels <- sapply(selected_responses, function(val) {
      val_numeric <- suppressWarnings(as.numeric(val))
      if (!is.na(val_numeric) && as.character(val_numeric) %in% names(labels_lookup)) {
@@ -460,6 +466,13 @@ create_interval_district_map <- function(data, geo_data, selected_responses = NU
        return(val)
      }
    })
+   
+   # Get colors from custom theme if provided
+   highlight_color <- if (!is.null(custom_theme)) {
+     custom_theme$colors$highlight
+   } else {
+     theme_config$colors$highlight
+   }
    
    # Create color palette based on percentage
    pal <- colorNumeric(
@@ -474,7 +487,7 @@ create_interval_district_map <- function(data, geo_data, selected_responses = NU
      addPolygons(
        fillOpacity = 0.7,
        weight = 1,
-       color = theme_config$palette$district[match(geo_data$No_Distrit, district_stats$district)],
+       color = district_palette[match(geo_data$No_Distrit, district_stats$district)],
        dashArray = "3",
        highlight = highlightOptions(
          weight = 2,
@@ -545,9 +558,9 @@ create_interval_district_map <- function(data, geo_data, selected_responses = NU
    )
    
    return(map)
- }
+}
 
- create_interval_ridge_plot <- function(data, title = NULL) {
+create_interval_ridge_plot <- function(data, title = NULL, custom_theme = NULL) {
   # Check if we have ggridges
   if (!requireNamespace("ggridges", quietly = TRUE)) {
     stop("Package 'ggridges' is required for this visualization. Please install it with install.packages('ggridges')")
@@ -566,6 +579,13 @@ create_interval_district_map <- function(data, geo_data, selected_responses = NU
       district = factor(district, levels = rev(sort(unique(as.character(district)))))
     )
   
+  # Use district palette from custom theme if provided
+  district_colors <- if (!is.null(custom_theme)) {
+    custom_theme$palettes$district
+  } else {
+    get_color_palette("district")
+  }
+  
   # Create the plot
   p <- ggplot(plot_data, aes(x = numeric_value, y = district, fill = district)) +
     ggridges::geom_density_ridges(
@@ -574,7 +594,7 @@ create_interval_district_map <- function(data, geo_data, selected_responses = NU
       alpha = 0.7,
       scale = 0.9
     ) +
-    scale_fill_manual(values = get_color_palette("district")) +
+    scale_fill_manual(values = district_colors) +
     theme_minimal() +
     labs(
       title = title,
@@ -583,11 +603,21 @@ create_interval_district_map <- function(data, geo_data, selected_responses = NU
     ) +
     theme(legend.position = "none")
   
+  # Apply custom typography if available
+  if (!is.null(custom_theme)) {
+    p <- p + 
+      theme(
+        text = element_text(family = custom_theme$typography$font_family),
+        plot.title = element_text(size = custom_theme$typography$sizes$title),
+        axis.title = element_text(size = custom_theme$typography$sizes$axis),
+        axis.text = element_text(size = custom_theme$typography$sizes$text)
+      )
+  }
+  
   return(p)
 }
 
-
-create_interval_age_bars <- function(data) {
+create_interval_age_bars <- function(data, custom_theme = NULL) {
   # Create label lookup
   labels_lookup <- create_label_lookup(data)
   
@@ -628,7 +658,14 @@ create_interval_age_bars <- function(data) {
   age_stats <- age_stats %>%
     left_join(age_modes, by = "age_group")
   
-  # Rest of the function remains the same
+  # Get age group colors from custom theme if provided
+  age_colors <- if (!is.null(custom_theme)) {
+    custom_theme$palettes$age_group
+  } else {
+    get_color_palette("age_group")
+  }
+  
+  # Create plot
   plot_ly(
     data = age_stats,
     x = ~age_group,
@@ -640,17 +677,18 @@ create_interval_age_bars <- function(data) {
     ),
     hoverinfo = "text+y",
     marker = list(
-      color = get_color_palette("age_group")
+      color = age_colors
     )
   ) %>%
     apply_plotly_theme(
       title = "Distribución por Grupo de Edad",
       xlab = "Grupo de Edad",
-      ylab = "Valor Promedio"
+      ylab = "Valor Promedio",
+      custom_theme = custom_theme  # Pass the custom theme
     )
 }
 
-create_interval_gender_dumbbell <- function(data) {
+create_interval_gender_dumbbell <- function(data, custom_theme = NULL) {
   # Create label lookup
   labels_lookup <- create_label_lookup(data)
   
@@ -691,6 +729,20 @@ create_interval_gender_dumbbell <- function(data) {
       values_from = c(mean_value, mode_label, n)
     )
   
+  # Get gender colors from custom theme if provided
+  gender_colors <- if (!is.null(custom_theme)) {
+    custom_theme$palettes$gender
+  } else {
+    get_color_palette("gender")
+  }
+  
+  # Get neutral color from theme
+  neutral_color <- if (!is.null(custom_theme)) {
+    custom_theme$colors$neutral
+  } else {
+    theme_config$colors$neutral
+  }
+  
   # Create the plot
   p <- plot_ly() %>%
     add_trace(
@@ -705,7 +757,7 @@ create_interval_gender_dumbbell <- function(data) {
         mode_label_Hombre, n_Hombre
       ),
       hoverinfo = "text+x",
-      marker = list(color = get_color_palette("gender")[2])
+      marker = list(color = gender_colors[2])
     ) %>%
     add_trace(
       data = gender_stats_wide,
@@ -719,7 +771,7 @@ create_interval_gender_dumbbell <- function(data) {
         mode_label_Mujer, n_Mujer
       ),
       hoverinfo = "text+x",
-      marker = list(color = get_color_palette("gender")[1])
+      marker = list(color = gender_colors[1])
     )
   
   # Add connecting lines
@@ -729,7 +781,7 @@ create_interval_gender_dumbbell <- function(data) {
       xend = gender_stats_wide$mean_value_Mujer[i],
       y = gender_stats_wide$district[i],
       yend = gender_stats_wide$district[i],
-      line = list(color = theme_config$colors$neutral),
+      line = list(color = neutral_color),
       showlegend = FALSE
     )
   }
@@ -738,12 +790,13 @@ create_interval_gender_dumbbell <- function(data) {
     apply_plotly_theme(
       title = "Comparación por Género y Distrito",
       xlab = "Valor Promedio",
-      ylab = "Distrito"
+      ylab = "Distrito",
+      custom_theme = custom_theme  # Pass the custom theme
     ) %>%
     layout(showlegend = TRUE)
 }
 
-create_interval_bars <- function(data, orientation = "v") {
+create_interval_bars <- function(data, orientation = "v", custom_theme = NULL) {
   # Check if we have valid data
   if (nrow(data) == 0) {
     return(plot_ly() %>% 
@@ -794,19 +847,51 @@ create_interval_bars <- function(data, orientation = "v") {
     district_stats$n
   )
   
-  plot_functions$bar(
-    data = district_stats,
-    x = "district",
-    y = "mean_value",
-    title = "Distribución por Distrito",
-    xlab = "Distrito",
-    ylab = "Valor Promedio",
-    orientation = orientation,
-    color_by = 'district'
-  )
+  # Get district colors from custom theme if provided
+  district_colors <- if (!is.null(custom_theme)) {
+    custom_theme$palettes$district
+  } else {
+    get_color_palette("district")
+  }
+  
+  # Create direct plot instead of using plot_functions
+  if (orientation == "h") {
+    plot_ly(
+      data = district_stats,
+      y = ~district,
+      x = ~mean_value,
+      type = "bar",
+      orientation = 'h',
+      text = ~hover_text,
+      hoverinfo = "text+x",
+      marker = list(color = district_colors)
+    ) %>%
+      apply_plotly_theme(
+        title = "Promedio por Distrito",
+        xlab = "Valor Promedio",
+        ylab = "Distrito",
+        custom_theme = custom_theme  # Pass the custom theme
+      )
+  } else {
+    plot_ly(
+      data = district_stats,
+      x = ~district,
+      y = ~mean_value,
+      type = "bar",
+      text = ~hover_text,
+      hoverinfo = "text+y",
+      marker = list(color = district_colors)
+    ) %>%
+      apply_plotly_theme(
+        title = "Promedio por Distrito",
+        xlab = "Distrito",
+        ylab = "Valor Promedio",
+        custom_theme = custom_theme  # Pass the custom theme
+      )
+  }
 }
+
 # UI Definition
-# Modify the intervalUI function in interval_module.R
 intervalUI <- function(id) {
   ns <- NS(id)
   
@@ -917,8 +1002,23 @@ intervalUI <- function(id) {
   )
 }
 
-intervalServer <- function(id, data, metadata, selected_question, geo_data) {
+# Server Definition - Updated to accept and use custom theme
+intervalServer <- function(id, data, metadata, selected_question, geo_data, current_theme = NULL) {
   moduleServer(id, function(input, output, session) {
+    # Get the active theme (custom or default)
+    active_theme <- reactive({
+      if (is.function(current_theme)) {
+        # If current_theme is a reactive function, call it to get the value
+        current_theme()
+      } else if (!is.null(current_theme)) {
+        # If it's a direct value, use it
+        current_theme
+      } else {
+        # Default to theme_config if nothing provided
+        theme_config
+      }
+    })
+    
     # Initial data preparation with metadata
     prepared_data <- reactive({
       req(data(), selected_question(), metadata())
@@ -977,8 +1077,8 @@ intervalServer <- function(id, data, metadata, selected_question, geo_data) {
       
       # Update the choices
       updateCheckboxGroupInput(session, "map_responses", 
-                               choices = choices,
-                               selected = NULL)
+                              choices = choices,
+                              selected = NULL)
     })
     
     # Filtered data reactive - UPDATED to handle omit_11 toggle
@@ -1020,251 +1120,248 @@ intervalServer <- function(id, data, metadata, selected_question, geo_data) {
       )
     })
 
-# Fix for the district_stats calculation in the interval module
-# This fixes the identical mean values issue
-
-output$summary_stats <- renderPrint({
-  data <- filtered_data()
-  
-  # Get the response counts from attributes
-  ns_nc_count <- attr(data, "ns_nc_count")
-  missing_count <- attr(data, "missing_count")
-  total_responses <- attr(data, "total_responses")
-  valid_responses <- nrow(data)
-  value_labels <- attr(data, "value_labels")
-  
-  cat("Estadísticas para Datos de Intervalo:\n")
-  cat("\nDistribución de Respuestas:\n")
-  cat("Total de respuestas:", total_responses, "\n")
-  cat("Respuestas válidas:", valid_responses, "\n")
-  cat("No sabe/No contesta:", ns_nc_count, 
-      sprintf("(%.1f%%)", 100 * ns_nc_count/total_responses), "\n")
-  cat("Datos faltantes:", missing_count,
-      sprintf("(%.1f%%)", 100 * missing_count/total_responses), "\n")
-  
-  # Get numeric values for analysis
-  numeric_values <- get_numeric_values(data)
-  
-  # Display overall statistics
-  cat("\nEstadísticas Generales:\n")
-  cat("Media:", round(mean(numeric_values, na.rm = TRUE), 2), "\n")
-  cat("Mediana:", median(numeric_values, na.rm = TRUE), "\n")
-  cat("Desviación Estándar:", round(sd(numeric_values, na.rm = TRUE), 2), "\n")
-  cat("Mínimo:", min(numeric_values, na.rm = TRUE), "\n")
-  cat("Máximo:", max(numeric_values, na.rm = TRUE), "\n")
-  
-  # Find mode
-  value_counts <- table(numeric_values)
-  mode_value <- as.numeric(names(which.max(value_counts)))
-  
-  # Get mode label if available
-  mode_label <- if (!is.null(value_labels) && as.character(mode_value) %in% names(value_labels)) {
-    paste0(mode_value, " (", value_labels[as.character(mode_value)], ")")
-  } else {
-    as.character(mode_value)
-  }
-  
-  cat("Moda:", mode_label, "\n")
-  
-  # Display frequency distribution with labels
-  if (!is.null(value_labels) && length(value_labels) > 0) {
-    cat("\nDistribución de Frecuencias:\n")
-    freq_df <- data.frame(
-      Valor = names(value_counts),
-      Frecuencia = as.vector(value_counts),
-      Porcentaje = round(100 * as.vector(value_counts) / sum(value_counts), 2)
-    )
-    
-    # Add labels if available
-    freq_df$Etiqueta <- sapply(freq_df$Valor, function(val) {
-      if (val %in% names(value_labels)) {
-        return(value_labels[val])
+    # Summary stats and tables remain unchanged since they don't directly use theme elements
+    output$summary_stats <- renderPrint({
+      data <- filtered_data()
+      
+      # Get the response counts from attributes
+      ns_nc_count <- attr(data, "ns_nc_count")
+      missing_count <- attr(data, "missing_count")
+      total_responses <- attr(data, "total_responses")
+      valid_responses <- nrow(data)
+      value_labels <- attr(data, "value_labels")
+      
+      cat("Estadísticas para Datos de Intervalo:\n")
+      cat("\nDistribución de Respuestas:\n")
+      cat("Total de respuestas:", total_responses, "\n")
+      cat("Respuestas válidas:", valid_responses, "\n")
+      cat("No sabe/No contesta:", ns_nc_count, 
+          sprintf("(%.1f%%)", 100 * ns_nc_count/total_responses), "\n")
+      cat("Datos faltantes:", missing_count,
+          sprintf("(%.1f%%)", 100 * missing_count/total_responses), "\n")
+      
+      # Get numeric values for analysis
+      numeric_values <- get_numeric_values(data)
+      
+      # Display overall statistics
+      cat("\nEstadísticas Generales:\n")
+      cat("Media:", round(mean(numeric_values, na.rm = TRUE), 2), "\n")
+      cat("Mediana:", median(numeric_values, na.rm = TRUE), "\n")
+      cat("Desviación Estándar:", round(sd(numeric_values, na.rm = TRUE), 2), "\n")
+      cat("Mínimo:", min(numeric_values, na.rm = TRUE), "\n")
+      cat("Máximo:", max(numeric_values, na.rm = TRUE), "\n")
+      
+      # Find mode
+      value_counts <- table(numeric_values)
+      mode_value <- as.numeric(names(which.max(value_counts)))
+      
+      # Get mode label if available
+      mode_label <- if (!is.null(value_labels) && as.character(mode_value) %in% names(value_labels)) {
+        paste0(mode_value, " (", value_labels[as.character(mode_value)], ")")
       } else {
-        return(NA)
+        as.character(mode_value)
+      }
+      
+      cat("Moda:", mode_label, "\n")
+      
+      # Display frequency distribution with labels
+      if (!is.null(value_labels) && length(value_labels) > 0) {
+        cat("\nDistribución de Frecuencias:\n")
+        freq_df <- data.frame(
+          Valor = names(value_counts),
+          Frecuencia = as.vector(value_counts),
+          Porcentaje = round(100 * as.vector(value_counts) / sum(value_counts), 2)
+        )
+        
+        # Add labels if available
+        freq_df$Etiqueta <- sapply(freq_df$Valor, function(val) {
+          if (val %in% names(value_labels)) {
+            return(value_labels[val])
+          } else {
+            return(NA)
+          }
+        })
+        
+        print(freq_df)
+      } else {
+        cat("\nDistribución de Frecuencias:\n")
+        print(value_counts)
+      }
+      
+      # Calculate district statistics - FIXED to use correct grouping
+      cat("\nEstadísticas por Distrito:\n")
+      district_stats <- data %>%
+        group_by(district) %>%
+        summarise(
+          n = n(),
+          Media = round(mean(value_num, na.rm = TRUE), 2), # Fixed this line to use value_num
+          Mediana = median(value_num, na.rm = TRUE),  # Fixed this line to use value_num
+          DE = round(sd(value_num, na.rm = TRUE), 2), # Fixed this line to use value_num
+          Min = min(value_num, na.rm = TRUE),  # Fixed this line to use value_num
+          Max = max(value_num, na.rm = TRUE),  # Fixed this line to use value_num
+          .groups = 'drop'
+        )
+      print(district_stats)
+      
+      # Calculate gender statistics - FIXED to use correct grouping
+      cat("\nEstadísticas por Género:\n")
+      gender_stats <- data %>%
+        group_by(gender) %>%
+        summarise(
+          n = n(),
+          Media = round(mean(value_num, na.rm = TRUE), 2),  # Fixed this line to use value_num
+          Mediana = median(value_num, na.rm = TRUE),  # Fixed this line to use value_num
+          DE = round(sd(value_num, na.rm = TRUE), 2),  # Fixed this line to use value_num
+          Min = min(value_num, na.rm = TRUE),  # Fixed this line to use value_num
+          Max = max(value_num, na.rm = TRUE),  # Fixed this line to use value_num
+          .groups = 'drop'
+        )
+      print(gender_stats)
+      
+      # Calculate age group statistics - FIXED to use correct grouping
+      cat("\nEstadísticas por Grupo de Edad:\n")
+      age_stats <- data %>%
+        group_by(age_group) %>%
+        summarise(
+          n = n(),
+          Media = round(mean(value_num, na.rm = TRUE), 2),  # Fixed this line to use value_num
+          Mediana = median(value_num, na.rm = TRUE),  # Fixed this line to use value_num
+          DE = round(sd(value_num, na.rm = TRUE), 2),  # Fixed this line to use value_num
+          Min = min(value_num, na.rm = TRUE),  # Fixed this line to use value_num
+          Max = max(value_num, na.rm = TRUE),  # Fixed this line to use value_num
+          .groups = 'drop'
+        )
+      print(age_stats)
+      
+      if (input$omit_11) {
+        cat("\nNota: Se han omitido los valores de 11 en los cálculos estadísticos.\n")
       }
     })
     
-    print(freq_df)
-  } else {
-    cat("\nDistribución de Frecuencias:\n")
-    print(value_counts)
-  }
-  
-  # Calculate district statistics - FIXED to use correct grouping
-  cat("\nEstadísticas por Distrito:\n")
-  district_stats <- data %>%
-    group_by(district) %>%
-    summarise(
-      n = n(),
-      Media = round(mean(value_num, na.rm = TRUE), 2), # Fixed this line to use value_num
-      Mediana = median(value_num, na.rm = TRUE),  # Fixed this line to use value_num
-      DE = round(sd(value_num, na.rm = TRUE), 2), # Fixed this line to use value_num
-      Min = min(value_num, na.rm = TRUE),  # Fixed this line to use value_num
-      Max = max(value_num, na.rm = TRUE),  # Fixed this line to use value_num
-      .groups = 'drop'
-    )
-  print(district_stats)
-  
-  # Calculate gender statistics - FIXED to use correct grouping
-  cat("\nEstadísticas por Género:\n")
-  gender_stats <- data %>%
-    group_by(gender) %>%
-    summarise(
-      n = n(),
-      Media = round(mean(value_num, na.rm = TRUE), 2),  # Fixed this line to use value_num
-      Mediana = median(value_num, na.rm = TRUE),  # Fixed this line to use value_num
-      DE = round(sd(value_num, na.rm = TRUE), 2),  # Fixed this line to use value_num
-      Min = min(value_num, na.rm = TRUE),  # Fixed this line to use value_num
-      Max = max(value_num, na.rm = TRUE),  # Fixed this line to use value_num
-      .groups = 'drop'
-    )
-  print(gender_stats)
-  
-  # Calculate age group statistics - FIXED to use correct grouping
-  cat("\nEstadísticas por Grupo de Edad:\n")
-  age_stats <- data %>%
-    group_by(age_group) %>%
-    summarise(
-      n = n(),
-      Media = round(mean(value_num, na.rm = TRUE), 2),  # Fixed this line to use value_num
-      Mediana = median(value_num, na.rm = TRUE),  # Fixed this line to use value_num
-      DE = round(sd(value_num, na.rm = TRUE), 2),  # Fixed this line to use value_num
-      Min = min(value_num, na.rm = TRUE),  # Fixed this line to use value_num
-      Max = max(value_num, na.rm = TRUE),  # Fixed this line to use value_num
-      .groups = 'drop'
-    )
-  print(age_stats)
-  
-  if (input$omit_11) {
-    cat("\nNota: Se han omitido los valores de 11 en los cálculos estadísticos.\n")
-  }
-})
-
-# Fix for summary_tables in interval module
-summary_tables <- reactive({
-  data <- filtered_data()
-  
-  # Create overall statistics table
-  overall_stats <- data.frame(
-    Statistic = c("Media", "Mediana", "Desviación Estándar", "Mínimo", "Máximo", "Moda", "N"),
-    Value = c(
-      round(mean(data$value_num, na.rm = TRUE), 2),
-      median(data$value_num, na.rm = TRUE),
-      round(sd(data$value_num, na.rm = TRUE), 2),
-      min(data$value_num, na.rm = TRUE),
-      max(data$value_num, na.rm = TRUE),
-      as.numeric(names(which.max(table(data$value_num)))),
-      length(data$value_num)
-    )
-  )
-  
-  # Calculate district statistics - FIXED
-  district_stats <- data %>%
-    group_by(district) %>%
-    summarise(
-      n = n(),
-      Media = round(mean(value_num, na.rm = TRUE), 2),
-      Mediana = median(value_num, na.rm = TRUE),
-      DE = round(sd(value_num, na.rm = TRUE), 2),
-      Min = min(value_num, na.rm = TRUE),
-      Max = max(value_num, na.rm = TRUE),
-      .groups = 'drop'
-    )
-  
-  # Calculate gender statistics - FIXED
-  gender_stats <- data %>%
-    group_by(gender) %>%
-    summarise(
-      n = n(),
-      Media = round(mean(value_num, na.rm = TRUE), 2),
-      Mediana = median(value_num, na.rm = TRUE),
-      DE = round(sd(value_num, na.rm = TRUE), 2),
-      Min = min(value_num, na.rm = TRUE),
-      Max = max(value_num, na.rm = TRUE),
-      .groups = 'drop'
-    )
-  
-  # Calculate age group statistics - FIXED
-  age_stats <- data %>%
-    group_by(age_group) %>%
-    summarise(
-      n = n(),
-      Media = round(mean(value_num, na.rm = TRUE), 2),
-      Mediana = median(value_num, na.rm = TRUE),
-      DE = round(sd(value_num, na.rm = TRUE), 2),
-      Min = min(value_num, na.rm = TRUE),
-      Max = max(value_num, na.rm = TRUE),
-      .groups = 'drop'
-    )
-  
-  # Create frequency table
-  freq_table <- as.data.frame(table(data$value_num))
-  names(freq_table) <- c("Valor", "Frecuencia")
-  freq_table$Porcentaje <- round(100 * freq_table$Frecuencia / sum(freq_table$Frecuencia), 2)
-  
-  # Add labels if available
-  value_labels <- attr(data, "value_labels")
-  if (!is.null(value_labels)) {
-    freq_table$Etiqueta <- sapply(freq_table$Valor, function(val) {
-      if (as.character(val) %in% names(value_labels)) {
-        return(value_labels[as.character(val)])
-      } else {
-        return(NA)
+    # Fix for summary_tables in interval module
+    summary_tables <- reactive({
+      data <- filtered_data()
+      
+      # Create overall statistics table
+      overall_stats <- data.frame(
+        Statistic = c("Media", "Mediana", "Desviación Estándar", "Mínimo", "Máximo", "Moda", "N"),
+        Value = c(
+          round(mean(data$value_num, na.rm = TRUE), 2),
+          median(data$value_num, na.rm = TRUE),
+          round(sd(data$value_num, na.rm = TRUE), 2),
+          min(data$value_num, na.rm = TRUE),
+          max(data$value_num, na.rm = TRUE),
+          as.numeric(names(which.max(table(data$value_num)))),
+          length(data$value_num)
+        )
+      )
+      
+      # Calculate district statistics - FIXED
+      district_stats <- data %>%
+        group_by(district) %>%
+        summarise(
+          n = n(),
+          Media = round(mean(value_num, na.rm = TRUE), 2),
+          Mediana = median(value_num, na.rm = TRUE),
+          DE = round(sd(value_num, na.rm = TRUE), 2),
+          Min = min(value_num, na.rm = TRUE),
+          Max = max(value_num, na.rm = TRUE),
+          .groups = 'drop'
+        )
+      
+      # Calculate gender statistics - FIXED
+      gender_stats <- data %>%
+        group_by(gender) %>%
+        summarise(
+          n = n(),
+          Media = round(mean(value_num, na.rm = TRUE), 2),
+          Mediana = median(value_num, na.rm = TRUE),
+          DE = round(sd(value_num, na.rm = TRUE), 2),
+          Min = min(value_num, na.rm = TRUE),
+          Max = max(value_num, na.rm = TRUE),
+          .groups = 'drop'
+        )
+      
+      # Calculate age group statistics - FIXED
+      age_stats <- data %>%
+        group_by(age_group) %>%
+        summarise(
+          n = n(),
+          Media = round(mean(value_num, na.rm = TRUE), 2),
+          Mediana = median(value_num, na.rm = TRUE),
+          DE = round(sd(value_num, na.rm = TRUE), 2),
+          Min = min(value_num, na.rm = TRUE),
+          Max = max(value_num, na.rm = TRUE),
+          .groups = 'drop'
+        )
+      
+      # Create frequency table
+      freq_table <- as.data.frame(table(data$value_num))
+      names(freq_table) <- c("Valor", "Frecuencia")
+      freq_table$Porcentaje <- round(100 * freq_table$Frecuencia / sum(freq_table$Frecuencia), 2)
+      
+      # Add labels if available
+      value_labels <- attr(data, "value_labels")
+      if (!is.null(value_labels)) {
+        freq_table$Etiqueta <- sapply(freq_table$Valor, function(val) {
+          if (as.character(val) %in% names(value_labels)) {
+            return(value_labels[as.character(val)])
+          } else {
+            return(NA)
+          }
+        })
       }
+      
+      return(list(
+        overall = overall_stats,
+        district = district_stats,
+        gender = gender_stats,
+        age = age_stats,
+        frequency = freq_table
+      ))
     })
-  }
-  
-  return(list(
-    overall = overall_stats,
-    district = district_stats,
-    gender = gender_stats,
-    age = age_stats,
-    frequency = freq_table
-  ))
-})
-
-# Fix the CSV download handler to not include folder structure in zip
-output$download_summary_csv <- downloadHandler(
-  filename = function() {
-    paste0("resumen_", selected_question(), "_", Sys.Date(), ".zip")
-  },
-  content = function(file) {
-    summaries <- summary_tables()
     
-    # Create temporary directory for files
-    temp_dir <- tempdir()
-    
-    # Write each summary to a CSV file
-    write.csv(summaries$overall, file.path(temp_dir, "estadisticas_generales.csv"), row.names = FALSE)
-    write.csv(summaries$district, file.path(temp_dir, "estadisticas_por_distrito.csv"), row.names = FALSE)
-    write.csv(summaries$gender, file.path(temp_dir, "estadisticas_por_genero.csv"), row.names = FALSE)
-    write.csv(summaries$age, file.path(temp_dir, "estadisticas_por_edad.csv"), row.names = FALSE)
-    write.csv(summaries$frequency, file.path(temp_dir, "tabla_frecuencias.csv"), row.names = FALSE)
-    
-    # Create zip file with all CSVs - FIXED to use relative paths
-    files_to_zip <- c(
-      "estadisticas_generales.csv",
-      "estadisticas_por_distrito.csv",
-      "estadisticas_por_genero.csv",
-      "estadisticas_por_edad.csv",
-      "tabla_frecuencias.csv"
+    # Download handlers remain unchanged since they just use the data without theme elements
+    output$download_summary_csv <- downloadHandler(
+      filename = function() {
+        paste0("resumen_", selected_question(), "_", Sys.Date(), ".zip")
+      },
+      content = function(file) {
+        summaries <- summary_tables()
+        
+        # Create temporary directory for files
+        temp_dir <- tempdir()
+        
+        # Write each summary to a CSV file
+        write.csv(summaries$overall, file.path(temp_dir, "estadisticas_generales.csv"), row.names = FALSE)
+        write.csv(summaries$district, file.path(temp_dir, "estadisticas_por_distrito.csv"), row.names = FALSE)
+        write.csv(summaries$gender, file.path(temp_dir, "estadisticas_por_genero.csv"), row.names = FALSE)
+        write.csv(summaries$age, file.path(temp_dir, "estadisticas_por_edad.csv"), row.names = FALSE)
+        write.csv(summaries$frequency, file.path(temp_dir, "tabla_frecuencias.csv"), row.names = FALSE)
+        
+        # Create zip file with all CSVs - FIXED to use relative paths
+        # Save current working directory
+        oldwd <- getwd()
+        
+        # Change to temp directory before zipping
+        setwd(temp_dir)
+        
+        # Create zip file
+        files_to_zip <- c(
+          "estadisticas_generales.csv",
+          "estadisticas_por_distrito.csv",
+          "estadisticas_por_genero.csv",
+          "estadisticas_por_edad.csv",
+          "tabla_frecuencias.csv"
+        )
+        
+        zip(file, files_to_zip)
+        
+        # Change back to original working directory
+        setwd(oldwd)
+      }
     )
     
-    # Save current working directory
-    oldwd <- getwd()
-    
-    # Change to temp directory before zipping
-    setwd(temp_dir)
-    
-    # Create zip file
-    zip(file, files_to_zip)
-    
-    # Change back to original working directory
-    setwd(oldwd)
-  }
-)
-    
-    # Excel download handler
     output$download_summary_excel <- downloadHandler(
       filename = function() {
         paste0("resumen_", selected_question(), "_", Sys.Date(), ".xlsx")
@@ -1301,13 +1398,14 @@ output$download_summary_csv <- downloadHandler(
       }
     )
     
-    # Keep the rest of the output functions the same
+    # Update plot outputs to use the active_theme
     output$histogram_plot <- renderPlotly({
       req(filtered_data())
       create_interval_histogram(
         filtered_data(), 
         bins = input$bins,
-        title = paste("Distribución de", selected_question())
+        title = paste("Distribución de", selected_question()),
+        custom_theme = active_theme()  # Pass the active theme
       )
     })
 
@@ -1318,31 +1416,42 @@ output$download_summary_csv <- downloadHandler(
         filtered_data(), 
         geo_data(),
         selected_responses = input$map_responses,
-        highlight_extremes = input$highlight_extremes
+        highlight_extremes = input$highlight_extremes,
+        custom_theme = active_theme()  # Pass the active theme
       )
     })
 
     output$age_bars_plot <- renderPlotly({
       req(filtered_data())
-      create_interval_age_bars(filtered_data())
+      create_interval_age_bars(
+        filtered_data(),
+        custom_theme = active_theme()  # Pass the active theme
+      )
     })
 
     output$gender_dumbbell_plot <- renderPlotly({
       req(filtered_data())
-      create_interval_gender_dumbbell(filtered_data())
+      create_interval_gender_dumbbell(
+        filtered_data(),
+        custom_theme = active_theme()  # Pass the active theme
+      )
     })
 
     output$bar_plot <- renderPlotly({
       req(filtered_data())
       create_interval_bars(
         filtered_data(),
-        orientation = input$bar_orientation
+        orientation = input$bar_orientation,
+        custom_theme = active_theme()  # Pass the active theme
       )
     })
     
     output$ridge_plot <- renderPlot({
       req(filtered_data())
-      create_interval_ridge_plot(filtered_data())
+      create_interval_ridge_plot(
+        filtered_data(),
+        custom_theme = active_theme()  # Pass the active theme
+      )
     })
   })
 }

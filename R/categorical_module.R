@@ -156,7 +156,9 @@ prepare_categorical_data <- function(data, question_id, metadata) {
   
   return(valid_data)
 }
-create_category_bars <- function(data, max_categories = 15, title = "Distribución de Frecuencias") {
+
+# Updated visualization functions with theme support
+create_category_bars <- function(data, max_categories = 15, title = "Distribución de Frecuencias", custom_theme = NULL) {
   tryCatch({
     # Input validation
     if (is.null(data) || nrow(data) == 0 || !("value" %in% names(data))) {
@@ -195,6 +197,13 @@ create_category_bars <- function(data, max_categories = 15, title = "Distribuci�
       )
     }
     
+    # Get bar color from theme
+    bar_color <- if (!is.null(custom_theme)) {
+      custom_theme$colors$primary
+    } else {
+      theme_config$colors$primary
+    }
+    
     # Create plot with horizontal layout for many categories
     if (nrow(freq_data) > 8) {
       p <- plot_ly(
@@ -206,13 +215,14 @@ create_category_bars <- function(data, max_categories = 15, title = "Distribuci�
         text = ~paste0(Category, ": ", Frequency, " (", Percentage, "%)"),
         hoverinfo = "text",
         marker = list(
-          color = theme_config$colors$primary
+          color = bar_color
         )
       ) %>%
         apply_plotly_theme(
           title = title,
           xlab = "Frecuencia",
-          ylab = ""
+          ylab = "",
+          custom_theme = custom_theme
         )
     } else {
       p <- plot_ly(
@@ -223,13 +233,14 @@ create_category_bars <- function(data, max_categories = 15, title = "Distribuci�
         text = ~paste0(Category, ": ", Frequency, " (", Percentage, "%)"),
         hoverinfo = "text",
         marker = list(
-          color = theme_config$colors$primary
+          color = bar_color
         )
       ) %>%
         apply_plotly_theme(
           title = title,
           xlab = "Categoría",
-          ylab = "Frecuencia"
+          ylab = "Frecuencia",
+          custom_theme = custom_theme
         )
     }
     
@@ -241,9 +252,8 @@ create_category_bars <- function(data, max_categories = 15, title = "Distribuci�
   })
 }
 
-# Create pie chart
-# Create pie chart (improved version)
-create_category_pie <- function(data, max_categories = 8) {
+# Create pie chart (improved version with theme support)
+create_category_pie <- function(data, max_categories = 8, custom_theme = NULL) {
   tryCatch({
     # Input validation
     if (is.null(data) || nrow(data) == 0 || !("value" %in% names(data))) {
@@ -282,9 +292,14 @@ create_category_pie <- function(data, max_categories = 8) {
       )
     }
     
-    # Create pie chart with custom colors
-    colors <- colorRampPalette(c(theme_config$colors$primary, theme_config$colors$highlight))(nrow(freq_data))
+    # Create custom colors if theme is provided
+    colors <- if (!is.null(custom_theme)) {
+      colorRampPalette(c(custom_theme$colors$primary, custom_theme$colors$highlight))(nrow(freq_data))
+    } else {
+      colorRampPalette(c(theme_config$colors$primary, theme_config$colors$highlight))(nrow(freq_data))
+    }
     
+    # Create pie chart with custom colors
     plot_ly(
       data = freq_data,
       labels = ~Category,
@@ -300,7 +315,22 @@ create_category_pie <- function(data, max_categories = 8) {
       text = ~paste0(Category, ": ", Frequency, " respuestas")
     ) %>%
       layout(
-        title = "Distribución de Categorías",
+        title = list(
+          text = "Distribución de Categorías",
+          font = if (!is.null(custom_theme)) {
+            list(
+              family = custom_theme$typography$font_family,
+              size = custom_theme$typography$sizes$title,
+              color = custom_theme$colors$text
+            )
+          } else {
+            list(
+              family = theme_config$typography$font_family,
+              size = theme_config$typography$sizes$title,
+              color = theme_config$colors$text
+            )
+          }
+        ),
         showlegend = FALSE
       )
   }, error = function(e) {
@@ -310,8 +340,8 @@ create_category_pie <- function(data, max_categories = 8) {
   })
 }
 
-# Create heatmap for district distribution
-create_category_district_heatmap <- function(data, max_categories = 10) {
+# Create heatmap for district distribution with theme support
+create_category_district_heatmap <- function(data, max_categories = 10, custom_theme = NULL) {
   tryCatch({
     # Input validation
     if (is.null(data) || nrow(data) == 0 || 
@@ -360,7 +390,8 @@ create_category_district_heatmap <- function(data, max_categories = 10) {
       apply_plotly_theme(
         title = "Distribución por Distrito",
         xlab = "Distrito",
-        ylab = "Categoría"
+        ylab = "Categoría",
+        custom_theme = custom_theme
       ) %>%
       layout(
         xaxis = list(tickangle = 45),
@@ -376,8 +407,8 @@ create_category_district_heatmap <- function(data, max_categories = 10) {
   })
 }
 
-# Create stacked bar chart by district
-create_category_stacked_bars <- function(data, max_categories = 7) {
+# Create stacked bar chart by district with theme support
+create_category_stacked_bars <- function(data, max_categories = 7, custom_theme = NULL) {
   tryCatch({
     # Input validation
     if (is.null(data) || nrow(data) == 0 || 
@@ -438,7 +469,8 @@ create_category_stacked_bars <- function(data, max_categories = 7) {
       apply_plotly_theme(
         title = "Distribución por Distrito",
         xlab = "Distrito",
-        ylab = "Porcentaje"
+        ylab = "Porcentaje",
+        custom_theme = custom_theme
       ) %>%
       layout(
         barmode = "stack",
@@ -452,8 +484,8 @@ create_category_stacked_bars <- function(data, max_categories = 7) {
   })
 }
 
-# Create treemap visualization
-create_category_treemap <- function(data, include_demographics = FALSE) {
+# Create treemap visualization with theme support
+create_category_treemap <- function(data, include_demographics = FALSE, custom_theme = NULL) {
   tryCatch({
     # Input validation
     if (is.null(data) || nrow(data) == 0 || !("value" %in% names(data))) {
@@ -512,6 +544,13 @@ create_category_treemap <- function(data, include_demographics = FALSE) {
       )
     }
     
+    # Use colors from custom theme if provided
+    colorscale <- if (!is.null(custom_theme)) {
+      colorRampPalette(c(custom_theme$colors$primary, custom_theme$colors$highlight))(9)
+    } else {
+      "Blues"
+    }
+    
     # Create treemap
     plot_ly(
       data = treemap_data,
@@ -524,14 +563,29 @@ create_category_treemap <- function(data, include_demographics = FALSE) {
       textinfo = "label+value+percent parent",
       hoverinfo = "label+value+percent parent",
       marker = list(
-        colorscale = "Blues",
+        colorscale = colorscale,
         line = list(width = 1)
       )
     ) %>%
       layout(
-        title = ifelse(include_demographics, 
-                     "Jerarquía de Categorías por Demografía", 
-                     "Distribución de Categorías")
+        title = list(
+          text = ifelse(include_demographics, 
+                      "Jerarquía de Categorías por Demografía", 
+                      "Distribución de Categorías"),
+          font = if (!is.null(custom_theme)) {
+            list(
+              family = custom_theme$typography$font_family,
+              size = custom_theme$typography$sizes$title,
+              color = custom_theme$colors$text
+            )
+          } else {
+            list(
+              family = theme_config$typography$font_family,
+              size = theme_config$typography$sizes$title,
+              color = theme_config$colors$text
+            )
+          }
+        )
       )
   }, error = function(e) {
     warning(paste("Error in create_category_treemap:", e$message))
@@ -540,8 +594,8 @@ create_category_treemap <- function(data, include_demographics = FALSE) {
   })
 }
 
-# Create bar chart by gender
-create_category_gender_bars <- function(data, max_categories = 5) {
+# Create bar chart by gender with theme support
+create_category_gender_bars <- function(data, max_categories = 5, custom_theme = NULL) {
   tryCatch({
     # Input validation
     if (is.null(data) || nrow(data) == 0 || 
@@ -575,6 +629,13 @@ create_category_gender_bars <- function(data, max_categories = 5) {
              layout(title = "No hay datos para visualizar después de filtrar"))
     }
     
+    # Get gender colors from theme if provided
+    gender_colors <- if (!is.null(custom_theme)) {
+      custom_theme$palettes$gender
+    } else {
+      get_color_palette("gender")
+    }
+    
     # Create grouped bar chart
     plot_ly(
       data = gender_data,
@@ -582,14 +643,15 @@ create_category_gender_bars <- function(data, max_categories = 5) {
       y = ~percentage,
       color = ~gender,
       type = "bar",
-      colors = get_color_palette("gender"),
+      colors = gender_colors,
       text = ~paste0(gender, " - ", value, ": ", n, " (", percentage, "%)"),
       hoverinfo = "text"
     ) %>%
       apply_plotly_theme(
         title = "Distribución por Género",
         xlab = "Categoría",
-        ylab = "Porcentaje"
+        ylab = "Porcentaje",
+        custom_theme = custom_theme
       ) %>%
       layout(
         barmode = "group",
@@ -602,8 +664,8 @@ create_category_gender_bars <- function(data, max_categories = 5) {
   })
 }
 
-# Create bar chart by age group
-create_category_age_bars <- function(data, max_categories = 5) {
+# Create bar chart by age group with theme support
+create_category_age_bars <- function(data, max_categories = 5, custom_theme = NULL) {
   tryCatch({
     # Input validation
     if (is.null(data) || nrow(data) == 0 || 
@@ -637,6 +699,13 @@ create_category_age_bars <- function(data, max_categories = 5) {
              layout(title = "No hay datos para visualizar después de filtrar"))
     }
     
+    # Get age group colors from theme if provided
+    age_colors <- if (!is.null(custom_theme)) {
+      custom_theme$palettes$age_group
+    } else {
+      get_color_palette("age_group")
+    }
+    
     # Create grouped bar chart
     plot_ly(
       data = age_data,
@@ -644,14 +713,15 @@ create_category_age_bars <- function(data, max_categories = 5) {
       y = ~percentage,
       color = ~age_group,
       type = "bar",
-      colors = get_color_palette("age_group"),
+      colors = age_colors,
       text = ~paste0(age_group, " - ", value, ": ", n, " (", percentage, "%)"),
       hoverinfo = "text"
     ) %>%
       apply_plotly_theme(
         title = "Distribución por Grupo de Edad",
         xlab = "Categoría",
-        ylab = "Porcentaje"
+        ylab = "Porcentaje",
+        custom_theme = custom_theme
       ) %>%
       layout(
         barmode = "group",
@@ -664,8 +734,8 @@ create_category_age_bars <- function(data, max_categories = 5) {
   })
 }
 
-# Create chord diagram for category relationships
-create_category_relationships <- function(data, cat_var1, cat_var2) {
+# Create chord diagram for category relationships with theme support
+create_category_relationships <- function(data, cat_var1, cat_var2, custom_theme = NULL) {
   tryCatch({
     # Input validation
     if (is.null(data) || nrow(data) == 0 || 
@@ -680,9 +750,13 @@ create_category_relationships <- function(data, cat_var1, cat_var2) {
     # Convert to matrix format for chord diagram
     matrix_data <- as.matrix(cross_tab)
     
-    # Generate colors
+    # Generate colors from theme
     n_colors <- nrow(matrix_data) + ncol(matrix_data)
-    colors <- colorRampPalette(c(theme_config$colors$primary, theme_config$colors$highlight))(n_colors)
+    colors <- if (!is.null(custom_theme)) {
+      colorRampPalette(c(custom_theme$colors$primary, custom_theme$colors$highlight))(n_colors)
+    } else {
+      colorRampPalette(c(theme_config$colors$primary, theme_config$colors$highlight))(n_colors)
+    }
     
     # Create labels
     labels <- c(rownames(matrix_data), colnames(matrix_data))
@@ -724,7 +798,22 @@ create_category_relationships <- function(data, cat_var1, cat_var2) {
       )
     ) %>%
       layout(
-        title = paste("Relación entre", cat_var1, "y", cat_var2),
+        title = list(
+          text = paste("Relación entre", cat_var1, "y", cat_var2),
+          font = if (!is.null(custom_theme)) {
+            list(
+              family = custom_theme$typography$font_family,
+              size = custom_theme$typography$sizes$title,
+              color = custom_theme$colors$text
+            )
+          } else {
+            list(
+              family = theme_config$typography$font_family,
+              size = theme_config$typography$sizes$title,
+              color = theme_config$colors$text
+            )
+          }
+        ),
         font = list(size = 10)
       )
   }, error = function(e) {
@@ -733,11 +822,20 @@ create_category_relationships <- function(data, cat_var1, cat_var2) {
            layout(title = paste("Error en la visualización:", e$message)))
   })
 }
-create_category_district_map <- function(data, geo_data, selected_categories = NULL, highlight_extremes = TRUE) {
+
+# Create map for categories with theme support
+create_category_district_map <- function(data, geo_data, selected_categories = NULL, highlight_extremes = TRUE, custom_theme = NULL) {
   # Check if we have data
   if (is.null(data) || nrow(data) == 0 || is.null(geo_data)) {
     return(plotly_empty() %>% 
              layout(title = "No hay datos suficientes para visualizar"))
+  }
+  
+  # Get district colors from custom theme if provided
+  district_colors <- if (!is.null(custom_theme)) {
+    custom_theme$palettes$district
+  } else {
+    theme_config$palettes$district
   }
   
   # Handle case when no categories are selected
@@ -762,7 +860,7 @@ create_category_district_map <- function(data, geo_data, selected_categories = N
       addPolygons(
         fillOpacity = 0.7,
         weight = 1,
-        color = theme_config$colors$primary,
+        color = district_colors[match(geo_data$No_Distrit, as.numeric(district_modes$district))],
         dashArray = "3",
         highlight = highlightOptions(
           weight = 2,
@@ -813,20 +911,13 @@ create_category_district_map <- function(data, geo_data, selected_categories = N
     categories_text <- paste0(substr(categories_text, 1, 97), "...")
   }
   
-  # Create color palette based on percentage
-  pal <- colorNumeric(
-    palette = "RdYlBu",
-    domain = district_stats$selected_percent,
-    reverse = TRUE
-  )
-  
   # Create map
   map <- leaflet(geo_data) %>%
     addTiles() %>% 
     addPolygons(
       fillOpacity = 0.7,
       weight = 1,
-      color = theme_config$colors$primary,
+      color = district_colors[match(geo_data$No_Distrit, as.numeric(district_stats$district))],
       dashArray = "3",
       highlight = highlightOptions(
         weight = 2,
@@ -898,6 +989,7 @@ create_category_district_map <- function(data, geo_data, selected_categories = N
   
   return(map)
 }
+
 # UI Definition
 categoricoUI <- function(id) {
   ns <- NS(id)
@@ -1049,9 +1141,24 @@ categoricoUI <- function(id) {
     )
   )
 }
-# Server Definition
-categoricoServer <- function(id, data, metadata, selected_question, geo_data) {
+
+# Server Definition - Updated to accept custom theme
+categoricoServer <- function(id, data, metadata, selected_question, geo_data, current_theme = NULL) {
   moduleServer(id, function(input, output, session) {
+    # Get the active theme (custom or default)
+    active_theme <- reactive({
+      if (is.function(current_theme)) {
+        # If current_theme is a reactive function, call it to get the value
+        current_theme()
+      } else if (!is.null(current_theme)) {
+        # If it's a direct value, use it
+        current_theme
+      } else {
+        # Default to theme_config if nothing provided
+        theme_config
+      }
+    })
+    
     # Initial data preparation with metadata
     prepared_data <- reactive({
       tryCatch({
@@ -1155,6 +1262,7 @@ categoricoServer <- function(id, data, metadata, selected_question, geo_data) {
         "bars" = plotlyOutput(session$ns("bars_plot"), height = "600px"),
         "pie" = plotlyOutput(session$ns("pie_plot"), height = "600px"),
         "district_heatmap" = plotlyOutput(session$ns("district_heatmap_plot"), height = "600px"),
+        "district_map" = leafletOutput(session$ns("district_map_plot"), height = "600px"),
         "stacked_bars" = plotlyOutput(session$ns("stacked_bars_plot"), height = "600px"),
         "gender_bars" = plotlyOutput(session$ns("gender_bars_plot"), height = "600px"),
         "age_bars" = plotlyOutput(session$ns("age_bars_plot"), height = "600px"),
@@ -1163,15 +1271,8 @@ categoricoServer <- function(id, data, metadata, selected_question, geo_data) {
         "relationship" = plotlyOutput(session$ns("relationship_plot"), height = "600px")
       )
     })
-    output$district_map_plot <- renderLeaflet({
-      req(filtered_data(), geo_data())
-      create_category_district_map(
-        filtered_data(),
-        geo_data(),
-        selected_categories = input$map_categories,
-        highlight_extremes = input$highlight_extremes
-      )
-    })
+    
+    # The statistical summary doesn't use theme elements, so it remains unchanged
     output$summary_stats <- renderPrint({
       tryCatch({
         data <- filtered_data()
@@ -1216,7 +1317,7 @@ categoricoServer <- function(id, data, metadata, selected_question, geo_data) {
           mode_percent <- round(100 * mode_count / sum(freq_table), 2)    
           
           cat("\nEstadísticas Descriptivas:\n")
-          cat("Categoría más frecuente:", mode_cateagory, "\n")
+          cat("Categoría más frecuente:", mode_category, "\n")
           cat("Frecuencia:", mode_count, "\n")
           cat("Porcentaje:", mode_percent, "%\n")
           cat("Total de categorías únicas:", length(freq_table), "\n")
@@ -1342,7 +1443,7 @@ categoricoServer <- function(id, data, metadata, selected_question, geo_data) {
       })
     })
     
-    # Generate summary tables for download
+    # Generate summary tables for download - these don't use theme elements either
     summary_tables <- reactive({
       data <- filtered_data()
       
@@ -1424,7 +1525,7 @@ categoricoServer <- function(id, data, metadata, selected_question, geo_data) {
       ))
     })
     
-    # CSV download handler
+    # CSV download handler - unchanged
     output$download_summary_csv <- downloadHandler(
       filename = function() {
         paste0("resumen_categorico_", selected_question(), "_", Sys.Date(), ".zip")
@@ -1470,7 +1571,7 @@ categoricoServer <- function(id, data, metadata, selected_question, geo_data) {
       }
     )
     
-    # Excel download handler
+    # Excel download handler - unchanged
     output$download_summary_excel <- downloadHandler(
       filename = function() {
         paste0("resumen_categorico_", selected_question(), "_", Sys.Date(), ".xlsx")
@@ -1516,65 +1617,96 @@ categoricoServer <- function(id, data, metadata, selected_question, geo_data) {
       }
     )
     
-    # Bar plot
+    # Update plot outputs to use the active theme
     output$bars_plot <- renderPlotly({
+      req(filtered_data())
       create_category_bars(
         filtered_data(), 
         max_categories = input$max_categories,
-        title = paste("Distribución de", selected_question())
+        title = paste("Distribución de", selected_question()),
+        custom_theme = active_theme()  # Pass the active theme
       )
     })
     
-    # Pie chart
     output$pie_plot <- renderPlotly({
+      req(filtered_data())
       create_category_pie(
         filtered_data(),
-        max_categories = input$pie_max_categories
+        max_categories = input$pie_max_categories,
+        custom_theme = active_theme()  # Pass the active theme
       )
     })
     
-    # District heatmap
     output$district_heatmap_plot <- renderPlotly({
+      req(filtered_data())
       create_category_district_heatmap(
         filtered_data(),
-        max_categories = input$heatmap_max_categories
+        max_categories = input$heatmap_max_categories,
+        custom_theme = active_theme()  # Pass the active theme
       )
     })
     
-    # Stacked bars
+    output$district_map_plot <- renderLeaflet({
+      req(filtered_data(), geo_data())
+      create_category_district_map(
+        filtered_data(),
+        geo_data(),
+        selected_categories = input$map_categories,
+        highlight_extremes = input$highlight_extremes,
+        custom_theme = active_theme()  # Pass the active theme
+      )
+    })
+    
     output$stacked_bars_plot <- renderPlotly({
+      req(filtered_data())
       create_category_stacked_bars(
         filtered_data(),
-        max_categories = input$stacked_max_categories
+        max_categories = input$stacked_max_categories,
+        custom_theme = active_theme()  # Pass the active theme
       )
     })
     
-    # Gender bars
     output$gender_bars_plot <- renderPlotly({
-      create_category_gender_bars(filtered_data())
+      req(filtered_data())
+      create_category_gender_bars(
+        filtered_data(),
+        custom_theme = active_theme()  # Pass the active theme
+      )
     })
     
-    # Age bars
     output$age_bars_plot <- renderPlotly({
-      create_category_age_bars(filtered_data())
+      req(filtered_data())
+      create_category_age_bars(
+        filtered_data(),
+        custom_theme = active_theme()  # Pass the active theme
+      )
     })
     
-    # Treemap
     output$treemap_plot <- renderPlotly({
-      create_category_treemap(filtered_data(), include_demographics = FALSE)
+      req(filtered_data())
+      create_category_treemap(
+        filtered_data(), 
+        include_demographics = FALSE,
+        custom_theme = active_theme()  # Pass the active theme
+      )
     })
     
-    # Hierarchical treemap
     output$hierarchical_treemap_plot <- renderPlotly({
-      create_category_treemap(filtered_data(), include_demographics = TRUE)
+      req(filtered_data())
+      create_category_treemap(
+        filtered_data(), 
+        include_demographics = TRUE,
+        custom_theme = active_theme()  # Pass the active theme
+      )
     })
     
-    # Relationship plot
     output$relationship_plot <- renderPlotly({
+      req(filtered_data())
       create_category_relationships(
         filtered_data(),
         cat_var1 = input$rel_cat1,
-        cat_var2 = input$rel_cat2
+        cat_var2 = input$rel_cat2,
+        custom_theme = active_theme()  # Pass the active theme
       )
     })
   })
