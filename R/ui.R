@@ -1,5 +1,7 @@
 library(bslib)
+library(shinyjs)
 ui <- page_fluid(
+  useShinyjs(),
   theme = bs_theme(
     version = 5,
     bootswatch = "litera",
@@ -23,6 +25,8 @@ ui <- page_fluid(
     )
   ),
   navset_tab(
+    id = "main_tabs",  
+
     nav_panel(
       title = "Vista General de Datos",
       icon = icon("database"),
@@ -122,6 +126,34 @@ ui <- page_fluid(
         conditionalPanel(
           condition = "input.test_module == 'nominal'",
           nominalUI("nominal_test")
+        )
+      )
+    ),
+    nav_panel(
+      title = "Búsqueda de Preguntas",
+      icon = icon("search"),
+      
+      layout_columns(
+        col_widths = c(12),
+        card(
+          card_header("Buscar Preguntas en la Encuesta"),
+          layout_columns(
+            col_widths = c(9, 3),
+            textInput(
+              "global_search",
+              "Buscar por texto en las preguntas:",
+              placeholder = "Ingrese texto para buscar..."
+            ),
+            actionButton(
+              "execute_search",
+              "Buscar",
+              icon = icon("search"),
+              width = "100%",
+              class = "btn-primary mt-4"
+            )
+          ),
+          DT::dataTableOutput("search_results_table"),
+          uiOutput("search_info")
         )
       )
     )

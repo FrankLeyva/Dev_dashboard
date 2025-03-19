@@ -186,4 +186,146 @@ server <- function(input, output, session) {
       )
     }
   })
+  # Search functionality
+observeEvent(input$execute_search, {
+  req(input$global_search, data())
+  search_text <- tolower(input$global_search)
+  
+  # Get all questions with their labels
+  all_questions <- data.frame(
+    variable = data()$metadata$variable,
+    label = data()$metadata$label,
+    scale_type = data()$metadata$scale_type,
+    stringsAsFactors = FALSE
+  )
+  
+  # Filter questions where label or variable contains the search text
+  matching_questions <- all_questions[
+    grepl(search_text, tolower(all_questions$label)) | 
+    grepl(search_text, tolower(all_questions$variable)),
+  ]
+  
+  # Create a nice results table
+  results_df <- matching_questions %>%
+    select(
+      variable,
+      Pregunta = label,
+      Tipo = scale_type
+    )
+  
+  # Store the search results
+  output$search_results_table <- DT::renderDataTable({
+    if (nrow(results_df) == 0) {
+      # Empty table with message
+      output$search_info <- renderUI({
+        div(
+          class = "alert alert-warning",
+          icon("exclamation-triangle"), 
+          "No se encontraron preguntas que coincidan con el texto de búsqueda."
+        )
+      })
+      return(results_df)
+    }
+    
+    # Show success message
+    output$search_info <- renderUI({
+      div(
+        class = "alert alert-info",
+        icon("info-circle"), 
+        paste0("Se encontraron ", nrow(results_df), " preguntas. Haga clic en cualquier fila para ver la pregunta.")
+      )
+    })
+    
+    # Return the datatable with clickable rows
+    DT::datatable(
+      results_df, 
+      selection = 'single',
+      options = list(
+        pageLength = 15,
+        language = list(
+          search = "Filtrar:",
+          paginate = list(previous = "Anterior", `next` = "Siguiente")
+        )
+      )
+    )
+  })
+})
+
+observeEvent(input$search_results_table_rows_selected, {
+  row_index <- input$search_results_table_rows_selected
+  
+  # Make sure we have a selection and search results
+  if (length(row_index) > 0 && !is.null(input$global_search)) {
+    # Get all questions with their labels again
+    all_questions <- data.frame(
+      variable = data()$metadata$variable,
+      label = data()$metadata$label,
+      scale_type = data()$metadata$scale_type,
+      stringsAsFactors = FALSE
+    )
+    
+    # Filter to get matching questions
+    search_text <- tolower(input$global_search)
+    matching_questions <- all_questions[
+      grepl(search_text, tolower(all_questions$label)) | 
+      grepl(search_text, tolower(all_questions$variable)),
+    ]
+    
+    # Get the selected question info
+    if (row_index <= nrow(matching_questions)) {
+      selected_question <- matching_questions[row_index, ]
+      
+      # Map the scale type to module name
+      module_mapping <- c(
+        "Razon" = "razon",
+        "Intervalo" = "intervalo",
+        "Ordinal" = "ordinal",
+        "Categorica" = "categorico", 
+        "Binaria" = "binaria",
+        "Nominal (Abierta)" = "nominal"
+      )
+      
+      question_module <- module_mapping[selected_question$scale_type]
+      question_id <- selected_question$variable
+      
+      # First, navigate to the "Prueba de Módulos" tab
+      updateTabsetPanel(session, inputId = "main_tabs", selected = "Prueba de Módulos")
+      
+      # Wait a moment to ensure the tab has switched
+      shinyjs::delay(100, {
+        # Update the module type
+        updateSelectInput(session, "test_module", selected = question_module)
+        
+        # Wait for the module's questions to load
+        shinyjs::delay(300, {
+          # Now update the question selection
+          # First get the list of questions for this module
+          module_questions <- question_classification()[[question_module]]
+          
+          # Check if our question is in the list
+          if (question_id %in% module_questions) {
+            updateSelectInput(session, "test_question", selected = question_id)
+            
+            showNotification(
+              paste0("Mostrando pregunta: ", question_id), 
+              type = "message"
+            )
+          } else {
+            showNotification(
+              paste0("No se pudo seleccionar la pregunta, no se encontró en el módulo ", question_module), 
+              type = "warning"
+            )
+          }
+        })
+      })
+    }
+  }
+})
+
+# Add automatic search when pressing Enter
+observeEvent(input$global_search, {
+  if (input$global_search != "" && !is.null(input$keyPressed) && input$keyPressed == 13) {
+    shinyjs::click("execute_search")
+  }
+}, ignoreInit = TRUE)
 }

@@ -5162,10 +5162,13 @@
   },
   "files": {
     ".Rprofile": {
-      "checksum": "80449a62217fe994cff35c3458bc1af2"
+      "checksum": "52e5bb596987a8556ed01cb281866792"
     },
     "app.R": {
-      "checksum": "12ac55e142dfcaeab648d7d2127635c2"
+      "checksum": "994635b5ef9e0964921f1a26235b54f3"
+    },
+    "Classifierapp.R": {
+      "checksum": "e432a9d5c3884351e601e08e1abda1f7"
     },
     "css/custom.css": {
       "checksum": "78e9ae05a4448fed23770bd773876f19"
@@ -5222,7 +5225,16 @@
       "checksum": "2d8e6c069ee3a656f08e9249ce4971fe"
     },
     "data/processed/PAR_2023_responses.csv": {
-      "checksum": "8baae13040d5fb7c1ec4d81abe465b51"
+      "checksum": "8d0a18c5f31113650e4cb7dcdc24c4dc"
+    },
+    "data/processed/PAR_2024_metadata.csv": {
+      "checksum": "1cb236644da55ed52e210705a3f49b38"
+    },
+    "data/processed/PAR_2024_metadata_classified.csv": {
+      "checksum": "93edf53a613c19f3085e2ec8ca242515"
+    },
+    "data/processed/PAR_2024_responses.csv": {
+      "checksum": "00ffc34431f617c01ab182082b23e812"
     },
     "data/processed/PER_2023_metadata.csv": {
       "checksum": "964293e13cbec2c7d93e8c4b12f53dd2"
@@ -5234,7 +5246,7 @@
       "checksum": "d3c2416bde6ea26fc7918434b6520ad0"
     },
     "data/processed/PER_2023_responses.csv": {
-      "checksum": "c4510753f17da8fd60fdc8c010189824"
+      "checksum": "62e4faaa80306aa80be1d3a1b3d3c1e2"
     },
     "data/processed/PER_2024_metadata.csv": {
       "checksum": "81bf6ce22660347089a31654b31e98e3"
@@ -5304,6 +5316,12 @@
     },
     "data/raw/Encuesta Percepcion ciudadana AEJ 2023.xlsx": {
       "checksum": "bf3b730d9c8be8d9424a09bc218e4d0b"
+    },
+    "data/raw/PAR_2024_CODING_MANUAL.csv": {
+      "checksum": "8d068c5b47ffd4215fd4096ed7b2ed43"
+    },
+    "data/raw/PAR_2024_RAW_Responses.csv": {
+      "checksum": "00d216f4af407de363b95fb3bb55c8aa"
     },
     "data/raw/PARTICIPACION 2011-2023/Base de datos AEJ Participación 2017 DISTRITOS.sav": {
       "checksum": "c23afd6673bb521c47bfa8d9d6f12003"
@@ -5443,47 +5461,47 @@
     "metadata_classified.csv": {
       "checksum": "81bf6ce22660347089a31654b31e98e3"
     },
-    "Proposal.R": {
-      "checksum": "75d8666e6454463b03cdfa22b3d4d410"
+    "PAR_2024_metadata_classified.csv": {
+      "checksum": "1cb236644da55ed52e210705a3f49b38"
     },
     "R/binary_module.R": {
-      "checksum": "b052cbebe99f1f252ae1059a8485340c"
+      "checksum": "7ae8fe5c93900dc01f28f651e68d725b"
     },
     "R/categorical_module.R": {
-      "checksum": "82f8186d8ae410b80faf0f8de3dbbf06"
+      "checksum": "9348716a31b1f5a7e56fab16c40a99c7"
     },
     "R/data_loader.R": {
-      "checksum": "abfbd0af9abb679154b649561afb1cce"
+      "checksum": "37f0a6432a88fc56312f6a3a231cb2de"
     },
     "R/global_theme.R": {
       "checksum": "960fc0f87375fadb3e99587a275e4d8c"
     },
     "R/interval_module.R": {
-      "checksum": "c10c489a60be7f1c41076fc157d0ba3c"
+      "checksum": "97c58b944af201d608b3627f86f57d3b"
     },
     "R/nominal_module.R": {
-      "checksum": "15c8d38a224cdba2bc086aa50ad44d48"
+      "checksum": "e7347339e69f769a2cae9100f305745b"
     },
     "R/ordinal_module.R": {
-      "checksum": "8d4a508a83c16dc9c304edb81f6edd74"
+      "checksum": "85ef06d896bd4064bfcff741f268777f"
     },
     "R/question_classifier.R": {
       "checksum": "30e2eb244c5488dd5f07e5751984efeb"
     },
     "R/razon_module.R": {
-      "checksum": "90e6abae1e2b89106b7549df7f31299f"
+      "checksum": "c049eb68c041fcde2e080eefc3ad339a"
     },
     "R/server.R": {
-      "checksum": "ffdcd468483d04bb71abfc11ae927040"
+      "checksum": "0d6c9751a9924dea0341a0b920272315"
     },
     "R/survey_config.R": {
-      "checksum": "5ac8055c2393028045b6483b4b245965"
+      "checksum": "8732a007b32185447c4edf2961f14638"
     },
     "R/theme_modules/services_module.r": {
       "checksum": "c05a0fec895c9a46651b46155538d1c5"
     },
     "R/ui.R": {
-      "checksum": "9d71510e48a008a853c2d5ccf2e13c4c"
+      "checksum": "266b88a780f38bc07588037c0880d6f2"
     },
     "R/utils.R": {
       "checksum": "caf202f8fa5ade5565fa07340857fc71"
@@ -5493,9 +5511,6 @@
     },
     "renv.lock": {
       "checksum": "715a1e370db53d225c51329e8ae7bba8"
-    },
-    "Reporte de Validación.docx": {
-      "checksum": "9bbeb3d8839fe2dd3c7b93ae400686a1"
     }
   },
   "users": null
