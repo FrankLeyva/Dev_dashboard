@@ -25,11 +25,7 @@ ui <- page_fluid(
             "ACTUAL Percepción Ciudadana 2024 (PER 2024 V2)" = "PER_2024_V2",
             "ACTUAL Participación Ciudadana 2024 (PAR 2024 V2)" = "PAR_2024_V2"
           ),
-<<<<<<< HEAD
           selected = "PER_2024_V2",
-=======
-          selected = "PER_2024",
->>>>>>> 2166b138479350a5093e230329bacb9174d78436
           inline = TRUE
         )
       ),
