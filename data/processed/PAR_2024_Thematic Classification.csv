@@ -1,0 +1,327 @@
+﻿variable,label,scale_type,Theme
+Q1,AGEB,Necesita Clasificacion,Internal
+Q2,Distrito electoral local,Necesita Clasificacion,Internal
+Q3,Colonia,Necesita Clasificacion,Internal
+Q4,Numero de encuestador,Necesita Clasificacion,Internal
+Q5,¿Conoce o puede mencionar el nombre de los actuales regidores? NO AYUDAR CON NOMBRES,Binaria,Representation
+Q6.1,Alejandro Daniel Acosta Aviña,Binaria,Representation
+Q6.2,Maria Dolores Adame Alvarado,Binaria,Representation
+Q6.3,Alejandro Alberto Jimenez,Binaria,Representation
+Q6.4,Laura Fernanda Avalos Medina,Binaria,Representation
+Q6.5,Hector Hugo Avitia Arellanes,Binaria,Representation
+Q6.6,Hector Hugo Avitia Corral,Binaria,Representation
+Q6.7,Jorge Marcial Bueno Quiroz,Binaria,Representation
+Q6.8,Mayra Karina Castillo Tapia,Binaria,Representation
+Q6.9,Luz Clara Cristo Sosa,Binaria,Representation
+Q6.10,Antonio Dominguez Alderete,Binaria,Representation
+Q6.11,Karla Michaeel Escalante Ramirez,Binaria,Representation
+Q6.12,Sandra Garcia Ramos,Binaria,Representation
+Q6.13,Pedro Alberto Matus Peña,Binaria,Representation
+Q6.14,Jose Mauricio Padilla,Binaria,Representation
+Q6.15,Martha Patricia Mendoza Rodriguez,Binaria,Representation
+Q6.16,Gloria Rocio Mirazo De la Rosa,Binaria,Representation
+Q6.17,Mireya Porras Armendariz,Binaria,Representation
+Q6.18,Dina Salgado Sotelo,Binaria,Representation
+Q6.19,Sandra Marbel Valenzuela Martinez,Binaria,Representation
+Q6.20,Jose Eduardo Valenzuela Martinez,Binaria,Representation
+Q7,¿Puede decirme el nombre del síndico o síndica municipal? NO AYUDAR CON NOMBRES,Binaria,Representation
+Q8.1,Leticia Ortega Máynez (Distrito 02),Binaria,Representation
+Q8.2,Oscar Daniel Avitia Arellanes (Distrito 03),Binaria,Representation
+Q8.3,Rosana Díaz Reyes (Distrito 04),Binaria,Representation
+Q8.4,Edna Xochitl Contreras Herrera (Distrito 05),Binaria,Representation
+Q8.5,Irlanda Dominique Márquez Nolasco (Distrito 06),Binaria,Representation
+Q8.6,Elizabeth Guzman Argueta (Distrito 07),Binaria,Representation
+Q8.7,Edin Cuauhtémoc Estrada Sotelo (Distrito 08),Binaria,Representation
+Q8.8,Magdalena Rentería Pérez (Distrito 09),Binaria,Representation
+Q8.9,María Antonieta Pérez Reyes (Distrito 10),Binaria,Representation
+Q8.10,No conoce diputado(a) local/estatal,Binaria,Representation
+Q9,¿Puede decirme el nombre del (la) diputado(a) federal de su distrito? NO AYUDAR CON NOMBRES,Binaria,Representation
+Q10.1,Daniel Murguía Lardizabal (Distrito 01),Binaria,Representation
+Q10.2,Teresita de Jesus Vargas Meráz (Distrito 02),Binaria,Representation
+Q10.3,Lilia Aguilar Gil (Distrito 03),Binaria,Representation
+Q10.4,Alejandro Perez Cuellar (Distrito 04),Binaria,Representation
+Q11,"Que tanto cree que los REGIDORES representan los intereses de los ciudadanos? Califique del 1 al 10, donde 1 es que no representan para nada los intereses y 10 es que representan totalmente los intereses ciudadanos. (NOTA: Un regidor tiene por función",Intervalo,Representation
+Q12,"¿Que tanto cree que EL/LA SINDICO(A) represente los intereses de los ciudadanos? Califique del 1 al 10, donde 1 es que no representan para nada los intereses y 10 es que representan totalmente los intereses ciudadanos. (NOTA: El síndico tiene por fun",Intervalo,Representation
+Q13,"¿Que tanto cree que EL/LA DIPUTADO(A) LOCAL represente los intereses de los ciudadanos? Califique del 1 al 10, donde 1 es que no representan para nada los intereses y 10 es que representan totalmente los intereses ciudadanos. (NOTA: Un diputado local",Intervalo,Representation
+Q14,"¿Que tanto cree que EL/LA DIPUTADO(A) FEDERAL represente los intereses de los ciudadanos? Califique del 1 al 10, donde 1 es que no representan para nada los intereses y 10 es que representan totalmente los intereses ciudadanos. (Nota: Un diputado fede",Intervalo,Representation
+Q15.1,Llevo a cabo actos de corrupcion,Intervalo,Corruption
+Q15.2,Tomo en cuenta a los ciudadanos,Intervalo,Corruption
+Q15.3,Cumplio con sus compromisos y promesas,Intervalo,Corruption
+Q15.4,Aplico imparcialmente las leyes,Intervalo,Corruption
+Q15.5,Rindio cuentas a la ciudadania,Intervalo,Corruption
+Q16.1,Llevo a cabo actos de corrupcion,Intervalo,Corruption
+Q16.2,Tomo en cuenta a los ciudadanos,Intervalo,Corruption
+Q16.3,Cumplio con sus compromisos y promesas,Intervalo,Corruption
+Q16.4,Aplico imparcialmente las leyes,Intervalo,Corruption
+Q16.5,Rindio cuentas a la ciudadania,Intervalo,Corruption
+Q17.1,Llevo a cabo actos de corrupcion,Intervalo,Corruption
+Q17.2,Tomo en cuenta a los ciudadanos,Intervalo,Corruption
+Q17.3,Cumplio con sus compromisos y promesas,Intervalo,Corruption
+Q17.4,Aplico imparcialmente las leyes,Intervalo,Corruption
+Q17.5,Rindio cuentas a la ciudadania,Intervalo,Corruption
+Q18,"Como calificaria la expectativa que tiene en este momento del gobierno Municipal de Cruz Perez Cuellar, donde 1 es pesimo y 10 es excelente.",Intervalo,Performance
+Q19,"Como calificaria la expectativa que tiene en este momento del gobierno Estatal de Maru Campos Galvan, donde 1 es pesimo y 10 es excelente.",Intervalo,Performance
+Q20,"Como calificaria la expectativa que tiene en este momento del gobierno de la Republica de Claudia Sheinbaum Pardo, donde 1 es pesimo y 10 es excelente.",Intervalo,Performance
+Q21.1,Diputados,Intervalo,Trust
+Q21.2,Prensa local (periódicos),Intervalo,Trust
+Q21.3,Televisoras locales,Intervalo,Trust
+Q21.4,Iglesias,Intervalo,Trust
+Q21.5,Maestros,Intervalo,Trust
+Q21.6,Partidos políticos,Intervalo,Trust
+Q21.7,Organizaciones ciudadanas (OSC's),Intervalo,Trust
+Q21.8,Universidades,Intervalo,Trust
+Q21.9,Empresarios,Intervalo,Trust
+Q21.10,Policía municipal,Intervalo,Trust
+Q21.11,Tránsito municipal,Intervalo,Trust
+Q21.12,Policía ministerial,Intervalo,Trust
+Q21.13,Policía estatal,Intervalo,Trust
+Q21.14,Ejército,Intervalo,Trust
+Q21.15,Guardia nacional,Intervalo,Trust
+Q21.16,Jueces o magistrados,Intervalo,Trust
+Q21.17,Presidente municipal(Cruz Pérez Cuellar),Intervalo,Trust
+Q21.18,Regidores,Intervalo,Trust
+Q21.19,Síndico/a,Intervalo,Trust
+Q21.20,Funcionarios del gobierno municipal,Intervalo,Trust
+Q21.21,Gobernador/a (Maru Campos),Intervalo,Trust
+Q21.22,Funcionarios del gobierno del estado,Intervalo,Trust
+Q21.23,Presidente de la república (Claudia Sheinbaum),Intervalo,Trust
+Q21.24,Funcionarios del gobierno federal,Intervalo,Trust
+Q22,"Durante 2024, ¿realizo algun tramite ante el gobierno municipal? (PREDIAL, LICENCIA DE FUNCIONAMIENTO, USO DE SUELO, CARTA DE RESIDENCIA, PAGO DE MULTAS, ESTACIONÓMETROS, SERVICIOS PÚBLICOS, PERMISO DE CONSTRUCCIÓN, OTRO TRÁMITE MUNICIPAL)",Binaria,Corruption
+Q23,"Durante el 2024, Cuantos tramites ante el Gobierno MUNICIPAL hizo durante este tiempo?",Razon,Corruption
+Q24,"Durante 2024, ¿realizó trámite de PREDIAL?",Binaria,Corruption
+Q24.1.1,Other,Razon,Corruption
+Q25,"Durante 2024, ¿dio mordida o soborno para realizar el trámite? PREDIAL",Binaria,Corruption
+Q25.1.1,Other,Razon,Corruption
+Q26,"En total, Cuanto dinero dio en sobornos por PREDIAL",Razon,Corruption
+Q27,"Durante 2024, ¿realizó trámite de LICENCIA DE FUNCIONAMIENTO?",Binaria,Corruption
+Q27.1.1,Other,Razon,Corruption
+Q28,"Durante 2024, ¿dio mordida o soborno para realizar el trámite? LICENCIA DE FUNCIONAMIENTO",Binaria,Corruption
+Q28.1.1,Other,Razon,Corruption
+Q29,"En total, cuanto dinero dio en sobornos por LICENCIA DE FUNCIONAMIENTO",Razon,Corruption
+Q30,"Durante 2024, Realizó trámite de USO DE SUELO?",Binaria,Corruption
+Q30.1.1,Other,Razon,Corruption
+Q31,"Durante 2024, dio mordida o soborno para realizar el trámite? USO DE SUELO",Binaria,Corruption
+Q31.1.1,Other,Razon,Corruption
+Q32,"En total, cuanto dinero dio en soborno por USO DE SUELO",Razon,Corruption
+Q33,"Durante 2024, ¿realizó trámite de CARTA DE RESIDENCIA?",Binaria,Corruption
+Q33.1.1,Other,Razon,Corruption
+Q34,"Durante 2024, ¿dio mordida o soborno para realizar el trámite? CARTA DE RESIDENCIA",Binaria,Corruption
+Q34.1.1,Other,Razon,Corruption
+Q35,"En total, cuanto dinero dio en sobornos CARTA DE RESIDENCIA",Razon,Corruption
+Q36,"Durante 2024, ¿realizó trámite de PAGO DE MULTAS?",Binaria,Corruption
+Q36.1.1,Other,Razon,Corruption
+Q37,"Durante 2024, ¿dio mordida o soborno para realizar el trámite? PAGO DE MULTAS",Binaria,Corruption
+Q37.1.1,Other,Razon,Corruption
+Q38,"En total, cuanto dinero dio en sobornos por PAGO DE MULTAS",Razon,Corruption
+Q39,"Durante 2024, ¿realizó trámite de ESTACIONÓMETROS?",Binaria,Corruption
+Q39.1.1,Other,Razon,Corruption
+Q40,"Durante 2024, ¿dio mordida o soborno para realizar el trámite? ESTACIONÓMETROS",Binaria,Corruption
+Q40.1.1,Other,Razon,Corruption
+Q41,"En total, cuanto dinero dio en sobornos por ESTACIONÓMETROS",Razon,Corruption
+Q42,"Durante 2024, ¿realizó trámite de SERVICIOS PÚBLICOS (LIMPIA, LUZ, PARQUES)?",Binaria,Corruption
+Q42.1.1,Other,Razon,Corruption
+Q43,"Durante 2024, ¿dio mordida o soborno para realizar el trámite? SERVICIOS PÚBLICOS (LIMPIA, LUZ, PARQUES)",Binaria,Corruption
+Q43.1.1,Other,Razon,Corruption
+Q44,"En total, cuanto dinero dio en sobornos por SERVICIOS PÚBLICOS (LIMPIA, LUZ, PARQUES)",Razon,Corruption
+Q45,"Durante 2024, ¿realizó trámite de PERMISO DE CONSTRUCCIÓN?",Binaria,Corruption
+Q45.1.1,Other,Razon,Corruption
+Q46,"Durante 2024, ¿dio mordida o soborno para realizar el trámite? PERMISO DE CONSTRUCCIÓN",Binaria,Corruption
+Q46.1.1,Other,Razon,Corruption
+Q47,"En total, cuanto dinero dio en sobornos por PERMISO DE CONSTRUCCIÓN",Razon,Corruption
+Q48,"Durante 2024, ¿realizó Trámites/ denuncias por delitos ambientales? DIRECCIÓN DE ECOLOGÍA",Binaria,Corruption
+Q48.1.1,Other,Razon,Corruption
+Q49,"Durante 2024, ¿dio mordida o soborno para realizar Trámites/ denuncias por delitos ambientales? DIRECCIÓN DE ECOLOGÍA",Binaria,Corruption
+Q49.1.1,Other,Razon,Corruption
+Q50,"En total, cuanto dinero dio en sobornos por tramites/ multas medioambientales en DIRECCIÓN DE ECOLOGÍA",Razon,Corruption
+Q51,"Durante 2024, ¿realizó OTROS TRÁMITES MUNICIPALES?",Binaria,Corruption
+Q51.1.1,Other,Razon,Corruption
+Q52,¿Cuál es el o los otros trámites municipales que realizó? (Escriba nombre de los trámites municipales).,Nominal (Abierta),Corruption
+Q53,"Durante 2024, ¿dio mordida o soborno para realizar el trámite? OTROS TRÁMITES MUNICIPALES",Binaria,Corruption
+Q53.1.1,Other,Razon,Corruption
+Q54,"En total, cuanto dinero dio en sobornos por estos OTROS TRÁMITES MUNICIPALES",Razon,Corruption
+Q55,"Durante 2024, ¿realizó por lo menos 1 trámite ante gobierno estatal? (LICENCIA DE CONDUCIR, REGISTRO DE LA PROPIEDAD, PERMISO DE GOBERNACIÓN, IMPUESTO SOBRE NÓMINAS, RECAUDACIÓN DE RENTAS, SERVICIOS EDUCATIVOS, JMAS, OTRO TRÁMITE ESTATAL)",Binaria,Corruption
+Q56,"Durante el 2024, Cuantos tramites ante el Gobierno ESTATAL hizo durante este tiempo?",Razon,Corruption
+Q57,"Durante 2024, ¿realizó trámites de LICENCIA DE CONDUCIR?",Binaria,Corruption
+Q57.1.1,Other,Razon,Corruption
+Q58,"Durante 2024, ¿dio mordida o soborno para realizar el trámite? LICENCIA DE CONDUCIR",Binaria,Corruption
+Q58.1.1,Other,Razon,Corruption
+Q59,"En total, cuanto dinero dio en sobornos por LICENCIA DE CONDUCIR",Razon,Corruption
+Q60,"Durante 2024, ¿realizó trámites de REGISTRO PÚBLICO DE LA PROPIEDAD?",Binaria,Corruption
+Q60.1.1,Other,Razon,Corruption
+Q61,"Durante 2024, ¿dio mordida o soborno para realizar el trámite? REGISTRO PÚBLICO DE LA PROPIEDAD",Binaria,Corruption
+Q61.1.1,Other,Razon,Corruption
+Q62,"En total, cuanto dinero dio en sobornos por REGISTRO PÚBLICO DE LA PROPIEDAD",Razon,Corruption
+Q63,"Durante 2024, ¿realizó trámites de PERMISOS DE GOBERNACIÓN?",Binaria,Corruption
+Q63.1.1,Other,Razon,Corruption
+Q64,"Durante 2024, ¿dio mordida o soborno para realizar el trámite? PERMISOS DE GOBERNACIÓN",Binaria,Corruption
+Q64.1.1,Other,Razon,Corruption
+Q65,"En total, cuanto dinero dio en sobornos por PERMISOS DE GOBERNACIÓN",Razon,Corruption
+Q66,"Durante 2024, ¿realizó trámites de IMPUESTO SOBRE NÓMINAS?",Binaria,Corruption
+Q66.1.1,Other,Razon,Corruption
+Q67,"Durante 2024, ¿dio mordida o soborno para realizar el trámite? IMPUESTO SOBRE NÓMINAS",Binaria,Corruption
+Q67.1.1,Other,Razon,Corruption
+Q68,"En total, cuanto dinero dio en sobornos por IMPUESTO SOBRE NÓMINAS",Razon,Corruption
+Q69,"Durante 2024, ¿realizó trámites de RECAUDACIÓN DE RENTAS?",Binaria,Corruption
+Q69.1.1,Other,Razon,Corruption
+Q70,"Durante 2024, ¿dio mordida o soborno para realizar el trámite? RECAUDACIÓN DE RENTAS",Binaria,Corruption
+Q70.1.1,Other,Razon,Corruption
+Q71,"En total, cuanto dinero dio en sobornos por RECAUDACIÓN DE RENTAS",Razon,Corruption
+Q72,"Durante 2024, ¿realizó trámites de SERVICIOS EDUCATIVOS?",Binaria,Corruption
+Q72.1.1,Other,Razon,Corruption
+Q73,"Durante 2024, ¿dio mordida o soborno para realizar el trámite? SERVICIOS EDUCATIVOS",Binaria,Corruption
+Q73.1.1,Other,Razon,Corruption
+Q74,"En total, cuanto dinero dio en sobornos por SERVICIOS EDUCATIVOS",Razon,Corruption
+Q75,"Durante 2024, ¿realizó trámites de JMAS (reconexión)?",Binaria,Corruption
+Q75.1.1,Other,Razon,Corruption
+Q76,"Durante 2024, ¿dio mordida o soborno para realizar el trámite? JMAS (reconexión)",Binaria,Corruption
+Q76.1.1,Other,Razon,Corruption
+Q77,"En total, cuanto dinero dio en sobornos por JMAS (reconexión)",Razon,Corruption
+Q78,"Durante 2024, ¿realizó Trámites/ denuncias por delitos ambientales? SECRETARÍA DE DESARROLLO URBANO Y ECOLOGÍA",Binaria,Corruption
+Q78.1.1,Other,Razon,Corruption
+Q79,"Durante 2024, ¿dio mordida o soborno para realizar Trámites/ denuncias por delitos ambientales? SECRETARÍA DE DESARROLLO URBANO Y ECOLOGÍA",Binaria,Corruption
+Q79.1.1,Other,Razon,Corruption
+Q80,"En total, cuanto dinero dio en sobornos por SECRETARÍA DE DESARROLLO URBANO Y ECOLOGÍA",Razon,Corruption
+Q81,"Durante 2024, ¿realizó OTROS TRÁMITES ESTATALES?",Binaria,Corruption
+Q81.1.1,Other,Razon,Corruption
+Q82,¿Cuál es el o los otros trámites estatales que realizó? (Escriba nombre de los trámites estatales).,Nominal (Abierta),Corruption
+Q83,"Durante 2024, ¿dio mordida o soborno para realizar el trámite? OTROS TRÁMITES ESTATALES",Binaria,Corruption
+Q83.1.1,Other,Razon,Corruption
+Q84,"En total, cuanto dinero dio en sobornos por OTROS TRÁMITES ESTATALES",Razon,Corruption
+Q85,"Durante 2024, ¿realizó por lo menos 1 trámite ante gobierno federal? (SAT-HACIENDA, CFE-LUZ, OTRO TRÁMITE FEDERAL)",Binaria,Corruption
+Q86,"Durante el 2024, Cuantos tramites ante el Gobierno FEDERAL hizo durante este tiempo?",Razon,Corruption
+Q87,"Durante 2024, ¿realizó trámites del HACIENDA/SAT?",Binaria,Corruption
+Q87.1.1,Other,Razon,Corruption
+Q88,"Durante 2024, ¿dio mordida o soborno para realizar el trámite? HACIENDA/SAT",Binaria,Corruption
+Q88.1.1,Other,Razon,Corruption
+Q89,"En total, cuanto dinero dio en sobornos por HACIENDA/SAT",Razon,Corruption
+Q90,"Durante 2024, ¿realizó trámites de CFE?",Binaria,Corruption
+Q90.1.1,Other,Razon,Corruption
+Q91,"Durante 2024, ¿dio mordida o soborno para realizar el trámite? CFE",Binaria,Corruption
+Q91.1.1,Other,Razon,Corruption
+Q92,"En total, cuanto dinero dio en sobornos por CFE",Razon,Corruption
+Q93,"Durante 2024, ¿realizó Trámites/ denuncias por delitos ambientales? SECRETARÍA DE MEDIO AMBIENTE Y RECURSOS NATURALES (SEMARNAT)",Binaria,Corruption
+Q93.1.1,Other,Razon,Corruption
+Q94,"Durante 2024, ¿dio mordida o soborno para realizar el Trámites/ denuncias por delitos ambientales? SECRETARÍA DE MEDIO AMBIENTE Y RECURSOS NATURALES (SEMARNAT)",Binaria,Corruption
+Q94.1.1,Other,Razon,Corruption
+Q95,"En total, cuanto dinero dio en sobornos por SECRETARÍA DE MEDIO AMBIENTE Y RECURSOS NATURALES (SEMARNAT)",Razon,Corruption
+Q96,"Durante 2024, ¿realizó Trámites/ denuncias por delitos ambientales? PROCURADURÍA FEDERAL DE PROTECCIÓN AL AMBIENTE (PROFEPA)",Binaria,Corruption
+Q96.1.1,Other,Razon,Corruption
+Q97,"Durante 2024, ¿dio mordida o soborno para realizar Trámites/ denuncias por delitos ambientales? PROCURADURÍA FEDERAL DE PROTECCIÓN AL AMBIENTE (PROFEPA)",Binaria,Corruption
+Q97.1.1,Other,Razon,Corruption
+Q98,"En total, cuanto dinero dio en sobornos por PROCURADURÍA FEDERAL DE PROTECCIÓN AL AMBIENTE (PROFEPA)",Razon,Corruption
+Q99,"Durante 2024, ¿realizó trámites ante OTRA DEPENDENCIA FEDERAL?",Binaria,Corruption
+Q99.1.1,Other,Razon,Corruption
+Q100,Mencione el nombre de la otra dependencia federal en la que realizó el trámite.,Nominal (Abierta),Corruption
+Q101,"Durante 2024, ¿dio mordida o soborno para realizar el trámite? OTRA DEPENDENCIA FEDERAL",Binaria,Corruption
+Q101.1.1,Other,Razon,Corruption
+Q102,"En total, cuanto dinero dio en sobornos por OTRA DEPENDENCIA FEDERAL",Razon,Corruption
+Q103,"Durante 2024, ¿fue detenido por TRÁNSITO MUNICIPAL?",Binaria,Corruption
+Q103.1.1,Other,Razon,Corruption
+Q104,"Durante 2024, ¿dio mordida o soborno en dinero o especie en al menos 1 de ellos? TRÁNSITO MUNICIPAL",Binaria,Corruption
+Q104.1.1,Other,Razon,Corruption
+Q105,"En total, cuanto dinero dio en sobornos a TRÁNSITO MUNICIPAL",Razon,Corruption
+Q106,"Durante 2024, ¿fue detenido por POLICÍA MUNICIPAL?",Binaria,Corruption
+Q106.1.1,Other,Razon,Corruption
+Q107,"Durante 2024, ¿dio mordida o soborno en dinero o especie en al menos 1 de ellos? POLICÍA MUNICIPAL",Binaria,Corruption
+Q107.1.1,Other,Razon,Corruption
+Q108,"En total, cuanto dinero dio en sobornos a POLICÍA MUNICIPAL",Razon,Corruption
+Q109,"Durante 2024, ¿fue detenido por POLICÍA ESTATAL?",Binaria,Corruption
+Q109.1.1,Other,Razon,Corruption
+Q110,"Durante 2024, ¿dio mordida o soborno en dinero o especie en al menos 1 de ellos? POLICÍA ESTATAL",Binaria,Corruption
+Q110.1.1,Other,Razon,Corruption
+Q111,"En total, cuanto dinero dio en sobornos a POLICÍA ESTATAL",Razon,Corruption
+Q112,"Durante 2024, ¿fue detenido por EJÉRCITO?",Binaria,Corruption
+Q112.1.1,Other,Razon,Corruption
+Q113,"Durante 2024, ¿dio mordida o soborno en dinero o especie en al menos 1 de ellos? EJÉRCITO",Binaria,Corruption
+Q113.1.1,Other,Razon,Corruption
+Q114,"En total, cuanto dinero dio en sobornos al EJÉRCITO",Razon,Corruption
+Q115,"Durante 2024, ¿fue detenido por GUARDIA NACIONAL?",Binaria,Corruption
+Q115.1.1,Other,Razon,Corruption
+Q116,"Durante 2024, ¿dio mordida o soborno en dinero o especie en al menos 1 de ellos? GUARDIA NACIONAL",Binaria,Corruption
+Q116.1.1,Other,Razon,Corruption
+Q117,"En total, cuanto dinero dio en sobornos a la GUARDIA NACIONAL",Razon,Corruption
+Q118,"Desde su punto de vista, ¿la corrupción es culpa de...?",Categorica,Corruption
+Q119,¿Cuáles son las instituciones que para usted son las que más previenen y combaten la corrupción en Juárez? IMPORTANCIA #1,Categorica,Corruption
+Q119.1.1,Other,Nominal (Abierta),Corruption
+Q120,¿Cuáles son las instituciones que para usted son las que más previenen y combaten la corrupción en Juárez? IMPORTANCIA #2,Categorica,Corruption
+Q120.1.1,Other,Nominal (Abierta),Corruption
+Q121,¿Cuáles son las instituciones que para usted son las que más previenen y combaten la corrupción en Juárez? IMPORTANCIA #3,Categorica,Corruption
+Q121.1.1, ,Nominal (Abierta),Corruption
+Q122,"En Juárez, ¿el que la hace, la paga? Es decir, ¿se castiga a quien comete algún delito o infracción?",Intervalo,Impunity
+Q123,¿Usted cree que el GOBIERNO MUNICIPAL de Cruz Pérez Cuéllar sanciona a los servidores públicos que son sorprendidos en actos de corrupción?,Intervalo,Impunity
+Q124,¿Usted cree que el GOBIERNO ESTATAL de Maru Campos Galván sanciona a los servidores públicos que son sorprendidos en actos de corrupción?,Intervalo,Impunity
+Q125,¿Usted cree que el GOBIERNO FEDERAL sanciona a los servidores públicos que son sorprendidos en actos de corrupción?,Intervalo,Impunity
+Q126,"Usted diría que en Juárez, ¿la justicia está exenta de corrupción?",Binaria,Corruption
+Q127,¿Cuáles son las instituciones que más violan las leyes? INSTITUCIÓN #1,Categorica,Corruption
+Q127.1.1,Other,Nominal (Abierta),Corruption
+Q128,¿Cuáles son las instituciones que más violan las leyes? INSTITUCIÓN #2,Categorica,Corruption
+Q128.1.1,Other,Nominal (Abierta),Corruption
+Q129,¿Cuáles son las instituciones que más violan las leyes? INSTITUCIÓN #3,Categorica,Corruption
+Q129.1.1,Other,Nominal (Abierta),Corruption
+Q130,"Que tanto le interesa participar en la policita del municipio, interviniendo en decisiones o realizando acciones de interes publico en beneficio de la ciudad?",Intervalo,Participation
+Q131.1,Informacion,Binaria,Participation
+Q131.2,Espacios para participar,Binaria,Participation
+Q131.3,Tiempo,Binaria,Participation
+Q131.4,Dinero,Binaria,Participation
+Q131.5,Confianza en las instituciones,Binaria,Participation
+Q131.6,Otro,Binaria,Participation
+Q131.6.1,Other,Nominal (Abierta),Participation
+Q132.1,Partidos/organizaciones políticas,Binaria,Participation
+Q132.2,Sindicatos,Binaria,Participation
+Q132.3,Iglesias/asociaciones religiosas,Binaria,Participation
+Q132.4,Agrupaciones empresariales,Binaria,Participation
+Q132.5,Asociaciones de padres de familia en escuelas,Binaria,Participation
+Q132.6,Asociaciones de equipos deportivos,Binaria,Participation
+Q132.7,Asociaciones/comités/juntas de vecinos,Binaria,Participation
+Q132.8,Clubs sociales/de servicios,Binaria,Participation
+Q132.9,Organizaciones civiles/ONGs/Fundaciones,Binaria,Participation
+Q132.10,Grupo de autoayuda o superación,Binaria,Participation
+Q132.11,Caja popular o cooperativa de crédito,Binaria,Participation
+Q133,"Si pertenece a otra organización que NO HAYA SIDO MENCIONADA ANTERIORMENTE, indique cuál (escriba nombre/objetivo):",Nominal (Abierta),Participation
+Q134,"Durante 2024, ¿apoyó activamente a algún movimiento social?",Binaria,Participation
+Q135,¿Cuál o cuáles movimientos sociales apoyó?,Nominal (Abierta),Participation
+Q136.1,"Propuestas de planes, programas, leyes o políticas públicas",Binaria,Participation
+Q136.2,Vigilar acciones/funciones de los servidores/instituciones públicas,Binaria,Participation
+Q136.3,Firmar cartas de apoyo/amparos,Binaria,Participation
+Q136.4,"Quejarse ante las autoridades (solicitudes, denuncias o reportes ante autoridades)",Binaria,Participation
+Q136.5,Pedir apoyo a una sociedad civil (organizarse con otros ciudadanos),Binaria,Participation
+Q136.6,Asistir a manifestaciones y/o marchas,Binaria,Participation
+Q136.7,"Colocar mantas, carteles o fotografías",Binaria,Participation
+Q136.8,Repartir circularees o manifiestos,Binaria,Participation
+Q136.9,"Enviar mensajes, opiniones, imágenes por redes sociales",Binaria,Participation
+Q136.10,Usar una aplicación o herramienta electrónica de denuncia ciudadana,Binaria,Participation
+Q136.11,"Hizo algo para resolver un problema con sus vecinos (baches, alumbrado, limpia, etc.)",Binaria,Participation
+Q136.12,Vigilar la correcta realización de alguna obra pública,Binaria,Participation
+Q136.13,"Bloquear calles, avenidas, carreteras",Binaria,Participation
+Q136.14,Mitin político,Binaria,Participation
+Q137,"Para usted, votar es...",Intervalo,Participation
+Q138.1,El referendum,Binaria,Participation
+Q138.2,El plebiscito,Binaria,Participation
+Q138.3,La iniciativa ciudadana,Binaria,Participation
+Q138.4,La revocacion de mandato,Binaria,Participation
+Q138.5,Audiencias publicas,Binaria,Participation
+Q138.6,Consulta publica,Binaria,Participation
+Q138.7,Consejos consultivos,Binaria,Participation
+Q138.8,Comites de participacion,Binaria,Participation
+Q138.9,Planeacion participativa,Binaria,Participation
+Q138.10,Presupuesto participativo,Binaria,Participation
+Q138.11,Cabildo abierto,Binaria,Participation
+Q138.12,Contralorias sociales,Binaria,Participation
+Q138.13,"Mecanismos de participacion social para ninas, ninos y adolescentes",Binaria,Participation
+Q139,¿Conoce o ha escuchado hablar de Plan Estratégico de Juárez A.C.? SIN APOYO VISUAL,Binaria,Internal
+Q140,¿Conoce o ha escuchado hablar de Plan Estratégico de Juárez A.C.? CON APOYO VISUAL,Binaria,Internal
+Q141.1,PEJ es una asociación apartidista y ciudadana,Intervalo,Internal
+Q141.2,PEJ es una organización con credibilidad,Intervalo,Internal
+Q141.3,PEJ es propositiva,Intervalo,Internal
+Q142,Sexo,Necesita Clasificacion,Internal
+Q143,Edad (escrita),Necesita Clasificacion,Internal
+Q144,Rango de edad,Ordinal,Internal
+Q145,¿Cuál es el grado de escolaridad?,Ordinal,Internal
+Q146,Ocupación,Binaria,Internal
+Q147,¿Cuenta con Seguro Social (IMSS)?,Binaria,Health
+Q148,Recibe algun ingreso personal de algun tipo?,Binaria,Internal
+Q149,"Durante 2024, cuál fue su rango de ingreso PERSONAL por semana?",Ordinal,Internal
+Q150,A Indique si es un periodo distinto a la semana PERSONAL,Nominal (Abierta),Internal
+Q151,"Durante 2024, cuál fue su rango de ingreso FAMILIAR por semana?",Ordinal,Internal
+Q152,A Indique si es un periodo distinto a la semana FAMILIAR,Nominal (Abierta),Internal
+Q153,"Colonia, direccion visitada",Necesita Clasificacion,Participation
