@@ -16,6 +16,108 @@ server <- function(input, output, session) {
     
     return(survey_data)
   })
+  # Load theme metadata
+all_themes <- reactive({
+  theme_metadata$load_thematic_classifications()
+})
+
+# Populate theme selectors in UI
+observe({
+  themes_list <- theme_metadata$get_all_themes()
+  
+  # Update all theme selectors with "all" option
+  updateSelectInput(session, "theme_selector", 
+                   choices = c("Todos los temas" = "all", themes_list),
+                   selected = "all")
+  
+  updateSelectInput(session, "filter_by_theme", 
+                   choices = c("Todos" = "all", themes_list),
+                   selected = "all")
+  
+  updateSelectInput(session, "test_theme_filter", 
+                   choices = c("Todos" = "all", themes_list),
+                   selected = "all")
+  
+  updateSelectInput(session, "search_theme_filter", 
+                   choices = c("Todos" = "all", themes_list),
+                   selected = "all")
+})
+
+# Update subtheme selector based on selected theme
+observe({
+  req(input$theme_selector)
+  
+  if (input$theme_selector != "all") {
+    subthemes <- theme_metadata$get_subthemes_by_theme(input$theme_selector)
+    updateSelectInput(session, "subtheme_selector", 
+                     choices = c("Todos los subtemas" = "all", subthemes),
+                     selected = "all")
+  } else {
+    # If "all themes" is selected, disable subtheme selection
+    updateSelectInput(session, "subtheme_selector", 
+                     choices = c("Todos los subtemas" = "all"),
+                     selected = "all")
+  }
+})
+
+# Update filter_by_subtheme based on selected theme
+observe({
+  req(input$filter_by_theme)
+  if (input$filter_by_theme != "all") {
+    subthemes <- theme_metadata$get_subthemes_by_theme(input$filter_by_theme)
+    updateSelectInput(session, "filter_by_subtheme", 
+                     choices = c("Todos" = "all", subthemes))
+  } else {
+    updateSelectInput(session, "filter_by_subtheme", 
+                     choices = c("Todos" = "all"))
+  }
+})
+
+# Update test_subtheme_filter based on selected theme
+observe({
+  req(input$test_theme_filter)
+  if (input$test_theme_filter != "all") {
+    subthemes <- theme_metadata$get_subthemes_by_theme(input$test_theme_filter)
+    updateSelectInput(session, "test_subtheme_filter", 
+                     choices = c("Todos" = "all", subthemes))
+  } else {
+    updateSelectInput(session, "test_subtheme_filter", 
+                     choices = c("Todos" = "all"))
+  }
+})
+
+# Display theme info
+output$theme_info_panel <- renderUI({
+  if (is.null(input$theme_selector) || input$theme_selector == "all") {
+    return(div(
+      class = "alert alert-info",
+      "Mostrando información para todos los temas. Seleccione un tema específico para ver más detalles."
+    ))
+  }
+  
+  theme_property <- theme_metadata$get_theme_property(input$theme_selector)
+  
+  div(
+    h4(input$theme_selector),
+    p(theme_property$description),
+    tags$span(
+      class = "badge",
+      style = paste0("background-color: ", theme_property$color, "; color: white;"),
+      icon(theme_property$icon), " ", input$theme_selector
+    ),
+    hr(),
+    if (!is.null(input$subtheme_selector) && input$subtheme_selector != "all") {
+      subtheme_property <- theme_metadata$get_subtheme_property(
+        input$theme_selector, 
+        input$subtheme_selector
+      )
+      div(
+        h5(input$subtheme_selector),
+        p(subtheme_property$description)
+      )
+    }
+  )
+})
   current_theme <- reactiveVal(theme_config)
   palette_options <- list(
     Default = theme_config$palettes$district,
@@ -436,14 +538,32 @@ output$theme_preview_age <- renderPlotly({
     ncol(data()$responses)
   })
   
-  # Display classification summary
-  output$classification_summary <- renderTable({
-    types <- question_classification()
+  # Display classification summary with themes
+output$classification_summary <- renderTable({
+  types <- question_classification()
+  
+  # Get theme counts
+  themes_data <- theme_metadata$load_thematic_classifications()
+  theme_counts <- themes_data %>%
+    group_by(MainTheme) %>%
+    summarise(Cantidad = n()) %>%
+    filter(!is.na(MainTheme))
+  
+  # Type counts
+  type_counts <- data.frame(
+    Tipo = c("Razón", "Intervalo", "Ordinal", "Categórico", "Binaria", "Nominal"),
+    Cantidad = sapply(types, length)
+  )
+  
+  # Combine and return both tables
+  rbind(
+    type_counts,
     data.frame(
-      Tipo = c("Razón", "Intervalo", "Ordinal", "Categórico", "Binaria", "Nominal"),
-      Cantidad = sapply(types, length)
+      Tipo = paste0("Tema: ", theme_counts$MainTheme),
+      Cantidad = theme_counts$Cantidad
     )
-  })
+  )
+})
   output$question_label <- renderText({
     req(input$test_question, data()$metadata)
     get_question_label(input$test_question, data()$metadata)
@@ -453,33 +573,139 @@ output$theme_preview_age <- renderPlotly({
     req(input$question_type)
     questions <- question_classification()[[input$question_type]]
     
+    # Filter by theme if selected
+    filtered_questions <- questions
+    
+    if (input$filter_by_theme != "all" || input$filter_by_subtheme != "all") {
+      themes_data <- theme_metadata$load_thematic_classifications()
+      
+      if (input$filter_by_theme != "all" && input$filter_by_subtheme == "all") {
+        # Filter by theme only
+        theme_questions <- themes_data %>%
+          filter(MainTheme == input$filter_by_theme) %>%
+          pull(variable)
+        
+        filtered_questions <- questions[questions %in% theme_questions]
+      } else if (input$filter_by_theme != "all" && input$filter_by_subtheme != "all") {
+        # Filter by theme and subtheme
+        theme_questions <- themes_data %>%
+          filter(MainTheme == input$filter_by_theme, Subtheme == input$filter_by_subtheme) %>%
+          pull(variable)
+        
+        filtered_questions <- questions[questions %in% theme_questions]
+      }
+    }
+    
     if(input$show_metadata) {
-      metadata_subset <- data()$metadata[data()$metadata$variable %in% questions, ]
-      DT::datatable(
+      metadata_subset <- data()$metadata[data()$metadata$variable %in% filtered_questions, ]
+      
+      # Add theme information
+      themes_data <- theme_metadata$load_thematic_classifications()
+      themes_data <- themes_data %>%
+        select(variable, MainTheme, Subtheme)
+      
+      metadata_with_themes <- left_join(
         metadata_subset,
+        themes_data,
+        by = "variable"
+      )
+      
+      DT::datatable(
+        metadata_with_themes,
         options = list(pageLength = 10),
         filter = 'top'
       )
     } else {
       DT::datatable(
-        data.frame(Variable = questions),
+        data.frame(Variable = filtered_questions),
         options = list(pageLength = 10),
         filter = 'top'
       )
     }
   })
-  observe({
-    # Clear the question selection first
-    updateSelectInput(session, "test_question", choices = NULL, selected = NULL)
+  # Update test question selection based on module, theme, and subtheme
+observe({
+  # Clear the question selection first
+  updateSelectInput(session, "test_question", choices = NULL, selected = NULL)
+  
+  # Get questions for the selected module
+  questions <- question_classification()[[input$test_module]]
+  
+  # Filter by theme and subtheme if selected
+  if (input$test_theme_filter != "all" || input$test_subtheme_filter != "all") {
+    themes_data <- theme_metadata$load_thematic_classifications()
     
-    # Then update with new choices
-    questions <- question_classification()[[input$test_module]]
-    updateSelectInput(
-      session,
-      "test_question",
-      choices = questions
+    if (input$test_theme_filter != "all" && input$test_subtheme_filter == "all") {
+      # Filter by theme only
+      theme_questions <- themes_data %>%
+        filter(MainTheme == input$test_theme_filter) %>%
+        pull(variable)
+      
+      questions <- questions[questions %in% theme_questions]
+    } else if (input$test_theme_filter != "all" && input$test_subtheme_filter != "all") {
+      # Filter by theme and subtheme
+      theme_questions <- themes_data %>%
+        filter(MainTheme == input$test_theme_filter, Subtheme == input$test_subtheme_filter) %>%
+        pull(variable)
+      
+      questions <- questions[questions %in% theme_questions]
+    }
+  }
+  
+  # Update the question selection with filtered questions
+  updateSelectInput(
+    session,
+    "test_question",
+    choices = questions
+  )
+})
+
+# Display theme information for the selected question
+output$question_theme_label <- renderUI({
+  req(input$test_question)
+  
+  themes_data <- theme_metadata$load_thematic_classifications()
+  question_theme_info <- themes_data %>%
+    filter(variable == input$test_question) %>%
+    select(MainTheme, Subtheme) %>%
+    first()
+  
+  if (!is.null(question_theme_info) && !is.na(question_theme_info$MainTheme)) {
+    theme_property <- theme_metadata$get_theme_property(question_theme_info$MainTheme)
+    
+    div(
+      tags$span(
+        "Tema: ",
+        tags$span(
+          class = "badge",
+          style = paste0("background-color: ", theme_property$color, "; color: white;"),
+          icon(theme_property$icon), " ", question_theme_info$MainTheme
+        )
+      ),
+      if (!is.na(question_theme_info$Subtheme)) {
+        tags$span(
+          " | Subtema: ",
+          tags$span(
+            class = "badge",
+            style = "background-color: #6c757d; color: white;",
+            question_theme_info$Subtheme
+          )
+        )
+      }
     )
-  })
+  } else {
+    div(
+      tags$span(
+        "Tema: ",
+        tags$span(
+          class = "badge",
+          style = "background-color: #6c757d; color: white;",
+          "No clasificado"
+        )
+      )
+    )
+  }
+})
   # Selected question reactive
   selected_question <- reactive({
     input$test_question
@@ -549,135 +775,271 @@ output$theme_preview_age <- renderPlotly({
     }
   })
   # Search functionality
-observeEvent(input$execute_search, {
-  req(input$global_search, data())
-  search_text <- tolower(input$global_search)
-  
-  # Get all questions with their labels
-  all_questions <- data.frame(
-    variable = data()$metadata$variable,
-    label = data()$metadata$label,
-    scale_type = data()$metadata$scale_type,
-    stringsAsFactors = FALSE
-  )
-  
-  # Filter questions where label or variable contains the search text
-  matching_questions <- all_questions[
-    grepl(search_text, tolower(all_questions$label)) | 
-    grepl(search_text, tolower(all_questions$variable)),
-  ]
-  
-  # Create a nice results table
-  results_df <- matching_questions %>%
-    select(
-      variable,
-      Pregunta = label,
-      Tipo = scale_type
-    )
-  
-  # Store the search results
-  output$search_results_table <- DT::renderDataTable({
-    if (nrow(results_df) == 0) {
-      # Empty table with message
-      output$search_info <- renderUI({
-        div(
-          class = "alert alert-warning",
-          icon("exclamation-triangle"), 
-          "No se encontraron preguntas que coincidan con el texto de búsqueda."
-        )
-      })
-      return(results_df)
-    }
+  observeEvent(input$execute_search, {
+    req(input$global_search, data())
+    search_text <- tolower(input$global_search)
     
-    # Show success message
-    output$search_info <- renderUI({
-      div(
-        class = "alert alert-info",
-        icon("info-circle"), 
-        paste0("Se encontraron ", nrow(results_df), " preguntas. Haga clic en cualquier fila para ver la pregunta.")
-      )
-    })
-    
-    # Return the datatable with clickable rows
-    DT::datatable(
-      results_df, 
-      selection = 'single',
-      options = list(
-        pageLength = 15,
-        language = list(
-          search = "Filtrar:",
-          paginate = list(previous = "Anterior", `next` = "Siguiente")
-        )
-      )
-    )
-  })
-})
-
-observeEvent(input$search_results_table_rows_selected, {
-  row_index <- input$search_results_table_rows_selected
-  
-  # Make sure we have a selection and search results
-  if (length(row_index) > 0 && !is.null(input$global_search)) {
-    # Get all questions with their labels again
+    # Get all questions with their labels and INCLUDE CURRENT SURVEY ID
+    current_survey_id <- data()$survey_id
     all_questions <- data.frame(
       variable = data()$metadata$variable,
       label = data()$metadata$label,
       scale_type = data()$metadata$scale_type,
+      survey_id = current_survey_id,  # Add current survey ID
       stringsAsFactors = FALSE
     )
     
-    # Filter to get matching questions
-    search_text <- tolower(input$global_search)
+    # Filter questions where label or variable contains the search text
     matching_questions <- all_questions[
       grepl(search_text, tolower(all_questions$label)) | 
       grepl(search_text, tolower(all_questions$variable)),
     ]
     
-    # Get the selected question info
-    if (row_index <= nrow(matching_questions)) {
-      selected_question <- matching_questions[row_index, ]
+    # Always get theme information
+    themes_data <- theme_metadata$load_thematic_classifications()
+    
+    # Filter by theme if selected
+    if (input$search_theme_filter != "all") {
+      theme_questions <- themes_data %>%
+        filter(MainTheme == input$search_theme_filter) %>%
+        pull(variable)
       
-      # Map the scale type to module name
-      module_mapping <- c(
-        "Razon" = "razon",
-        "Intervalo" = "intervalo",
-        "Ordinal" = "ordinal",
-        "Categorica" = "categorico", 
-        "Binaria" = "binaria",
-        "Nominal (Abierta)" = "nominal"
+      matching_questions <- matching_questions[matching_questions$variable %in% theme_questions, ]
+    }
+    
+    # Create a nice results table with theme information - KEY CHANGE: JOIN BY BOTH VARIABLE AND SURVEY_ID
+    if (nrow(matching_questions) > 0) {
+      # Normalize survey IDs before joining to match format in themes_data
+      matching_questions$survey_id <- sub("_V2$", "", matching_questions$survey_id)
+      
+      # Join with theme data using both variable AND survey_id to prevent duplicates
+      results_df <- matching_questions %>%
+        left_join(
+          themes_data %>% select(variable, survey_id, MainTheme, Subtheme),
+          by = c("variable", "survey_id")
+        ) %>%
+        select(
+          Variable = variable,
+          Pregunta = label,
+          Tipo = scale_type,
+          Tema = MainTheme,
+          Subtema = Subtheme,
+          Encuesta = survey_id
+        )
+      
+      # Replace NA values with "No clasificado"
+      results_df$Tema[is.na(results_df$Tema)] <- "No clasificado"
+      results_df$Subtema[is.na(results_df$Subtema)] <- "No clasificado"
+      
+      # Add a nicer survey display name
+      results_df$Encuesta <- ifelse(
+        results_df$Encuesta == "PER_2024",
+        "Percepción 2024",
+        "Participación 2024"
+      )
+    } else {
+      # Empty dataframe with all required columns
+      results_df <- data.frame(
+        Variable = character(0),
+        Pregunta = character(0),
+        Tipo = character(0),
+        Tema = character(0),
+        Subtema = character(0),
+        Encuesta = character(0)
+      )
+    }
+    
+    # Store the search results
+    output$search_results_table <- DT::renderDataTable({
+      if (nrow(results_df) == 0) {
+        # Empty table with message
+        output$search_info <- renderUI({
+          div(
+            class = "alert alert-warning",
+            icon("exclamation-triangle"), 
+            "No se encontraron preguntas que coincidan con el texto de búsqueda."
+          )
+        })
+        return(results_df)
+      }
+      
+      # Show success message
+      output$search_info <- renderUI({
+        div(
+          class = "alert alert-info",
+          icon("info-circle"), 
+          paste0("Se encontraron ", nrow(results_df), " preguntas. Haga clic en cualquier fila para ver la pregunta.")
+        )
+      })
+      
+      # Return the datatable with clickable rows
+      DT::datatable(
+        results_df, 
+        selection = 'single',
+        options = list(
+          pageLength = 15,
+          language = list(
+            search = "Filtrar:",
+            paginate = list(previous = "Anterior", `next` = "Siguiente")
+          )
+        )
+      )
+    })
+  })
+
+# Enhanced handler for search result selection with robust error handling
+observeEvent(input$search_results_table_rows_selected, {
+  row_index <- input$search_results_table_rows_selected
+  
+  # Make sure we have a selection and search results
+  if (length(row_index) > 0 && !is.null(input$global_search)) {
+    # Get the DT table data directly (safer than reconstructing the search)
+    table_data <- isolate({
+      dataTableProxy("search_results_table") %>% 
+        DT::selectRows(NULL) %>% 
+        DT::selectPage(NULL)
+      
+      results_df <- input$search_results_table_rows_all
+      if (is.null(results_df)) return(NULL)
+      
+      selected_question <- results_df[row_index, ]
+    })
+    
+    if (is.null(table_data)) {
+      showNotification("No se pudo obtener información de la pregunta seleccionada", type = "error")
+      return()
+    }
+    
+    # Extract question info
+    question_id <- selected_question$Variable
+    question_survey_raw <- selected_question$Encuesta
+    
+    # Map the survey name back to the survey ID
+    survey_id <- ifelse(
+      grepl("Percepción", question_survey_raw),
+      "PER_2024_V2",
+      "PAR_2024_V2"
+    )
+    
+    # Map the scale type to module name
+    module_mapping <- c(
+      "razon" = "razon",
+      "Razon" = "razon",
+      "intervalo" = "intervalo", 
+      "Intervalo" = "intervalo",
+      "ordinal" = "ordinal",
+      "Ordinal" = "ordinal",
+      "categorica" = "categorico",
+      "Categorica" = "categorico", 
+      "binaria" = "binaria",
+      "Binaria" = "binaria",
+      "nominal" = "nominal",
+      "Nominal" = "nominal",
+      "nominal (abierta)" = "nominal",
+      "Nominal (Abierta)" = "nominal"
+    )
+    
+    question_type <- selected_question$Tipo
+    question_module <- module_mapping[question_type]
+    
+    if (is.na(question_module)) {
+      question_module <- "categorico"  # Default fallback
+    }
+    
+    # CRITICAL SAFETY CHECK: Verify the question exists in the target survey
+    temp_survey_data <- tryCatch({
+      temp_data <- load_survey_data(survey_id)
+      if (question_id %in% names(temp_data$responses)) {
+        TRUE  # Question exists
+      } else {
+        FALSE  # Question doesn't exist
+      }
+    }, error = function(e) {
+      FALSE  # Error loading survey
+    })
+    
+    if (!temp_survey_data) {
+      showNotification(
+        paste0("La pregunta ", question_id, " no existe en la encuesta ", survey_id), 
+        type = "error"
+      )
+      return()
+    }
+    
+    # First switch to the correct survey if needed
+    current_survey <- input$survey_selector
+    
+    if (current_survey != survey_id) {
+      # Update the survey selector
+      updateRadioButtons(session, "survey_selector", selected = survey_id)
+      
+      # Wait for data to load before proceeding
+      showNotification(
+        paste0("Cambiando a encuesta: ", survey_id), 
+        type = "message"
       )
       
-      question_module <- module_mapping[selected_question$scale_type]
-      question_id <- selected_question$variable
-      
-      # First, navigate to the "Prueba de Módulos" tab
+      # Use a longer delay
+      shinyjs::delay(2000, {
+        # Continue with module selection
+        updateTabsetPanel(session, inputId = "main_tabs", selected = "Prueba de Módulos")
+        
+        shinyjs::delay(500, {
+          updateSelectInput(session, "test_module", selected = question_module)
+          
+          shinyjs::delay(800, {
+            # Final safety check before updating question selection
+            tryCatch({
+              module_questions <- question_classification()[[question_module]]
+              if (question_id %in% module_questions) {
+                updateSelectInput(session, "test_question", selected = question_id)
+                showNotification(
+                  paste0("Mostrando pregunta: ", question_id), 
+                  type = "message"
+                )
+              } else {
+                showNotification(
+                  paste0("Pregunta ", question_id, " no encontrada en módulo ", question_module), 
+                  type = "warning"
+                )
+              }
+            }, error = function(e) {
+              showNotification(
+                paste0("Error al cargar la pregunta: ", e$message), 
+                type = "error"
+              )
+            })
+          })
+        })
+      })
+    } else {
+      # No survey change needed, proceed directly
       updateTabsetPanel(session, inputId = "main_tabs", selected = "Prueba de Módulos")
       
-      # Wait a moment to ensure the tab has switched
-      shinyjs::delay(100, {
-        # Update the module type
+      shinyjs::delay(300, {
         updateSelectInput(session, "test_module", selected = question_module)
         
-        # Wait for the module's questions to load
-        shinyjs::delay(300, {
-          # Now update the question selection
-          # First get the list of questions for this module
-          module_questions <- question_classification()[[question_module]]
-          
-          # Check if our question is in the list
-          if (question_id %in% module_questions) {
-            updateSelectInput(session, "test_question", selected = question_id)
-            
+        shinyjs::delay(500, {
+          tryCatch({
+            module_questions <- question_classification()[[question_module]]
+            if (question_id %in% module_questions) {
+              updateSelectInput(session, "test_question", selected = question_id)
+              showNotification(
+                paste0("Mostrando pregunta: ", question_id), 
+                type = "message"
+              )
+            } else {
+              showNotification(
+                paste0("Pregunta ", question_id, " no encontrada en módulo ", question_module), 
+                type = "warning"
+              )
+            }
+          }, error = function(e) {
             showNotification(
-              paste0("Mostrando pregunta: ", question_id), 
-              type = "message"
+              paste0("Error al cargar la pregunta: ", e$message), 
+              type = "error"
             )
-          } else {
-            showNotification(
-              paste0("No se pudo seleccionar la pregunta, no se encontró en el módulo ", question_module), 
-              type = "warning"
-            )
-          }
+          })
         })
       })
     }
@@ -690,4 +1052,216 @@ observeEvent(input$global_search, {
     shinyjs::click("execute_search")
   }
 }, ignoreInit = TRUE)
+ # Update the theme questions table in server.R
+output$theme_questions_table <- DT::renderDataTable({
+  # Get all theme data
+  themes_data <- theme_metadata$load_thematic_classifications()
+  
+  # Filter based on selections
+  if (input$theme_selector == "all") {
+    # Show all themes
+    questions <- themes_data
+  } else if (input$subtheme_selector == "all") {
+    # Show all subthemes for the selected theme
+    questions <- themes_data %>%
+      filter(MainTheme == input$theme_selector)
+  } else {
+    # Show specific theme and subtheme
+    questions <- themes_data %>%
+      filter(MainTheme == input$theme_selector, Subtheme == input$subtheme_selector)
+  }
+  
+  # Add survey name column with friendly names
+  questions$Encuesta <- ifelse(
+    questions$survey_id == "PER_2024",
+    "Percepción 2024",
+    "Participación 2024"
+  )
+  
+  # Rename columns for display
+  questions <- questions %>%
+    select(
+      Variable = variable,
+      Pregunta = label,
+      Tipo = scale_type,
+      Subtema = Subtheme,
+      Tema = MainTheme,
+      Encuesta
+    )
+  
+  DT::datatable(
+    questions,
+    options = list(
+      pageLength = 15,
+      language = list(
+        search = "Filtrar:",
+        paginate = list(previous = "Anterior", `next` = "Siguiente")
+      )
+    ),
+    selection = 'single'
+  )
+})
+# Enhanced handler for theme question selection in server.R
+observeEvent(input$theme_questions_table_rows_selected, {
+  row_index <- input$theme_questions_table_rows_selected
+  
+  if (length(row_index) > 0) {
+    # Get themes data
+    themes_data <- theme_metadata$load_thematic_classifications()
+    
+    # Get filtered data based on selections
+    if (input$theme_selector == "all") {
+      filtered_data <- themes_data
+    } else if (input$subtheme_selector == "all") {
+      filtered_data <- themes_data %>%
+        filter(MainTheme == input$theme_selector)
+    } else {
+      filtered_data <- themes_data %>%
+        filter(MainTheme == input$theme_selector, Subtheme == input$subtheme_selector)
+    }
+    
+    # Get the selected question info
+    selected_question <- filtered_data[row_index, ]
+    question_id <- selected_question$variable
+    question_survey <- selected_question$survey_id
+    
+    # Determine the module type for this question
+    question_type <- tolower(selected_question$scale_type)
+    
+    # Map scale_type to module name
+    module_mapping <- c(
+      "razon" = "razon",
+      "intervalo" = "intervalo",
+      "ordinal" = "ordinal",
+      "categorica" = "categorico", 
+      "binaria" = "binaria",
+      "nominal (abierta)" = "nominal"
+    )
+    
+    # Default fallback for unknown types
+    question_module <- "categorico"
+    
+    # Try to match the question type to a module
+    if (question_type %in% names(module_mapping)) {
+      question_module <- module_mapping[question_type]
+    }
+    
+    # Map survey_id to the corresponding radio button value
+    survey_mapping <- c(
+      "PER_2024" = "PER_2024_V2",
+      "PAR_2024" = "PAR_2024_V2"
+    )
+    
+    # Get target survey
+    target_survey <- survey_mapping[question_survey]
+    
+    if (is.na(target_survey)) {
+      showNotification(
+        paste0("No se pudo determinar la encuesta para: ", question_id), 
+        type = "error"
+      )
+      return()
+    }
+    
+    # CRITICAL SAFETY CHECK: Verify the question exists in the target survey
+    # Load the target survey data temporarily to check
+    temp_survey_data <- tryCatch({
+      temp_data <- load_survey_data(target_survey)
+      if (question_id %in% names(temp_data$responses)) {
+        TRUE  # Question exists
+      } else {
+        FALSE  # Question doesn't exist
+      }
+    }, error = function(e) {
+      FALSE  # Error loading survey
+    })
+    
+    if (!temp_survey_data) {
+      showNotification(
+        paste0("La pregunta ", question_id, " no existe en la encuesta ", target_survey), 
+        type = "error"
+      )
+      return()
+    }
+    
+    # Now it's safe to switch surveys if needed
+    current_survey <- input$survey_selector
+    if (current_survey != target_survey) {
+      # Update the survey selector
+      updateRadioButtons(session, "survey_selector", selected = target_survey)
+      
+      # Notify user
+      showNotification(
+        paste0("Cambiando a encuesta: ", target_survey), 
+        type = "message"
+      )
+      
+      # Give it plenty of time to load (increase if still having issues)
+      shinyjs::delay(2000, {
+        # Now navigate to Module Testing tab
+        updateTabsetPanel(session, inputId = "main_tabs", selected = "Prueba de Módulos")
+        
+        # Update module selection with more delay
+        shinyjs::delay(500, {
+          updateSelectInput(session, "test_module", selected = question_module)
+          
+          # Wait for module questions to load with even more delay
+          shinyjs::delay(800, {
+            # Final safety check before updating question selection
+            tryCatch({
+              module_questions <- question_classification()[[question_module]]
+              if (question_id %in% module_questions) {
+                updateSelectInput(session, "test_question", selected = question_id)
+                showNotification(
+                  paste0("Mostrando pregunta: ", question_id), 
+                  type = "message"
+                )
+              } else {
+                showNotification(
+                  paste0("Pregunta ", question_id, " no encontrada en módulo ", question_module), 
+                  type = "warning"
+                )
+              }
+            }, error = function(e) {
+              showNotification(
+                paste0("Error al cargar la pregunta: ", e$message), 
+                type = "error"
+              )
+            })
+          })
+        })
+      })
+    } else {
+      # No survey change needed, proceed directly but still with safety checks
+      updateTabsetPanel(session, inputId = "main_tabs", selected = "Prueba de Módulos")
+      
+      shinyjs::delay(300, {
+        updateSelectInput(session, "test_module", selected = question_module)
+        
+        shinyjs::delay(500, {
+          tryCatch({
+            module_questions <- question_classification()[[question_module]]
+            if (question_id %in% module_questions) {
+              updateSelectInput(session, "test_question", selected = question_id)
+              showNotification(
+                paste0("Mostrando pregunta: ", question_id), 
+                type = "message"
+              )
+            } else {
+              showNotification(
+                paste0("Pregunta ", question_id, " no encontrada en módulo ", question_module), 
+                type = "warning"
+              )
+            }
+          }, error = function(e) {
+            showNotification(
+              paste0("Error al cargar la pregunta: ", e$message), 
+              type = "error"
+            )
+          })
+        })
+      })
+    }
+  }
+})
 }

@@ -80,6 +80,19 @@ ui <- page_fluid(
               "Binaria" = "binaria",
               "Nominal" = "nominal"
             )
+          ), 
+          # Add theme filtering here
+          selectInput(
+            "filter_by_theme",
+            "Filtrar por Tema:",
+            choices = c("Todos" = "all", NULL),  # Will be populated in server
+            selected = "all"
+          ),
+          selectInput(
+            "filter_by_subtheme",
+            "Filtrar por Subtema:",
+            choices = c("Todos" = "all", NULL),  # Will be populated in server
+            selected = "all"
           ),
           checkboxInput("show_metadata", "Mostrar Metadata", FALSE)
         ),
@@ -108,6 +121,17 @@ ui <- page_fluid(
               "Nominal" = "nominal"
             )
           ),
+          # Add theme selector
+      selectInput(
+        "test_theme_filter",
+        "Filtrar por Tema:",
+        choices = c("Todos" = "all", NULL)  # Will be populated in server
+      ),
+      selectInput(
+        "test_subtheme_filter",
+        "Filtrar por Subtema:",
+        choices = c("Todos" = "all", NULL)  # Will be populated in server
+      ),
           selectInput(
             "test_question",
             "Pregunta de Prueba",
@@ -162,6 +186,11 @@ ui <- page_fluid(
               "global_search",
               "Buscar por texto en las preguntas:",
               placeholder = "Ingrese texto para buscar..."
+            ),
+            selectInput(
+              "search_theme_filter",
+              "Filtrar por Tema:",
+              choices = c("Todos" = "all", NULL)  # Will be populated in server
             ),
             actionButton(
               "execute_search",
@@ -246,6 +275,32 @@ ui <- page_fluid(
               fileInput("upload_theme", "Importar Tema", accept = ".json")
             )
           )
+        )
+      )
+    ),
+    nav_panel(
+      title = "Clasificación por Temas",
+      icon = icon("tags"),
+      
+      layout_sidebar(
+        sidebar = sidebar(
+          selectInput(
+            "theme_selector",
+            "Seleccionar Tema:",
+            choices = c("Todos los temas" = "all", NULL)  # Add "all" option
+          ),
+          selectInput(
+            "subtheme_selector",
+            "Seleccionar Subtema:",
+            choices = c("Todos los subtemas" = "all", NULL)  # Add "all" option
+          ),
+          hr(),
+          uiOutput("theme_info_panel")
+        ),
+        
+        card(
+          card_header("Preguntas por Tema y Subtema"),
+          DT::dataTableOutput("theme_questions_table")
         )
       )
     )

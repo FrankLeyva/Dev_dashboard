@@ -1,0 +1,263 @@
+variable,label,scale_type,OldTheme,MainTheme,Subtheme
+Q1AGEB,AGEB,Nominal (Abierta),Internal,Internal,Internal
+Q2Distrito electoral local,Distrito electoral local,Razon,Internal,Internal,Internal
+Q3Colonia,Colonia,Nominal (Abierta),Internal,Internal,Internal
+Q4Numero de encuestador,Numero de encuestador,Razon,Internal,Internal,Internal
+Q5,Conoce o puede mencionar el nombre de los actuales regidores?,Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q6.1,María Dolores Adame Alvarado,Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q6.2,Alma Edith Arredondo Salinas,Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q6.3,Héctor Hugo Avitia Arellanes,Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q6.4,Amparo Beltrán Ceballos,Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q6.5,Jorge Marcial Bueno Quiroz,Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q6.6,Mayra Karina Castillo Tapia,Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q6.7,Antonio Domínguez Alderete,Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q6.8,Karla Michael Escalante Ramírez,Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q6.9,Ana Carmen Estrada García,Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q6.10,Joob Quintin Flores Silva,Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q6.11,Austria Elizabeth Galindo Rodríguez,Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q6.12,Jorge Alberto Gutiérrez Casas,Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q6.13,Tania Maldonado Garduño,Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q6.14,Pedro Alberto Matus Peña,Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q6.15,Martha Patricia Mendoza Rodríguez,Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q6.16,Vanessa Mora de la O,Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q6.17,Mireya Porras Armendáriz,Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q6.18,Yolanda Cecilia Reyes Castro,Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q6.19,Victor Manuel Talamantes Vázquez,Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q6.20,Enrique Torres Valadez,Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q7,Puede decirme el nombre del síndico o síndica municipal?,Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q8,Conoce o puede nombrar algun diputado local/ estatal de su distrito?,Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q9.1,Leticia Ortega Máynez (Distrito 02),Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q9.2,Oscar Daniel Avitia Arellanes (Distrito 03),Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q9.3,Rosana Díaz Reyes (Distrito 04),Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q9.4,Marisela Terrazas Muñoz (Distrito 05),Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q9.5,Jael Argüelles Díaz (Distrito 06),Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q9.6,Gustavo de la Rosa Hickerson (Distrito 07),Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q9.7,Edin Cuauhtémoc Estrada Sotelo (Distrito 08),Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q9.8,Magdalena Rentería Pérez (Distrito 09),Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q9.9,María Antonieta Pérez Reyes (Distrito 10),Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q10,Puede decirme el nombre del (la) diputado(a) federal de su distrito?,Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q11.1,Daniel Murguía Lardizabal (Distrito 01),Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q11.2,Teresita de Jesus Vargas Meráz (Distrito 02),Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q11.3,Lilia Aguilar Gil (Distrito 03),Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q11.4,Daniela Soraya Álvarez Hernández(Distrito 04),Binaria,Representation,Governance & Civic Engagement,Political Representation
+Q12,Regidores representan intereses ciudadanos,Intervalo,Trust,Governance & Civic Engagement,Trust in Institutions
+Q13,Sindico/a representa intereses ciudadanos,Intervalo,Trust,Governance & Civic Engagement,Trust in Institutions
+Q14,Diputado/a local representa intereses ciudadanos,Intervalo,Trust,Governance & Civic Engagement,Trust in Institutions
+Q15,Diputado/a federal representa intereses ciudadanos,Intervalo,Trust,Governance & Civic Engagement,Trust in Institutions
+Q16.1,Alcalde: Llevó a cabo actos de corrupción,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q16.2,Alcalde: Tomó en cuenta a los ciudadanos,Binaria,Performance,Governance & Civic Engagement,Government Performance
+Q16.3,Alcalde: Cumplió con sus compromisos y promesas,Binaria,Performance,Governance & Civic Engagement,Government Performance
+Q16.4,Alcalde: Aplicó imparcialmente las leyes,Binaria,Performance,Governance & Civic Engagement,Government Performance
+Q16.5,Alcalde: Rindió cuentas a la ciudadanía,Binaria,Trust,Governance & Civic Engagement,Trust in Institutions
+Q17.1,Gobernador/a: Llevó a cabo actos de corrupción,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q17.2,Gobernador/a: Tomó en cuenta a los ciudadanos,Binaria,Trust,Governance & Civic Engagement,Trust in Institutions
+Q17.3,Gobernador/a: Cumplió con sus compromisos y promesas,Binaria,Trust,Governance & Civic Engagement,Trust in Institutions
+Q17.4,Gobernador/a: Aplicó imparcialmente las leyes,Binaria,Trust,Governance & Civic Engagement,Trust in Institutions
+Q17.5,Gobernador/a: Rindió cuentas a la ciudadanía,Binaria,Trust,Governance & Civic Engagement,Trust in Institutions
+Q18.1,Presidente: Llevó a cabo actos de corrupción,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q18.2,Presidente: Tomó en cuenta a los ciudadanos,Binaria,Trust,Governance & Civic Engagement,Trust in Institutions
+Q18.3,Presidente: Cumplió con sus compromisos y promesas,Binaria,Trust,Governance & Civic Engagement,Trust in Institutions
+Q18.4,Presidente: Aplicó imparcialmente las leyes,Binaria,Trust,Governance & Civic Engagement,Trust in Institutions
+Q18.5,Presidente: Rindió cuentas a la ciudadanía,Binaria,Trust,Governance & Civic Engagement,Trust in Institutions
+Q19,Expectativa del gobierno Municipal de Cruz Perez Cuellar,Intervalo,Trust,Governance & Civic Engagement,Trust in Institutions
+Q20,Expectativa del gobierno Estatal de Maru Campos Galvan,Intervalo,Trust,Governance & Civic Engagement,Trust in Institutions
+Q21,Expectativa del gobierno de la Republica de Andres Manuel Lopez Obrador,Intervalo,Trust,Governance & Civic Engagement,Trust in Institutions
+Q22.1,Confianza: Diputados,Intervalo,Trust,Governance & Civic Engagement,Trust in Institutions
+Q22.2,Confianza: Prensa local (periódicos),Intervalo,Trust,Governance & Civic Engagement,Trust in Institutions
+Q22.3,Confianza: Televisoras locales,Intervalo,Trust,Governance & Civic Engagement,Trust in Institutions
+Q22.4,Confianza: Iglesias,Intervalo,Trust,Governance & Civic Engagement,Trust in Institutions
+Q22.5,Confianza: Maestros,Intervalo,Trust,Governance & Civic Engagement,Trust in Institutions
+Q22.6,Confianza: Partidos políticos,Intervalo,Trust,Governance & Civic Engagement,Trust in Institutions
+Q22.7,Confianza: Organizaciones ciudadanas (OSC's),Intervalo,Trust,Governance & Civic Engagement,Trust in Institutions
+Q22.8,Confianza: Universidades,Intervalo,Trust,Governance & Civic Engagement,Trust in Institutions
+Q22.9,Confianza: Empresarios,Intervalo,Trust,Governance & Civic Engagement,Trust in Institutions
+Q22.10,Confianza: Policía municipal,Intervalo,Trust,Governance & Civic Engagement,Trust in Institutions
+Q22.11,Confianza: Tránsito municipal,Intervalo,Trust,Governance & Civic Engagement,Trust in Institutions
+Q22.12,Confianza: Policía ministerial,Intervalo,Trust,Governance & Civic Engagement,Trust in Institutions
+Q22.13,Confianza: Policía estatal,Intervalo,Trust,Governance & Civic Engagement,Trust in Institutions
+Q22.14,Confianza: Ejército,Intervalo,Trust,Governance & Civic Engagement,Trust in Institutions
+Q22.15,Confianza: Guardia nacional,Intervalo,Trust,Governance & Civic Engagement,Trust in Institutions
+Q22.16,Confianza: Jueces o magistrados,Intervalo,Trust,Governance & Civic Engagement,Trust in Institutions
+Q22.17,Confianza: Presidente municipal(Cruz Pérez Cuellar),Intervalo,Trust,Governance & Civic Engagement,Trust in Institutions
+Q22.18,Confianza: Regidores,Intervalo,Trust,Governance & Civic Engagement,Trust in Institutions
+Q22.19,Confianza: Síndico/a,Intervalo,Trust,Governance & Civic Engagement,Trust in Institutions
+Q22.20,Confianza: Funcionarios del gobierno municipal,Intervalo,Trust,Governance & Civic Engagement,Trust in Institutions
+Q22.21,Confianza: Gobernador/a (Maru Campos),Intervalo,Trust,Governance & Civic Engagement,Trust in Institutions
+Q22.22,Confianza: Funcionarios del gobierno del estado,Intervalo,Trust,Governance & Civic Engagement,Trust in Institutions
+Q22.23,Confianza: Presidente de la república,Intervalo,Trust,Governance & Civic Engagement,Trust in Institutions
+Q22.24,Confianza: Funcionarios del gobierno federal,Intervalo,Trust,Governance & Civic Engagement,Trust in Institutions
+Q23,Durante 2023 realizó algún trámite ante el gobierno municipal?,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q24,Cuántos trámites ante el Gobierno MUNICIPAL hizo durante este tiempo?,Razon,Corruption,Governance & Civic Engagement,Public Integrity
+Q25,Durante 2023 realizó trámite de PREDIAL?,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q26,Durante 2023 dio mordida o soborno para realizar el trámite? PREDIAL,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q27,En total cuánto dinero dio en sobornos por PREDIAL,Razon,Corruption,Governance & Civic Engagement,Public Integrity
+Q28,Durante 2023 realizó trámite de LICENCIA DE FUNCIONAMIENTO?,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q29,Durante 2023 dio mordida o soborno para realizar el trámite? LICENCIA DE FUNCIONAMIENTO,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q30,En total cuánto dinero dio en sobornos por LICENCIA DE FUNCIONAMIENTO,Razon,Corruption,Governance & Civic Engagement,Public Integrity
+Q31,Durante 2023 realizó trámite de USO DE SUELO?,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q32,Durante 2023 dio mordida o soborno para realizar el trámite? USO DE SUELO,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q33,En total cuánto dinero dio en soborno por USO DE SUELO,Razon,Corruption,Governance & Civic Engagement,Public Integrity
+Q34,Durante 2023 realizó trámite de CARTA DE RESIDENCIA?,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q35,Durante 2023 dio mordida o soborno para realizar el trámite? CARTA DE RESIDENCIA,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q36,En total cuánto dinero dio en sobornos CARTA DE RESIDENCIA,Razon,Corruption,Governance & Civic Engagement,Public Integrity
+Q37,Durante 2023 realizó trámite de PAGO DE MULTAS?,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q38,Durante 2023 dio mordida o soborno para realizar el trámite? PAGO DE MULTAS,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q39,En total cuánto dinero dio en sobornos por PAGO DE MULTAS,Razon,Corruption,Governance & Civic Engagement,Public Integrity
+Q40,Durante 2023 realizó trámite de ESTACIONÓMETROS?,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q41,Durante 2023 dio mordida o soborno para realizar el trámite? ESTACIONÓMETROS,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q42,En total cuánto dinero dio en sobornos por ESTACIONÓMETROS,Razon,Corruption,Governance & Civic Engagement,Public Integrity
+Q43,Durante 2023 realizó trámite de SERVICIOS PÚBLICOS (LIMPIA; LUZ; PARQUES)?,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q44,Durante 2023 dio mordida o soborno para realizar el trámite? SERVICIOS PÚBLICOS,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q45,En total cuánto dinero dio en sobornos por SERVICIOS PÚBLICOS,Razon,Corruption,Governance & Civic Engagement,Public Integrity
+Q46,Durante 2023 realizó trámite de PERMISO DE CONSTRUCCIÓN?,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q47,Durante 2023 dio mordida o soborno para realizar el trámite? PERMISO DE CONSTRUCCIÓN,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q48,En total cuánto dinero dio en sobornos por PERMISO DE CONSTRUCCIÓN,Razon,Corruption,Governance & Civic Engagement,Public Integrity
+Q49,Durante 2023 realizó trámites por delitos ambientales? DIRECCIÓN DE ECOLOGÍA,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q50,Durante 2023 dio mordida o soborno para realizar trámites por delitos ambientales?,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q51,En total cuánto dinero dio en sobornos por trámites/multas medioambientales,Razon,Corruption,Governance & Civic Engagement,Public Integrity
+Q52,Durante 2023 realizó OTROS TRÁMITES MUNICIPALES?,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q53,Cuál es el o los otros trámites municipales que realizó?,Nominal (Abierta),Corruption,Governance & Civic Engagement,Public Integrity
+Q54,Durante 2023 dio mordida o soborno para realizar el trámite? OTROS TRÁMITES MUNICIPALES,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q55,En total cuánto dinero dio en sobornos por estos OTROS TRÁMITES MUNICIPALES,Razon,Corruption,Governance & Civic Engagement,Public Integrity
+Q56,Durante 2023 realizó por lo menos 1 trámite ante gobierno estatal?,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q57,Durante el 2023 cuántos trámites ante el Gobierno ESTATAL hizo durante este tiempo?,Razon,Corruption,Governance & Civic Engagement,Public Integrity
+Q58,Durante 2023 realizó trámites de LICENCIA DE CONDUCIR?,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q59,Durante 2023 dio mordida o soborno para realizar el trámite? LICENCIA DE CONDUCIR,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q60,En total cuánto dinero dio en sobornos por LICENCIA DE CONDUCIR,Razon,Corruption,Governance & Civic Engagement,Public Integrity
+Q61,Durante 2023 realizó trámites de REGISTRO PÚBLICO DE LA PROPIEDAD?,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q62,Durante 2023 dio mordida o soborno para realizar el trámite? REGISTRO PÚBLICO,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q63,En total cuánto dinero dio en sobornos por REGISTRO PÚBLICO DE LA PROPIEDAD,Razon,Corruption,Governance & Civic Engagement,Public Integrity
+Q64,Durante 2023 realizó trámites de PERMISOS DE GOBERNACIÓN?,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q65,Durante 2023 dio mordida o soborno para realizar el trámite? PERMISOS DE GOBERNACIÓN,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q66,En total cuánto dinero dio en sobornos por PERMISOS DE GOBERNACIÓN,Razon,Corruption,Governance & Civic Engagement,Public Integrity
+Q67,Durante 2023 realizó trámites de IMPUESTO SOBRE NÓMINAS?,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q68,Durante 2023 dio mordida o soborno para realizar el trámite? IMPUESTO SOBRE NÓMINAS,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q69,En total cuánto dinero dio en sobornos por IMPUESTO SOBRE NÓMINAS,Razon,Corruption,Governance & Civic Engagement,Public Integrity
+Q70,Durante 2023 realizó trámites de RECAUDACIÓN DE RENTAS?,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q71,Durante 2023 dio mordida o soborno para realizar el trámite? RECAUDACIÓN DE RENTAS,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q72,En total cuánto dinero dio en sobornos por RECAUDACIÓN DE RENTAS,Razon,Corruption,Governance & Civic Engagement,Public Integrity
+Q73,Durante 2023 realizó trámites de SERVICIOS EDUCATIVOS?,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q74,Durante 2023 dio mordida o soborno para realizar el trámite? SERVICIOS EDUCATIVOS,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q75,En total cuánto dinero dio en sobornos por SERVICIOS EDUCATIVOS,Razon,Corruption,Governance & Civic Engagement,Public Integrity
+Q76,Durante 2023 realizó trámites de JMAS (reconexión)?,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q77,Durante 2023 dio mordida o soborno para realizar el trámite? JMAS (reconexión),Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q78,En total cuánto dinero dio en sobornos por JMAS (reconexión),Razon,Corruption,Governance & Civic Engagement,Public Integrity
+Q79,Durante 2023 realizó Trámites/denuncias por delitos ambientales?,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q80,Durante 2023 dio mordida o soborno para realizar Trámites/denuncias por delitos ambientales?,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q81,En total cuánto dinero dio en sobornos por DESARROLLO URBANO Y ECOLOGÍA,Razon,Corruption,Governance & Civic Engagement,Public Integrity
+Q82,Durante 2023 realizó OTROS TRÁMITES ESTATALES?,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q83,Cuál es el o los otros trámites estatales que realizó?,Nominal (Abierta),Corruption,Governance & Civic Engagement,Public Integrity
+Q84,Durante 2023 dio mordida o soborno para realizar el trámite? OTROS TRÁMITES ESTATALES,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q85,En total cuánto dinero dio en sobornos por OTROS TRÁMITES ESTATALES,Razon,Corruption,Governance & Civic Engagement,Public Integrity
+Q86,Durante 2023 realizó por lo menos 1 trámite ante gobierno federal?,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q87,Durante el 2023 cuántos trámites ante el Gobierno FEDERAL hizo durante este tiempo?,Razon,Corruption,Governance & Civic Engagement,Public Integrity
+Q88,Durante 2023 realizó trámites del HACIENDA/SAT?,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q89,Durante 2023 dio mordida o soborno para realizar el trámite? HACIENDA/SAT,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q90,En total cuánto dinero dio en sobornos por HACIENDA/SAT,Razon,Corruption,Governance & Civic Engagement,Public Integrity
+Q91,Durante 2023 realizó trámites de CFE?,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q92,Durante 2023 dio mordida o soborno para realizar el trámite? CFE,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q93,En total cuánto dinero dio en sobornos por CFE,Razon,Corruption,Governance & Civic Engagement,Public Integrity
+Q94,Durante 2023 realizó Trámites/denuncias por delitos ambientales? SEMARNAT,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q95,Durante 2023 dio mordida o soborno para realizar Trámites/denuncias por delitos ambientales? SEMARNAT,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q96,En total cuánto dinero dio en sobornos por SEMARNAT,Razon,Corruption,Governance & Civic Engagement,Public Integrity
+Q97,Durante 2023 realizó Trámites/denuncias por delitos ambientales? PROFEPA,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q98,Durante 2023 dio mordida o soborno para realizar Trámites/denuncias por delitos ambientales? PROFEPA,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q99,En total cuánto dinero dio en sobornos por PROFEPA,Razon,Corruption,Governance & Civic Engagement,Public Integrity
+Q100,Durante 2023 realizó trámites ante OTRA DEPENDENCIA FEDERAL?,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q101,Mencione el nombre de la otra dependencia federal en la que realizó el trámite.,Nominal (Abierta),Corruption,Governance & Civic Engagement,Public Integrity
+Q102,Durante 2023 dio mordida o soborno para realizar el trámite? OTRA DEPENDENCIA FEDERAL,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q103,En total cuánto dinero dio en sobornos por OTRA DEPENDENCIA FEDERAL,Razon,Corruption,Governance & Civic Engagement,Public Integrity
+Q104,Durante 2023 fue detenido por TRÁNSITO MUNICIPAL?,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q105,Durante 2023 dio mordida o soborno en dinero o especie? TRÁNSITO MUNICIPAL,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q106,En total cuánto dinero dio en sobornos a TRÁNSITO MUNICIPAL,Razon,Corruption,Governance & Civic Engagement,Public Integrity
+Q107,Durante 2023 fue detenido por POLICÍA MUNICIPAL?,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q108,Durante 2023 dio mordida o soborno en dinero o especie? POLICÍA MUNICIPAL,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q109,En total cuánto dinero dio en sobornos a POLICÍA MUNICIPAL,Razon,Corruption,Governance & Civic Engagement,Public Integrity
+Q110,Durante 2023 fue detenido por POLICÍA ESTATAL?,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q111,Durante 2023 dio mordida o soborno en dinero o especie? POLICÍA ESTATAL,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q112,En total cuánto dinero dio en sobornos a POLICÍA ESTATAL,Razon,Corruption,Governance & Civic Engagement,Public Integrity
+Q113,Durante 2023 fue detenido por EJÉRCITO?,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q114,Durante 2023 dio mordida o soborno en dinero o especie? EJÉRCITO,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q115,En total cuánto dinero dio en sobornos al EJÉRCITO,Razon,Corruption,Governance & Civic Engagement,Public Integrity
+Q116,Durante 2023 fue detenido por GUARDIA NACIONAL?,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q117,Durante 2023 dio mordida o soborno en dinero o especie? GUARDIA NACIONAL,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q118,En total cuánto dinero dio en sobornos a la GUARDIA NACIONAL,Razon,Corruption,Governance & Civic Engagement,Public Integrity
+Q119,Desde su punto de vista la corrupción es culpa de...,Categorica,Corruption,Governance & Civic Engagement,Public Integrity
+Q120,Instituciones que más previenen y combaten la corrupción - IMPORTANCIA #1,Categorica,Corruption,Governance & Civic Engagement,Public Integrity
+Q121,Instituciones que más previenen y combaten la corrupción - IMPORTANCIA #2,Categorica,Corruption,Governance & Civic Engagement,Public Integrity
+Q122,Instituciones que más previenen y combaten la corrupción - IMPORTANCIA #3,Categorica,Corruption,Governance & Civic Engagement,Public Integrity
+Q123,En Juarez el que la hace la paga? Es decir se castiga a quien comete algún delito?,Binaria,Impunity,Governance & Civic Engagement,Justice & Accountability
+Q124,El GOBIERNO MUNICIPAL sanciona a los servidores públicos sorprendidos en actos de corrupción?,Binaria,Impunity,Governance & Civic Engagement,Justice & Accountability
+Q125,El GOBIERNO ESTATAL sanciona a los servidores públicos sorprendidos en actos de corrupción?,Binaria,Impunity,Governance & Civic Engagement,Justice & Accountability
+Q126,El GOBIERNO FEDERAL sanciona a los servidores públicos sorprendidos en actos de corrupción?,Binaria,Impunity,Governance & Civic Engagement,Justice & Accountability
+Q127,En Juarez la justicia está exenta de corrupción?,Binaria,Corruption,Governance & Civic Engagement,Public Integrity
+Q128,Instituciones que más violan las leyes - INSTITUCIÓN #1,Categorica,Corruption,Governance & Civic Engagement,Public Integrity
+Q129,Instituciones que más violan las leyes - INSTITUCIÓN #2,Categorica,Corruption,Governance & Civic Engagement,Public Integrity
+Q130,Instituciones que más violan las leyes - INSTITUCIÓN #3,Categorica,Corruption,Governance & Civic Engagement,Public Integrity
+Q131,Interés en participar en la política del municipio,Ordinal,Participation,Community Participation,Civic Activities
+Q132.1,Obstáculos para participar: Información,Binaria,Participation,Community Participation,Civic Activities
+Q132.2,Obstáculos para participar: Espacios para participar,Binaria,Participation,Community Participation,Civic Activities
+Q132.3,Obstáculos para participar: Tiempo,Binaria,Participation,Community Participation,Civic Activities
+Q132.4,Obstáculos para participar: Dinero,Binaria,Participation,Community Participation,Civic Activities
+Q132.5,Obstáculos para participar: Confianza en las instituciones,Binaria,Participation,Community Participation,Civic Activities
+Q132.6,Obstáculos para participar: Otro,Binaria,Participation,Community Participation,Civic Activities
+Q133,Participa activamente en alguna organización?,Binaria,Participation,Community Participation,Civic Activities
+Q134.1,Participa en: Partidos/organizaciones políticas,Binaria,Participation,Community Participation,Civic Activities
+Q134.2,Participa en: Sindicatos,Binaria,Participation,Community Participation,Civic Activities
+Q134.3,Participa en: Iglesias/asociaciones religiosas,Binaria,Participation,Community Participation,Civic Activities
+Q134.4,Participa en: Agrupaciones empresariales,Binaria,Participation,Community Participation,Civic Activities
+Q134.5,Participa en: Asociaciones de padres de familia en escuelas,Binaria,Participation,Community Participation,Civic Activities
+Q134.6,Participa en: Asociaciones o equipos deportivos,Binaria,Participation,Community Participation,Civic Activities
+Q134.7,Participa en: Asociaciones/comités/juntas de vecinos,Binaria,Participation,Community Participation,Civic Activities
+Q134.8,Participa en: Clubs sociales/de servicios,Binaria,Participation,Community Participation,Civic Activities
+Q134.9,Participa en: Organizaciones civiles/ONGs/Fundaciones,Binaria,Participation,Community Participation,Civic Activities
+Q134.10,Participa en: Grupo de autoayuda o superación,Binaria,Participation,Community Participation,Civic Activities
+Q134.11,Participa en: Caja popular o cooperativa de crédito,Binaria,Participation,Community Participation,Civic Activities
+Q135,Si pertenece a otra organización (no mencionada) indique cual,Nominal (Abierta),Participation,Community Participation,Civic Activities
+Q136,Durante 2023 ¿apoyó activamente a algún movimiento social?,Binaria,Participation,Community Participation,Civic Activities
+Q137,Cuál o cuáles movimientos sociales apoyó?,Nominal (Abierta),Participation,Community Participation,Civic Activities
+Q138.1,Formas de participación: Propuestas de planes programas leyes o políticas públicas,Binaria,Participation,Community Participation,Community Involvement
+Q138.2,Formas de participación: Vigilar acciones/funciones de los servidores/instituciones públicas,Binaria,Participation,Community Participation,Community Involvement
+Q138.3,Formas de participación: Firmar cartas de apoyo/amparos,Binaria,Participation,Community Participation,Community Involvement
+Q138.4,Formas de participación: Quejarse ante las autoridades,Binaria,Participation,Community Participation,Community Involvement
+Q138.5,Formas de participación: Pedir apoyo a una sociedad civil,Binaria,Participation,Community Participation,Community Involvement
+Q138.6,Formas de participación: Asistir a manifestaciones y/o marchas,Binaria,Participation,Community Participation,Community Involvement
+Q138.7,Formas de participación: Colocar mantas carteles o fotografías,Binaria,Participation,Community Participation,Community Involvement
+Q138.8,Formas de participación: Repartir circulares o manifiestos,Binaria,Participation,Community Participation,Community Involvement
+Q138.9,Formas de participación: Enviar mensajes opiniones imágenes por redes sociales,Binaria,Participation,Community Participation,Community Involvement
+Q138.10,Formas de participación: Usar una aplicación o herramienta electrónica de denuncia ciudadana,Binaria,Participation,Community Participation,Community Involvement
+Q138.11,Formas de participación: Hizo algo para resolver un problema con sus vecinos,Binaria,Participation,Community Participation,Community Involvement
+Q138.12,Formas de participación: Vigilar la correcta realización de alguna obra pública,Binaria,Participation,Community Participation,Community Involvement
+Q138.13,Formas de participación: Bloquear calles avenidas carreteras,Binaria,Participation,Community Participation,Community Involvement
+Q138.14,Formas de participación: Mitin político,Binaria,Participation,Community Participation,Community Involvement
+Q139,Para usted votar es...,Categorica,Participation,Community Participation,Decision-Making Participation
+Q140.1,Conoce: El referendum,Binaria,Participation,Community Participation,Decision-Making Participation
+Q140.2,Conoce: El plebiscito,Binaria,Participation,Community Participation,Decision-Making Participation
+Q140.3,Conoce: La iniciativa ciudadana,Binaria,Participation,Community Participation,Decision-Making Participation
+Q140.4,Conoce: La revocación de mandato,Binaria,Participation,Community Participation,Decision-Making Participation
+Q140.5,Conoce: Audiencias públicas,Binaria,Participation,Community Participation,Decision-Making Participation
+Q140.6,Conoce: Consulta pública,Binaria,Participation,Community Participation,Decision-Making Participation
+Q140.7,Conoce: Consejos consultivos,Binaria,Participation,Community Participation,Decision-Making Participation
+Q140.8,Conoce: Comités de participación,Binaria,Participation,Community Participation,Decision-Making Participation
+Q140.9,Conoce: Planeación participativa,Binaria,Participation,Community Participation,Decision-Making Participation
+Q140.10,Conoce: Presupuesto participativo,Binaria,Participation,Community Participation,Decision-Making Participation
+Q140.11,Conoce: Cabildo abierto,Binaria,Participation,Community Participation,Decision-Making Participation
+Q140.12,Conoce: Contralorías sociales,Binaria,Participation,Community Participation,Decision-Making Participation
+Q140.13,Conoce: Mecanismos de participación social para niñas niños y adolescentes,Binaria,Participation,Community Participation,Decision-Making Participation
+Q141,Conoce o ha escuchado hablar de Plan Estratégico de Juárez A.C.? SIN APOYO VISUAL,Binaria,Internal,Internal,Internal
+Q142,Conoce o ha escuchado hablar de Plan Estratégico de Juárez A.C.? CON APOYO VISUAL,Binaria,Internal,Internal,Internal
+Q143.1,PEJ es una asociación apartidista y ciudadana,Binaria,Internal,Internal,Internal
+Q143.2,PEJ es una organización con credibilidad,Binaria,Internal,Internal,Internal
+Q143.3,PEJ es propositiva,Binaria,Internal,Internal,Internal
+Q144,Sexo,Categorica,Internal,Dashboard Context,Survey Demographics
+Q145,Edad (escrita),Razon,Internal,Dashboard Context,Survey Demographics
+Q146,Rango de edad,Categorica,Internal,Dashboard Context,Survey Demographics
+Q147,Grado de escolaridad,Ordinal,Internal,Dashboard Context,Survey Demographics
+Q148,Ocupación,Categorica,Internal,Dashboard Context,Survey Demographics
+Q149,Cuenta con Seguro Social (IMSS)?,Binaria,Health,Public Services,Healthcare
+Q150,Recibe algún ingreso personal de algún tipo?,Binaria,Internal,Dashboard Context,Survey Demographics
+Q151,Durante 2023 cual fue su rango de ingreso PERSONAL por semana?,Ordinal,Internal,Dashboard Context,Survey Demographics
+Q152,Indique si es un periodo distinto a la semana PERSONAL,Nominal (Abierta),Internal,Dashboard Context,Survey Demographics
+Q153,Durante 2023 cual fue su rango de ingreso FAMILIAR por semana?,Ordinal,Internal,Dashboard Context,Survey Demographics
+Q154,Indique si es un periodo distinto a la semana FAMILIAR,Nominal (Abierta),Internal,Dashboard Context,Survey Demographics
+Q155,Fue supervisado?,Binaria,Internal,Internal,Internal

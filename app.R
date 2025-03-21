@@ -29,6 +29,8 @@ source('R/nominal_module.R')
 source('R/binary_module.R')
 source("R/data_loader.R")
 source("R/question_classifier.R")
+source("R/themes_metadata.R")  
+
 source("R/server.R")
 source("R/ui.R")
 
