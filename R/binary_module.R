@@ -505,14 +505,13 @@ create_binary_pie <- function(data, title = "Distribución de Respuestas", custo
     )
 }
 
-# Updated district map visualization
 create_binary_district_map <- function(data, geo_data, highlight_extremes = TRUE, focus_on_true = TRUE, custom_theme = NULL) {
   # Check if we have data
   if (is.null(data) || nrow(data) == 0 || is.null(geo_data)) {
     return(plotly_empty() %>% 
              layout(title = "No hay datos suficientes para visualizar"))
   }
-  
+
   # Get correct labels using the helper function
   labels <- get_binary_labels(data)
   true_label <- labels$true_label
@@ -525,7 +524,7 @@ create_binary_district_map <- function(data, geo_data, highlight_extremes = TRUE
     theme_config$palettes$district
   }
   
-  # Calculate percentages by district - we'll focus on TRUE values by default
+  # Calculate percentages by district
   district_stats <- data %>%
     group_by(district) %>%
     summarise(
@@ -537,6 +536,10 @@ create_binary_district_map <- function(data, geo_data, highlight_extremes = TRUE
       .groups = 'drop'
     )
   
+  # Debug information
+  print("District stats:")
+  print(district_stats)
+  
   # Choose which percentage to display based on focus parameter
   if (!focus_on_true) {
     district_stats$selected_percent <- district_stats$false_percent
@@ -547,6 +550,9 @@ create_binary_district_map <- function(data, geo_data, highlight_extremes = TRUE
     district_stats$selected_count <- district_stats$true_count
     display_label <- true_label
   }
+  
+  # Convert district to numeric to ensure proper matching
+  district_stats$district <- as.numeric(as.character(district_stats$district))
   
   # Calculate centroids for label placement
   geo_data$centroid <- sf::st_centroid(geo_data$geometry)
@@ -561,21 +567,63 @@ create_binary_district_map <- function(data, geo_data, highlight_extremes = TRUE
     lowest_district <- district_stats %>% arrange(selected_percent) %>% slice(1)
   }
   
-  # Create map
+  # PRE-CALCULATE ALL POLYGON COLORS - key fix for the error
+  geo_data$polygon_color <- "#CCCCCC"  # Default gray
+  
+  # Debug info
+  print("Geo data district numbers:")
+  print(geo_data$No_Distrit)
+  
+  # Create a named vector of colors for easier lookup
+  district_color_map <- setNames(
+    # Make sure we have enough colors for all districts (2-10)
+    if(length(district_colors) >= 9) {
+      district_colors[1:9]
+    } else {
+      # If not enough colors, repeat the last ones
+      c(district_colors, rep(district_colors[length(district_colors)], 9 - length(district_colors)))
+    },
+    # Map colors to district numbers 2-10
+    2:10
+  )
+  
+  # Assign colors to districts
+  for (i in 1:nrow(geo_data)) {
+    dist_num <- geo_data$No_Distrit[i]
+    # Simply look up the color by district number
+    if (!is.na(dist_num) && as.character(dist_num) %in% names(district_color_map)) {
+      geo_data$polygon_color[i] <- district_color_map[as.character(dist_num)]
+    }
+  }
+  
+  # Create HTML hover labels - pre-calculate to avoid errors
+  geo_data$hover_label <- ""
+  for (i in 1:nrow(geo_data)) {
+    dist_num <- geo_data$No_Distrit[i]
+    # Find matching district in stats
+    match_idx <- which(district_stats$district == dist_num)
+    
+    if (length(match_idx) > 0 && match_idx <= nrow(district_stats)) {
+      geo_data$hover_label[i] <- sprintf(
+        "Distrito: %s<br>%s: %s%%<br>Respuestas: %d/%d",
+        dist_num,
+        display_label,
+        district_stats$selected_percent[match_idx],
+        district_stats$selected_count[match_idx],
+        district_stats$total_responses[match_idx]
+      )
+    } else {
+      geo_data$hover_label[i] <- sprintf("Distrito: %s<br>Sin datos", dist_num)
+    }
+  }
+  
+  # Create map with pre-calculated values
   map <- leaflet(geo_data) %>%
     addTiles() %>% 
     addPolygons(
       fillOpacity = 0.7,
       weight = 1,
-      color = ~{
-        # Safer color mapping
-        district_idx <- match(No_Distrit, as.numeric(district_stats$district))
-        if(!is.na(district_idx) && district_idx <= length(district_colors)) {
-          district_colors[district_idx]
-        } else {
-          "#CCCCCC"  # Default gray
-        }
-      },
+      color = ~polygon_color,  # Use pre-calculated colors
       dashArray = "3",
       highlight = highlightOptions(
         weight = 2,
@@ -584,20 +632,19 @@ create_binary_district_map <- function(data, geo_data, highlight_extremes = TRUE
         fillOpacity = 0.7,
         bringToFront = TRUE
       ),
-      label = ~sprintf(
-        "Distrito: %s<br>%s: %s%%<br>Respuestas: %d/%d",
-        district_stats$district[match(No_Distrit, district_stats$district)],
-        display_label,
-        district_stats$selected_percent[match(No_Distrit, district_stats$district)],
-        district_stats$selected_count[match(No_Distrit, district_stats$district)],
-        district_stats$total_responses[match(No_Distrit, district_stats$district)]
-      ) %>% lapply(HTML)
+      label = ~lapply(hover_label, HTML)  # Use pre-calculated labels
     )
   
   # Add labels for each district
   for(i in 1:nrow(geo_data)) {
     district_num <- geo_data$No_Distrit[i]
-    percent <- district_stats$selected_percent[match(district_num, district_stats$district)]
+    # Find matching district in stats
+    match_idx <- which(district_stats$district == district_num)
+    
+    # Skip if no match found
+    if(length(match_idx) == 0) next
+    
+    percent <- district_stats$selected_percent[match_idx]
     
     # Skip if no percentage data
     if(is.na(percent)) next
@@ -607,10 +654,12 @@ create_binary_district_map <- function(data, geo_data, highlight_extremes = TRUE
     text_color <- "#000000"  # Default black text
     
     if(highlight_extremes) {
-      if(!is.null(highest_district) && !is.na(highest_district$district) && district_num == highest_district$district) {
+      if(!is.null(highest_district) && !is.na(highest_district$district) && 
+         district_num == highest_district$district) {
         bg_color <- "#87CEEB"  # Light blue background for highest
         text_color <- "#000000"  # Black text
-      } else if(!is.null(lowest_district) && !is.na(lowest_district$district) && district_num == lowest_district$district) {
+      } else if(!is.null(lowest_district) && !is.na(lowest_district$district) && 
+                district_num == lowest_district$district) {
         bg_color <- "#012A4A"  # Dark blue background for lowest
         text_color <- "#FFFFFF"  # White text
       }
@@ -640,8 +689,8 @@ create_binary_district_map <- function(data, geo_data, highlight_extremes = TRUE
   
   map <- map %>% addControl(
     html = sprintf(
-      '<div style="background-color: #333333; color: white; padding: 5px; border-radius: 3px;"><strong>%s general: %s%%</strong></div>',
-      display_label, overall_percent
+      '<div style="background-color: #333333; color: white; padding: 5px; border-radius: 3px;"><strong>Porcentaje general: %s%%</strong></div>',
+      overall_percent
     ),
     position = "topright"
   )
