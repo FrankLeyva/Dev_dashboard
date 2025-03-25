@@ -1092,9 +1092,18 @@ create_ordinal_bars <- function(data, orientation = "v", custom_theme = NULL) {
 }
 
 create_ordinal_ridge_plot <- function(data, title = NULL, custom_theme = NULL) {
+  # Check for empty data
+  if(nrow(data) == 0) {
+    return(ggplot() + 
+             ggtitle("No hay datos suficientes para visualizar") +
+             theme_minimal())
+  }
+  
   # Check if we have ggridges
   if (!requireNamespace("ggridges", quietly = TRUE)) {
-    stop("Package 'ggridges' is required for this visualization. Please install it with install.packages('ggridges')")
+    return(ggplot() + 
+             ggtitle("Package 'ggridges' is required for this visualization") +
+             theme_minimal())
   }
   
   question_label <- attr(data, "question_label")
@@ -1110,20 +1119,54 @@ create_ordinal_ridge_plot <- function(data, title = NULL, custom_theme = NULL) {
       district = factor(district, levels = rev(sort(unique(as.character(district)))))
     )
   
-  # Get district colors from custom theme if provided
+  # Use district palette from custom theme if provided
   district_colors <- if (!is.null(custom_theme)) {
     custom_theme$palettes$district
   } else {
     get_color_palette("district")
   }
   
+  # Get distinct colors for median and mean
+  median_color <- "#000000"  
+  
+  mean_color <-    "#000000"  
+  
   # Create the plot
   p <- ggplot(plot_data, aes(x = numeric_value, y = district, fill = district)) +
+    # Base layer with density ridges - NO OUTLINE
     ggridges::geom_density_ridges(
-      quantile_lines = TRUE, 
-      quantiles = 2,
       alpha = 0.7,
-      scale = 0.9
+      scale = 0.9,
+      rel_min_height = 0.01,
+      color = NA,  # No outline color
+      show.legend = FALSE
+    ) +
+    # Add median line on top (solid)
+    ggridges::geom_density_ridges(
+      aes(x = numeric_value, y = district),
+      alpha = 0,  # Transparent fill
+      scale = 0.9,
+      rel_min_height = 0.01,
+      quantile_lines = TRUE,
+      quantiles = 2,  # 2 is the code for median
+      color = median_color,
+      size = 1.0,
+      fill = NA,
+      show.legend = FALSE
+    ) +
+    # Add mean line on top (dashed)
+    ggridges::geom_density_ridges(
+      aes(x = numeric_value, y = district),
+      alpha = 0,  # Transparent fill
+      scale = 0.9,
+      rel_min_height = 0.01,
+      quantile_lines = TRUE,
+      quantile_fun = function(x,...) mean(x, na.rm = TRUE),
+      linetype = "dashed",
+      color = mean_color,
+      size = 1.0,
+      fill = NA,
+      show.legend = FALSE
     ) +
     scale_fill_manual(values = district_colors) +
     theme_minimal() +
@@ -1145,9 +1188,29 @@ create_ordinal_ridge_plot <- function(data, title = NULL, custom_theme = NULL) {
       )
   }
   
+  # Add a legend explaining the lines
+  p <- p + 
+    annotate("segment", x = min(plot_data$numeric_value, na.rm=TRUE), 
+             xend = min(plot_data$numeric_value, na.rm=TRUE) + (max(plot_data$numeric_value, na.rm=TRUE) - min(plot_data$numeric_value, na.rm=TRUE))*0.1,
+             y = min(as.numeric(plot_data$district), na.rm=TRUE) - 1.0, 
+             yend = min(as.numeric(plot_data$district), na.rm=TRUE) - 1.0,
+             color = median_color, size = 1.0) +
+    annotate("text", x = min(plot_data$numeric_value, na.rm=TRUE) + (max(plot_data$numeric_value, na.rm=TRUE) - min(plot_data$numeric_value, na.rm=TRUE))*0.12, 
+             y = min(as.numeric(plot_data$district), na.rm=TRUE) - 1.0, 
+             label = "Mediana", hjust = 0, size = 3.5) +
+    annotate("segment", x = min(plot_data$numeric_value, na.rm=TRUE), 
+             xend = min(plot_data$numeric_value, na.rm=TRUE) + (max(plot_data$numeric_value, na.rm=TRUE) - min(plot_data$numeric_value, na.rm=TRUE))*0.1,
+             y = min(as.numeric(plot_data$district), na.rm=TRUE) - 1.5, 
+             yend = min(as.numeric(plot_data$district), na.rm=TRUE) - 1.5,
+             color = mean_color, linetype = "dashed", size = 1.0) +
+    annotate("text", x = min(plot_data$numeric_value, na.rm=TRUE) + (max(plot_data$numeric_value, na.rm=TRUE) - min(plot_data$numeric_value, na.rm=TRUE))*0.12, 
+             y = min(as.numeric(plot_data$district), na.rm=TRUE) - 1.5, 
+             label = "Media", hjust = 0, size = 3.5) +
+    coord_cartesian(clip = 'off') +  # Allow drawing outside the plot area
+    theme(plot.margin = margin(b = 40))  # Add extra margin at the bottom
+  
   return(p)
 }
-
 create_ordinal_pie <- function(data, max_categories = 12, custom_theme = NULL) {
   # Check if we have valid data
   if (nrow(data) == 0) {
