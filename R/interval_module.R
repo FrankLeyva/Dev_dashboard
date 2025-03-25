@@ -606,6 +606,16 @@ for (i in 1:nrow(geo_data)) {
     }
   }
 }
+# Add overall average label
+overall_mean <- round(mean(district_stats$mean_value , na.rm = TRUE), 1)
+
+map <- map %>% addControl(
+html = sprintf(
+'<div style="background-color: #333333; color: white; padding: 5px; border-radius: 3px;"><strong>Porcentaje general: %s</strong></div>',
+  overall_mean
+),
+position = "topright"
+)
 
 return(map)
 } else {
