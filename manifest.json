@@ -1,7 +1,7 @@
 {
   "version": 1,
   "locale": "en_US",
-  "platform": "4.4.2",
+  "platform": "4.4.3",
   "metadata": {
     "appmode": "shiny",
     "primary_rmd": null,
@@ -268,38 +268,6 @@
         "RemoteReposName": "CRAN",
         "RemotePkgPlatform": "x86_64-w64-mingw32",
         "RemoteSha": "1.0.14"
-      }
-    },
-    "SnowballC": {
-      "Source": "CRAN",
-      "Repository": "https://cran.rstudio.com",
-      "description": {
-        "Package": "SnowballC",
-        "Type": "Package",
-        "Version": "0.7.1",
-        "Date": "2023-04-25",
-        "Title": "Snowball Stemmers Based on the C 'libstemmer' UTF-8 Library",
-        "Authors@R": "person(\"Milan\", \"Bouchet-Valat\", email=\"nalimilan@club.fr\",\n                  role=c(\"aut\", \"cre\"))",
-        "Description": "An R interface to the C 'libstemmer' library that implements\n  Porter's word stemming algorithm for collapsing words to a common\n  root to aid comparison of vocabulary. Currently supported languages are\n  Arabic, Basque, Catalan, Danish, Dutch, English, Finnish, French, German, Greek,\n  Hindi, Hungarian, Indonesian, Irish, Italian, Lithuanian, Nepali,\n  Norwegian, Portuguese, Romanian, Russian, Spanish, Swedish, Tamil\n  and Turkish.",
-        "License": "BSD_3_clause + file LICENSE",
-        "Copyright": "Dr Martin Porter (2001) and Richard Boulton (2004, 2005) for\nthe 'libstemmer' C library, and Milan Bouchet-Valat (2013) for\nthe R package contents.",
-        "URL": "https://github.com/nalimilan/R.TeMiS",
-        "BugReports": "https://github.com/nalimilan/R.TeMiS/issues",
-        "NeedsCompilation": "yes",
-        "Packaged": "2023-04-25 19:45:22 UTC; milan",
-        "Author": "Milan Bouchet-Valat [aut, cre]",
-        "Maintainer": "Milan Bouchet-Valat <nalimilan@club.fr>",
-        "Repository": "CRAN",
-        "Date/Publication": "2023-04-25 20:30:06 UTC",
-        "Built": "R 4.4.0; x86_64-w64-mingw32; 2024-04-23 00:26:55 UTC; windows",
-        "Archs": "x64",
-        "RemoteType": "standard",
-        "RemotePkgRef": "SnowballC",
-        "RemoteRef": "SnowballC",
-        "RemoteRepos": "https://cran.rstudio.com",
-        "RemoteReposName": "CRAN",
-        "RemotePkgPlatform": "x86_64-w64-mingw32",
-        "RemoteSha": "0.7.1"
       }
     },
     "askpass": {
@@ -2237,40 +2205,6 @@
         "RemoteReposName": "CRAN",
         "RemotePkgPlatform": "x86_64-w64-mingw32",
         "RemoteSha": "0.2.7"
-      }
-    },
-    "janeaustenr": {
-      "Source": "CRAN",
-      "Repository": "https://cran.rstudio.com",
-      "description": {
-        "Package": "janeaustenr",
-        "Title": "Jane Austen's Complete Novels",
-        "Version": "1.0.0",
-        "Authors@R": "\n    person(\"Julia\", \"Silge\", , \"julia.silge@gmail.com\", role = c(\"aut\", \"cre\"),\n           comment = c(ORCID = \"0000-0002-3671-836X\"))",
-        "Description": "Full texts for Jane Austen's 6 completed novels, ready for\n    text analysis. These novels are \"Sense and Sensibility\", \"Pride and\n    Prejudice\", \"Mansfield Park\", \"Emma\", \"Northanger Abbey\", and\n    \"Persuasion\".",
-        "License": "MIT + file LICENSE",
-        "URL": "https://github.com/juliasilge/janeaustenr",
-        "BugReports": "https://github.com/juliasilge/janeaustenr/issues",
-        "Depends": "R (>= 3.5)",
-        "Suggests": "dplyr, testthat",
-        "Config/testthat/edition": "3",
-        "Encoding": "UTF-8",
-        "LazyData": "true",
-        "RoxygenNote": "7.2.1",
-        "NeedsCompilation": "no",
-        "Packaged": "2022-08-26 22:14:26 UTC; juliasilge",
-        "Author": "Julia Silge [aut, cre] (<https://orcid.org/0000-0002-3671-836X>)",
-        "Maintainer": "Julia Silge <julia.silge@gmail.com>",
-        "Repository": "CRAN",
-        "Date/Publication": "2022-08-26 22:32:06 UTC",
-        "Built": "R 4.4.2; ; 2025-02-18 01:28:25 UTC; windows",
-        "RemoteType": "standard",
-        "RemotePkgRef": "janeaustenr",
-        "RemoteRef": "janeaustenr",
-        "RemoteRepos": "https://cran.rstudio.com",
-        "RemoteReposName": "CRAN",
-        "RemotePkgPlatform": "x86_64-w64-mingw32",
-        "RemoteSha": "1.0.0"
       }
     },
     "jquerylib": {
@@ -4516,44 +4450,6 @@
         "RemoteSha": "1.2.1"
       }
     },
-    "tidytext": {
-      "Source": "CRAN",
-      "Repository": "https://cran.rstudio.com",
-      "description": {
-        "Type": "Package",
-        "Package": "tidytext",
-        "Title": "Text Mining using 'dplyr', 'ggplot2', and Other Tidy Tools",
-        "Version": "0.4.2",
-        "Authors@R": "c(\n    person(\"Gabriela\", \"De Queiroz\", , \"gabidequeiroz@gmail.com\", role = \"ctb\"),\n    person(\"Colin\", \"Fay\", , \"contact@colinfay.me\", role = \"ctb\",\n           comment = c(ORCID = \"0000-0001-7343-1846\")),\n    person(\"Emil\", \"Hvitfeldt\", , \"emilhhvitfeldt@gmail.com\", role = \"ctb\"),\n    person(\"Os\", \"Keyes\", , \"ironholds@gmail.com\", role = \"ctb\",\n           comment = c(ORCID = \"0000-0001-5196-609X\")),\n    person(\"Kanishka\", \"Misra\", , \"kmisra@purdue.edu\", role = \"ctb\"),\n    person(\"Tim\", \"Mastny\", , \"tim.mastny@gmail.com\", role = \"ctb\"),\n    person(\"Jeff\", \"Erickson\", , \"jeff@erick.so\", role = \"ctb\"),\n    person(\"David\", \"Robinson\", , \"admiral.david@gmail.com\", role = \"aut\"),\n    person(\"Julia\", \"Silge\", , \"julia.silge@gmail.com\", role = c(\"aut\", \"cre\"),\n           comment = c(ORCID = \"0000-0002-3671-836X\"))\n  )",
-        "Description": "Using tidy data principles can make many text mining tasks\n    easier, more effective, and consistent with tools already in wide use.\n    Much of the infrastructure needed for text mining with tidy data\n    frames already exists in packages like 'dplyr', 'broom', 'tidyr', and\n    'ggplot2'. In this package, we provide functions and supporting data\n    sets to allow conversion of text to and from tidy formats, and to\n    switch seamlessly between tidy tools and existing text mining\n    packages.",
-        "License": "MIT + file LICENSE",
-        "URL": "https://juliasilge.github.io/tidytext/,\nhttps://github.com/juliasilge/tidytext",
-        "BugReports": "https://github.com/juliasilge/tidytext/issues",
-        "Depends": "R (>= 2.10)",
-        "Imports": "cli, dplyr (>= 1.1.1), generics, janeaustenr, lifecycle,\nMatrix, methods, purrr (>= 0.1.1), rlang (>= 0.4.10), stringr,\ntibble, tokenizers, vctrs",
-        "Suggests": "broom, covr, data.table, ggplot2, hunspell, knitr, mallet,\nNLP, quanteda, readr, reshape2, rmarkdown, scales, stm,\nstopwords, testthat (>= 2.1.0), textdata, tidyr, tm,\ntopicmodels, vdiffr, wordcloud",
-        "VignetteBuilder": "knitr",
-        "Config/Needs/website": "ropensci/gutenbergr",
-        "Config/testthat/edition": "3",
-        "Encoding": "UTF-8",
-        "LazyData": "TRUE",
-        "RoxygenNote": "7.3.1",
-        "NeedsCompilation": "no",
-        "Packaged": "2024-04-10 11:39:59 UTC; juliasilge",
-        "Author": "Gabriela De Queiroz [ctb],\n  Colin Fay [ctb] (<https://orcid.org/0000-0001-7343-1846>),\n  Emil Hvitfeldt [ctb],\n  Os Keyes [ctb] (<https://orcid.org/0000-0001-5196-609X>),\n  Kanishka Misra [ctb],\n  Tim Mastny [ctb],\n  Jeff Erickson [ctb],\n  David Robinson [aut],\n  Julia Silge [aut, cre] (<https://orcid.org/0000-0002-3671-836X>)",
-        "Maintainer": "Julia Silge <julia.silge@gmail.com>",
-        "Repository": "CRAN",
-        "Date/Publication": "2024-04-10 12:50:06 UTC",
-        "Built": "R 4.4.2; ; 2025-02-18 02:57:52 UTC; windows",
-        "RemoteType": "standard",
-        "RemotePkgRef": "tidytext",
-        "RemoteRef": "tidytext",
-        "RemoteRepos": "https://cran.rstudio.com",
-        "RemoteReposName": "CRAN",
-        "RemotePkgPlatform": "x86_64-w64-mingw32",
-        "RemoteSha": "0.4.2"
-      }
-    },
     "tidyverse": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -4656,45 +4552,6 @@
         "RemoteReposName": "CRAN",
         "RemotePkgPlatform": "source",
         "RemoteSha": "0.55"
-      }
-    },
-    "tokenizers": {
-      "Source": "CRAN",
-      "Repository": "https://cran.rstudio.com",
-      "description": {
-        "Package": "tokenizers",
-        "Type": "Package",
-        "Title": "Fast, Consistent Tokenization of Natural Language Text",
-        "Version": "0.3.0",
-        "Date": "2022-12-19",
-        "Description": "Convert natural language text into tokens. Includes tokenizers for\n    shingled n-grams, skip n-grams, words, word stems, sentences, paragraphs,\n    characters, shingled characters, lines, Penn Treebank, regular\n    expressions, as well as functions for counting characters, words, and sentences,\n    and a function for splitting longer texts into separate documents, each with\n    the same number of words.  The tokenizers have a consistent interface, and\n    the package is built on the 'stringi' and 'Rcpp' packages for  fast\n    yet correct tokenization in 'UTF-8'. ",
-        "License": "MIT + file LICENSE",
-        "LazyData": "yes",
-        "Authors@R": "c(person(\"Lincoln\", \"Mullen\", role = c(\"aut\", \"cre\"),\n        email = \"lincoln@lincolnmullen.com\",\n        comment = c(ORCID = \"0000-0001-5103-6917\")),\n        person(\"Os\", \"Keyes\", role = c(\"ctb\"),\n        email = \"ironholds@gmail.com\",\n        comment = c(ORCID = \"0000-0001-5196-609X\")),\n        person(\"Dmitriy\", \"Selivanov\", role = c(\"ctb\"),\n        email = \"selivanov.dmitriy@gmail.com\"),\n        person(\"Jeffrey\", \"Arnold\", role = c(\"ctb\"),\n        email = \"jeffrey.arnold@gmail.com\",\n        comment = c(ORCID = \"0000-0001-9953-3904\")),\n        person(\"Kenneth\", \"Benoit\", role = c(\"ctb\"),\n        email = \"kbenoit@lse.ac.uk\",\n        comment = c(ORCID = \"0000-0002-0797-564X\")))",
-        "URL": "https://docs.ropensci.org/tokenizers/,\nhttps://github.com/ropensci/tokenizers",
-        "BugReports": "https://github.com/ropensci/tokenizers/issues",
-        "RoxygenNote": "7.2.1",
-        "Depends": "R (>= 3.1.3)",
-        "Imports": "stringi (>= 1.0.1), Rcpp (>= 0.12.3), SnowballC (>= 0.5.1)",
-        "LinkingTo": "Rcpp",
-        "Encoding": "UTF-8",
-        "Suggests": "covr, knitr, rmarkdown, stopwords (>= 0.9.0), testthat",
-        "VignetteBuilder": "knitr",
-        "NeedsCompilation": "yes",
-        "Packaged": "2022-12-20 21:28:10 UTC; lmullen",
-        "Author": "Lincoln Mullen [aut, cre] (<https://orcid.org/0000-0001-5103-6917>),\n  Os Keyes [ctb] (<https://orcid.org/0000-0001-5196-609X>),\n  Dmitriy Selivanov [ctb],\n  Jeffrey Arnold [ctb] (<https://orcid.org/0000-0001-9953-3904>),\n  Kenneth Benoit [ctb] (<https://orcid.org/0000-0002-0797-564X>)",
-        "Maintainer": "Lincoln Mullen <lincoln@lincolnmullen.com>",
-        "Repository": "CRAN",
-        "Date/Publication": "2022-12-22 08:50:02 UTC",
-        "Built": "R 4.4.2; x86_64-w64-mingw32; 2025-01-09 01:44:26 UTC; windows",
-        "Archs": "x64",
-        "RemoteType": "standard",
-        "RemotePkgRef": "tokenizers",
-        "RemoteRef": "tokenizers",
-        "RemoteRepos": "https://cran.rstudio.com",
-        "RemoteReposName": "CRAN",
-        "RemotePkgPlatform": "x86_64-w64-mingw32",
-        "RemoteSha": "0.3.0"
       }
     },
     "tzdb": {
@@ -5232,61 +5089,16 @@
   },
   "files": {
     ".Rprofile": {
-      "checksum": "9917088ef30044ed212bb2576c98230b"
+      "checksum": "29e2c8f852ac83013899b71907794210"
     },
     "app.R": {
-      "checksum": "fec4fa1ef82e6266bae5f52fe2868533"
-    },
-    "Classifierapp.R": {
-      "checksum": "e432a9d5c3884351e601e08e1abda1f7"
+      "checksum": "7df1a2bbc28dff1b8ed55699d6b31798"
     },
     "css/custom.css": {
       "checksum": "78e9ae05a4448fed23770bd773876f19"
     },
-    "data/Coded/binary_module.R": {
-      "checksum": "9f68b0d2c074e5d752fd0abb4e03f578"
-    },
-    "data/Coded/economía.R": {
-      "checksum": "ed88c4169707061d857463e5572f5207"
-    },
-    "data/Coded/global.R": {
-      "checksum": "8ffa7da51733222d4149b4c41a450677"
-    },
-    "data/Coded/Intervalo.R": {
-      "checksum": "6f02b04a5cde7fd963d030ecf76a4015"
-    },
-    "data/Coded/newrazon.R": {
-      "checksum": "0b6187c7543fac168ee50ff432efd425"
-    },
-    "data/Coded/nominal_module.R": {
-      "checksum": "2e867350e1f4451e7c6d2385cc7848e3"
-    },
-    "data/Coded/oldrazon.R": {
-      "checksum": "2a24b3262b801b97ff88138e1349f97d"
-    },
     "data/geo/Jrz_Map.geojson": {
       "checksum": "7800f5e72c4f644f193a09dc1aee42ea"
-    },
-    "data/processed/AEJ_2019_2023_Vivienda.csv": {
-      "checksum": "d7a55f9a8fe6ad14e324f45be08c3d6b"
-    },
-    "data/processed/INEGI_Ocup_vivienda.csv": {
-      "checksum": "60fee32361641268caa3b164a9fe290c"
-    },
-    "data/processed/INEGI_Viv_part_habitada.csv": {
-      "checksum": "7aece959e4d29aa12568c13ed4744653"
-    },
-    "data/processed/INEGI_viviendas_completo.csv": {
-      "checksum": "7c8c3015090dcd9525a35e95978c086b"
-    },
-    "data/processed/INEGI_viviendas_deshabitadas.csv": {
-      "checksum": "c5f1e0aff9c9de0a863554719a606952"
-    },
-    "data/processed/Map_Survey.csv": {
-      "checksum": "b4b8b7e882ff541511dec4ac65964fbd"
-    },
-    "data/processed/Map_Survey.rds": {
-      "checksum": "90e2b62be164b11c90471a8759ad70d9"
     },
     "data/processed/PAR_2023_Metadata.csv": {
       "checksum": "1cc00712e0c117b39cef1d25dbfccfe7"
@@ -5303,17 +5115,35 @@
     "data/processed/PAR_2024_metadata_classified.csv": {
       "checksum": "93edf53a613c19f3085e2ec8ca242515"
     },
+    "data/processed/PAR_2024_metadata_classified_V2.csv": {
+      "checksum": "fbb1a5e5186c84b9ae0a073afcdc66f0"
+    },
+    "data/processed/PAR_2024_metadata_classified_V3.csv": {
+      "checksum": "3ad151e11475affc392f7e07e488c88e"
+    },
+    "data/processed/PAR_2024_metadata_V2.csv": {
+      "checksum": "137b3269ed0ce87d233724422f345280"
+    },
     "data/processed/PAR_2024_responses.csv": {
       "checksum": "00ffc34431f617c01ab182082b23e812"
+    },
+    "data/processed/PAR_2024_responses_V2.csv": {
+      "checksum": "008c3d17590dd8759c2668953d5f11a8"
+    },
+    "data/processed/PAR_2024_responses_V3.csv": {
+      "checksum": "665befdb7ffc237ffa010bd1b7389c2d"
+    },
+    "data/processed/PAR_2024_Thematic Classification.csv": {
+      "checksum": "a1d441b10079d06d6ccfaffe3d68d542"
+    },
+    "data/processed/PAR_2024_Thematic_Classification_V2.csv": {
+      "checksum": "e3c17738ddf8d7b3bf5ad786de84db62"
     },
     "data/processed/PER_2023_metadata.csv": {
       "checksum": "964293e13cbec2c7d93e8c4b12f53dd2"
     },
     "data/processed/PER_2023_metadata_classified.csv": {
       "checksum": "ba15714f19e803546da9d8a02891ab38"
-    },
-    "data/processed/PER_2023_metadata_classified_old.csv": {
-      "checksum": "d3c2416bde6ea26fc7918434b6520ad0"
     },
     "data/processed/PER_2023_responses.csv": {
       "checksum": "62e4faaa80306aa80be1d3a1b3d3c1e2"
@@ -5324,254 +5154,104 @@
     "data/processed/PER_2024_metadata_classified.csv": {
       "checksum": "a1e04d5f48f683fce76e02751cb65c3b"
     },
+    "data/processed/PER_2024_metadata_classified_V2.csv": {
+      "checksum": "8ea80dad6d68f24fe27a6b3eff973579"
+    },
+    "data/processed/PER_2024_metadata_classified_V3.csv": {
+      "checksum": "24cb6a148382da13ad95bf2323521804"
+    },
+    "data/processed/PER_2024_metadata_V2.csv": {
+      "checksum": "e3f19922013ab4f15b03ad062e35a698"
+    },
     "data/processed/PER_2024_responses.csv": {
       "checksum": "82e7cc2f32031795f0c77b49d2e27eca"
     },
-    "data/processed/SNIIV_modalidad.csv": {
-      "checksum": "063dd6686c78bc1f95f8cb4fce8428c5"
+    "data/processed/PER_2024_responses_V2.csv": {
+      "checksum": "f00824063e5629b2bfeb06dd3bba0868"
     },
-    "data/processed/SNIIV_organismo.csv": {
-      "checksum": "e04ffeba2339c86e67ee34bab1bc1732"
+    "data/processed/PER_2024_responses_V3.csv": {
+      "checksum": "bfb10d60c275d48af3c64f16cf753c4f"
     },
-    "data/processed/SNIIV_Vivienda.csv": {
-      "checksum": "12543c2ab9cd0473f2603cba2e5f7912"
+    "data/processed/PER_2024_Thematic_Classification_V2.csv": {
+      "checksum": "4616ccabaa5bcaab2c05319f6c8d709b"
     },
-    "data/processed/viviendas_completo.csv": {
-      "checksum": "7c8c3015090dcd9525a35e95978c086b"
+    "data/raw/1.Encuesta A Percepcion Ciudadana-V1.xlsx": {
+      "checksum": "f8969c57abe158523ce7f3a17d17270e"
     },
-    "data/raw/AEJ Participación 2021.xlsx": {
-      "checksum": "0d54b0cf8fe26e638052742d2a90c782"
+    "data/raw/1.Encuesta A Percepcion Ciudadana-VF.xlsx": {
+      "checksum": "e6743dae62da7dc73f887717ef9159e3"
+    },
+    "data/raw/1.Encuesta B Participación Ciudadana y Buen Gobierno 2024 - V1.xlsx": {
+      "checksum": "70eaf78f0722b04da1b7f9845f8581d0"
+    },
+    "data/raw/1.Encuesta B Participación Ciudadana y Buen Gobierno 2024 - VF.xlsx": {
+      "checksum": "b8ea7c2f4572dfaf4630c8133b373b8c"
     },
     "data/raw/AEJ Participación 2023.sav": {
       "checksum": "1665967d0e1b3dc28f09d7dde2e1fd8a"
     },
-    "data/raw/AEJ Percepción 2021- sample-data.csv": {
-      "checksum": "dd55976995ef5e3cd0ea383507723b85"
-    },
-    "data/raw/AEJ Percepción 2021-Sample.csv": {
-      "checksum": "7c7a4137c587b0de57f15a07d65376a7"
-    },
-    "data/raw/AEJ Percepción 2021.xlsx": {
-      "checksum": "8f8f212d21e2e7433bfda74ccd2e3a38"
-    },
     "data/raw/AEJ Percepción 2023.sav": {
       "checksum": "3118b20845d48a5280cd864a19a50668"
     },
-    "data/raw/AEJ Percepción 2023_metadata.csv": {
-      "checksum": "fb0f5814f18cdb4616b1c7c08352b2d5"
+    "data/raw/PAR_2024_CODING_MANUAL_V2.csv": {
+      "checksum": "a0c2261645656e172a8f6e861b5dcb6a"
     },
-    "data/raw/AEJ Percepción 2023_responses.csv": {
-      "checksum": "22dcb02a34c299b3661e32c3c7b37cb3"
+    "data/raw/PAR_2024_RAW_Responses_V2.csv": {
+      "checksum": "d8ad68360c64243415ae13156dac7e26"
     },
-    "data/raw/AEJ Percepción 2023_sample.csv": {
-      "checksum": "4dd53470bad4dcab215002b021f72c70"
+    "data/raw/PAR_2024_RAW_Responses_V3.csv": {
+      "checksum": "fa2f942753533764bbf97653ae32fc11"
     },
-    "data/raw/Coding Manual AEJ Percepción 2023.csv": {
-      "checksum": "fb0f5814f18cdb4616b1c7c08352b2d5"
+    "data/raw/PER_2024_CODING_MANUAL_V2.csv": {
+      "checksum": "0c9029c905d9ac7004ca245c08bfb5e7"
     },
-    "data/raw/Coding_manual_2024.csv": {
-      "checksum": "c592304857f4344d107d5cd6ac57d99b"
+    "data/raw/PER_2024_RAW_Responses_V2.csv": {
+      "checksum": "3e74bf89876dd68ca954ecd69486787a"
     },
-    "data/raw/Cuestionario B Participacion ciudadana 2023.xlsx": {
-      "checksum": "391c9f2de949de7d114dda00051c25cd"
+    "data/raw/PER_2024_RAW_responses_V3.csv": {
+      "checksum": "51c195dc6a061b44ec771b4a0f8628ba"
     },
-    "data/raw/denue_inegi_01_.csv": {
-      "checksum": "efebdea8df74dec56dbae85f49541d7c"
-    },
-    "data/raw/Encuesta B Participación Ciudadana y Buen Gobierno 2023.sav": {
-      "checksum": "604391b39921e4ab18f5b63dbeebf993"
-    },
-    "data/raw/Encuesta Percepción Ciudadana AEJ 2023.sav": {
-      "checksum": "8bf020a78e2f664d15413369375df39f"
-    },
-    "data/raw/Encuesta Percepcion ciudadana AEJ 2023.xlsx": {
-      "checksum": "bf3b730d9c8be8d9424a09bc218e4d0b"
-    },
-    "data/raw/PAR_2024_CODING_MANUAL.csv": {
-      "checksum": "8d068c5b47ffd4215fd4096ed7b2ed43"
-    },
-    "data/raw/PAR_2024_RAW_Responses.csv": {
-      "checksum": "00d216f4af407de363b95fb3bb55c8aa"
-    },
-    "data/raw/PARTICIPACION 2011-2023/Base de datos AEJ Participación 2017 DISTRITOS.sav": {
-      "checksum": "c23afd6673bb521c47bfa8d9d6f12003"
-    },
-    "data/raw/PARTICIPACION 2011-2023/Base de datos AEJ Participación 2017 DISTRITOS.xlsx": {
-      "checksum": "893f044b1531e3bf5f0fd67da4024b06"
-    },
-    "data/raw/PARTICIPACION 2011-2023/Base de datos AEJ Participación 2018 DISTRITOS.sav": {
-      "checksum": "3534fdfecbdcc3fd71661debde6d8b16"
-    },
-    "data/raw/PARTICIPACION 2011-2023/Base de datos AEJ Participación 2018 DISTRITOS.xlsx": {
-      "checksum": "6f73ed3b67b93c3e60ec6ff93cf60baa"
-    },
-    "data/raw/PARTICIPACION 2011-2023/Base de datos AEJ Participación 2020 DISTRITOS.sav": {
-      "checksum": "2b12563c7de8e54be1965ef95317d6d2"
-    },
-    "data/raw/PARTICIPACION 2011-2023/Base de datos AEJ Participación 2020 DISTRITOS.xlsx": {
-      "checksum": "f028fe689ed4cb016644cc58d5987cf2"
-    },
-    "data/raw/PARTICIPACION 2011-2023/Base de datos AEJ Participación 2021 DISTRITOS.sav": {
-      "checksum": "95744561b35efdc331655da93b805e64"
-    },
-    "data/raw/PARTICIPACION 2011-2023/Base de datos AEJ Participación 2021 DISTRITOS.xlsx": {
-      "checksum": "9aa049dfac0305ac6a679c3907919b83"
-    },
-    "data/raw/PARTICIPACION 2011-2023/Base de datos AEJ Participación 2022.sav": {
-      "checksum": "28ab3b99207112a3eaa026f019717eef"
-    },
-    "data/raw/PARTICIPACION 2011-2023/Base de datos AEJ Participación 2022.xlsx": {
-      "checksum": "9033cf4dcbcb5caa3f0d14d7b7282efd"
-    },
-    "data/raw/PARTICIPACION 2011-2023/Cuestionario B Participacion ciudadana 2023.xlsx": {
-      "checksum": "391c9f2de949de7d114dda00051c25cd"
-    },
-    "data/raw/PARTICIPACION 2011-2023/Encuesta B Participación Ciudadana y Buen Gobierno 2023.sav": {
-      "checksum": "604391b39921e4ab18f5b63dbeebf993"
-    },
-    "data/raw/PER_2023_metadata_classified.csv": {
-      "checksum": "074ee656a86662c55ed984662b042316"
-    },
-    "data/raw/PER_2023_responses.csv": {
-      "checksum": "41ca455bae37d161b65da3a31db83da6"
-    },
-    "data/raw/PER_2024.xlsx": {
-      "checksum": "f8969c57abe158523ce7f3a17d17270e"
-    },
-    "data/raw/PER_2024_RAW_Responses.csv": {
-      "checksum": "a6035543929c2c74b3d9872c811f55ee"
-    },
-    "data/raw/PER_2024_RAW_Responses.xlsx": {
-      "checksum": "2d14e0b159845da77856f32cbfbfcb61"
-    },
-    "data/raw/PERCEPCION 2011-2023/_Encuesta de Percepción Ciudadana 2022.sav": {
-      "checksum": "632e05e46eba2902499fe1bac7948a65"
-    },
-    "data/raw/PERCEPCION 2011-2023/_Encuesta de Percepción Ciudadana 2022.xlsx": {
-      "checksum": "c6679e4779147e62c6689ce622964a01"
-    },
-    "data/raw/PERCEPCION 2011-2023/Base de datos AEJ Percepción 2011 DISTRITOS.sav": {
-      "checksum": "96a21f0578c32ee761c196b433e083cf"
-    },
-    "data/raw/PERCEPCION 2011-2023/Base de datos AEJ Percepción 2011 DISTRITOS.xlsx": {
-      "checksum": "c58e5e8f9a0fdc0995cb0a46e2ea19cb"
-    },
-    "data/raw/PERCEPCION 2011-2023/Base de datos AEJ Percepción 2012 DISTRITOS.sav": {
-      "checksum": "a3a6bcf02af59d18a90fe01720a2687f"
-    },
-    "data/raw/PERCEPCION 2011-2023/Base de datos AEJ Percepción 2012 DISTRITOS.xls": {
-      "checksum": "9893c36748962181e3ef171b339ee544"
-    },
-    "data/raw/PERCEPCION 2011-2023/Base de datos AEJ Percepción 2013 DISTRITOS.sav": {
-      "checksum": "2b70ec766bf027ca01a9a8819f2282f5"
-    },
-    "data/raw/PERCEPCION 2011-2023/Base de datos AEJ Percepción 2013 DISTRITOS.xls": {
-      "checksum": "2240543d249a704bd54a146545b47007"
-    },
-    "data/raw/PERCEPCION 2011-2023/Base de datos AEJ Percepción 2014 DISTRITOS.sav": {
-      "checksum": "a8cf8cc74254a3f2fd764b9f6673d41f"
-    },
-    "data/raw/PERCEPCION 2011-2023/Base de datos AEJ Percepción 2014 DISTRITOS.xls": {
-      "checksum": "fdf4b47163321409dad80a8ba3bb4d60"
-    },
-    "data/raw/PERCEPCION 2011-2023/Base de datos AEJ Percepción 2015 DISTRITOS.sav": {
-      "checksum": "294f71a8d8811f83a2f3ebbd31970a71"
-    },
-    "data/raw/PERCEPCION 2011-2023/Base de datos AEJ Percepción 2015 DISTRITOS.xlsx": {
-      "checksum": "d92a651a8064bacf73063d9ceade1bc3"
-    },
-    "data/raw/PERCEPCION 2011-2023/Base de datos AEJ Percepción 2016 DISTRITOS.sav": {
-      "checksum": "1a70b612d85a47995c79940a66a10c7b"
-    },
-    "data/raw/PERCEPCION 2011-2023/Base de datos AEJ Percepción 2016 DISTRITOS.xlsx": {
-      "checksum": "ee67f11c89e0c3a4b62ba65abc8f8f85"
-    },
-    "data/raw/PERCEPCION 2011-2023/Base de datos AEJ Percepción 2017 DISTRITOS.sav": {
-      "checksum": "461e8ba18cd918219a878fe51c6357f5"
-    },
-    "data/raw/PERCEPCION 2011-2023/Base de datos AEJ Percepción 2017 DISTRITOS.xlsx": {
-      "checksum": "2e4bab088db3734373397dc1daed6777"
-    },
-    "data/raw/PERCEPCION 2011-2023/Base de datos AEJ Percepción 2018 DISTRITOS.sav": {
-      "checksum": "f1153f2043674af50e5c80e03eec9c1b"
-    },
-    "data/raw/PERCEPCION 2011-2023/Base de datos AEJ Percepción 2018 DISTRITOS.xlsx": {
-      "checksum": "ea29405c4754557fb02cd2fc2f599957"
-    },
-    "data/raw/PERCEPCION 2011-2023/Base de datos AEJ Percepción 2019 DISTRITOS.sav": {
-      "checksum": "13b49e7f924e581b7e5a691ae775ca09"
-    },
-    "data/raw/PERCEPCION 2011-2023/Base de datos AEJ Percepción 2019 DISTRITOS.xlsx": {
-      "checksum": "8ecab74a493e7c48f8342c580a4889b8"
-    },
-    "data/raw/PERCEPCION 2011-2023/Base de datos AEJ Percepción 2020 DISTRITOS.sav": {
-      "checksum": "ceeaa7f368174705258c49da10abba29"
-    },
-    "data/raw/PERCEPCION 2011-2023/Base de datos AEJ Percepción 2020 DISTRITOS.xlsx": {
-      "checksum": "9aa66c7007a5eaf1edc5365dad69a38c"
-    },
-    "data/raw/PERCEPCION 2011-2023/Base de datos AEJ Percepción 2021 DISTRITOS.sav": {
-      "checksum": "4c11feb3938e6f77cdea3a7385f19321"
-    },
-    "data/raw/PERCEPCION 2011-2023/Base de datos AEJ Percepción 2021 DISTRITOS.xlsx": {
-      "checksum": "1980dfb55c400d55a77ffe6d6b3e7e86"
-    },
-    "data/raw/PERCEPCION 2011-2023/Encuesta Percepción Ciudadana AEJ 2023.sav": {
-      "checksum": "8bf020a78e2f664d15413369375df39f"
-    },
-    "data/raw/PERCEPCION 2011-2023/Encuesta Percepcion ciudadana AEJ 2023.xlsx": {
-      "checksum": "bf3b730d9c8be8d9424a09bc218e4d0b"
-    },
-    "data/raw/Preguntas AEJ Participación 2021.csv": {
-      "checksum": "d56d0f28d8bffcabb1aeff07ee5ad2a5"
-    },
-    "data/raw/Preguntas AEJ Percepción 2021.csv": {
-      "checksum": "2a9a7398a8b03ad08869443f4be7de7d"
-    },
-    "metadata_classified.csv": {
-      "checksum": "81bf6ce22660347089a31654b31e98e3"
-    },
-    "PAR_2024_metadata_classified.csv": {
-      "checksum": "1cb236644da55ed52e210705a3f49b38"
+    "LICENSE": {
+      "checksum": "d229da563da18fe5d58cd95a6467d584"
     },
     "R/binary_module.R": {
-      "checksum": "7ae8fe5c93900dc01f28f651e68d725b"
+      "checksum": "6b8aba395ea497d7804a3043ff8593e7"
     },
     "R/categorical_module.R": {
-      "checksum": "9348716a31b1f5a7e56fab16c40a99c7"
+      "checksum": "5819e5e0aa504fe1a10733d2e91e6e4c"
     },
     "R/data_loader.R": {
-      "checksum": "37f0a6432a88fc56312f6a3a231cb2de"
+      "checksum": "86042d9c50e91ecb12b30055a4d073a6"
     },
     "R/global_theme.R": {
       "checksum": "0dbf9a5e8b83b62ad776fb0069e7e161"
     },
     "R/interval_module.R": {
-      "checksum": "97c58b944af201d608b3627f86f57d3b"
+      "checksum": "12c802d0837200f4603aee2b3b313250"
     },
     "R/nominal_module.R": {
-      "checksum": "e7347339e69f769a2cae9100f305745b"
+      "checksum": "899e477e1b148bf4bd390f5ddc6f0bdd"
     },
     "R/ordinal_module.R": {
-      "checksum": "85ef06d896bd4064bfcff741f268777f"
+      "checksum": "9b6091da838f282cf21074656f078eba"
     },
     "R/question_classifier.R": {
       "checksum": "30e2eb244c5488dd5f07e5751984efeb"
     },
     "R/razon_module.R": {
-      "checksum": "c001de3854e3f08325df55a1bd5faa03"
+      "checksum": "7b522b2783ff49066471b8fdb41abcc1"
     },
     "R/server.R": {
-      "checksum": "582ec55f098a122257afb4c6ba5fdeeb"
+      "checksum": "c833e2e1a7289da269f4b978dd6591c6"
     },
     "R/survey_config.R": {
-      "checksum": "8732a007b32185447c4edf2961f14638"
+      "checksum": "77413e9c6341a7e313f56e2300684901"
     },
-    "R/theme_modules/services_module.r": {
-      "checksum": "c05a0fec895c9a46651b46155538d1c5"
+    "R/themes_metadata.R": {
+      "checksum": "97a0eca87eef88767a9a17b96e5e8a40"
     },
     "R/ui.R": {
-      "checksum": "7414fd4bf6440fbf9203582625f60179"
+      "checksum": "13f9dc0350ab118cf7712b2c79da760d"
     },
     "R/utils.R": {
       "checksum": "caf202f8fa5ade5565fa07340857fc71"
@@ -5580,7 +5260,7 @@
       "checksum": "9343d232581bcc020ba4e595a406def6"
     },
     "renv.lock": {
-      "checksum": "414fd42d63366dfb351943d7f299f586"
+      "checksum": "cc4c21ce56ffa6d09b690d711b3e49b5"
     }
   },
   "users": null
