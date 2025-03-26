@@ -159,14 +159,10 @@ output$theme_info_panel <- renderUI({
       "2023 Participación Ciudadana (PAR 2023)"
     } else if (input$survey_selector == "PER_2023"){
       "2023 Percepción Ciudadana (PER 2023)"
-    } else if (input$survey_selector == "PER_2024_V1"){
-      "PREELIMINAR 2024 Percepción Ciudadana (PER 2024 V1)"
-    } else if (input$survey_selector == "PAR_2024_V1"){
-      "PREELIMINAR 2024 Participación Ciudadana (PAR 2024 V1)"
-    }else if (input$survey_selector == "PER_2024_V2"){
-      "ACTUAL 2024 Percepción Ciudadana (PER 2024 V2)"
-    } else if (input$survey_selector == "PAR_2024_V2"){
-      "ACTUAL 2024 Participación Ciudadana (PAR 2024 V2)"
+    }else if (input$survey_selector == "PER_2024"){
+      "ACTUAL 2024 Percepción Ciudadana (PER 2024)"
+    } else if (input$survey_selector == "PAR_2024"){
+      "ACTUAL 2024 Participación Ciudadana (PAR 2024)"
     }
   })
   observeEvent(input$survey_selector, {

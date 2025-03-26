@@ -3,16 +3,10 @@ load_survey_data <- function(survey_id = "PER_2023") {
   if (survey_id == "PAR_2023") {
     response_path <- "data/processed/PAR_2023_responses.csv"
     metadata_path <- "data/processed/PAR_2023_metadata_classified.csv"
-  } else if (survey_id == "PER_2024_V1") { 
-    response_path <- "data/processed/PER_2024_responses.csv"
-    metadata_path <- "data/processed/PER_2024_metadata_classified.csv"
-  } else if (survey_id == "PAR_2024_V1") {
-    response_path <- "data/processed/PAR_2024_responses.csv"
-    metadata_path <- "data/processed/PAR_2024_metadata_classified.csv"
-  } else if (survey_id == "PAR_2024_V2") {
+  } else if (survey_id == "PAR_2024") {
     response_path <- "data/processed/PAR_2024_responses_V3.csv"
     metadata_path <- "data/processed/PAR_2024_metadata_classified_V3.csv"
-  } else if (survey_id == "PER_2024_V2") {
+  } else if (survey_id == "PER_2024") {
     response_path <- "data/processed/PER_2024_responses_V3.csv"
     metadata_path <- "data/processed/PER_2024_metadata_classified_V3.csv"
   } else { 
